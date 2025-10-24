@@ -12,8 +12,5 @@ export async function GET() {
     path: '/',
   });
   
-  console.log('[Test] Cookie set in response');
-  console.log('[Test] Response headers:', Object.fromEntries(response.headers.entries()));
-  
   return response;
 }

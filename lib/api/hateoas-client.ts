@@ -2,18 +2,22 @@ import type { HATEOASCollection, HATEOASResource } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
 
+export type TokenProvider = () => Promise<string | null>;
+
 export class HATEOASClient {
   private baseUrl: string;
   private endpoints: Map<string, string> = new Map();
+  private tokenProvider: TokenProvider;
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, tokenProvider?: TokenProvider) {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+    this.tokenProvider = tokenProvider ?? this.fetchTokenFromSession.bind(this);
   }
 
   /**
    * Get access token from session
    */
-  private async getAccessToken(): Promise<string | null> {
+  private async fetchTokenFromSession(): Promise<string | null> {
     try {
       const response = await fetch('/api/auth/session');
       if (response.ok) {
@@ -24,6 +28,10 @@ export class HATEOASClient {
       console.error('Failed to get access token:', error);
     }
     return null;
+  }
+
+  private async getAccessToken(): Promise<string | null> {
+    return this.tokenProvider();
   }
 
   /**
@@ -51,6 +59,7 @@ export class HATEOASClient {
     }
 
     const response = await fetch(url, {
+      cache: 'no-store',
       ...options,
       headers,
     });
@@ -313,5 +322,9 @@ export class HATEOASClient {
   }
 }
 
-// Export a singleton instance
+// Export a singleton instance for client environments
 export const hateoasClient = new HATEOASClient(API_BASE_URL);
+
+export function createServerHateoasClient(tokenProvider: TokenProvider) {
+  return new HATEOASClient(API_BASE_URL, tokenProvider);
+}

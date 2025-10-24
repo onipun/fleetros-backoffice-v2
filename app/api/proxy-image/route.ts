@@ -5,10 +5,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const imageUrl = searchParams.get('url');
 
-    console.log('🖼️ Proxy image request for:', imageUrl);
-
     if (!imageUrl) {
-      console.error('❌ No image URL provided');
       return NextResponse.json(
         { error: 'Image URL is required' },
         { status: 400 }
@@ -22,9 +19,6 @@ export async function GET(request: NextRequest) {
     if (sessionResponse.ok) {
       const session = await sessionResponse.json();
       token = session.accessToken;
-      console.log('✅ Got auth token for image proxy');
-    } else {
-      console.warn('⚠️ Failed to get auth token, proceeding without authentication');
     }
 
     // Fetch the image from the backend with authentication
@@ -32,12 +26,9 @@ export async function GET(request: NextRequest) {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-
-    console.log('🔄 Fetching image from backend:', imageUrl);
     const response = await fetch(imageUrl, { headers });
 
     if (!response.ok) {
-      console.error('❌ Failed to fetch image:', response.status, response.statusText);
       return NextResponse.json(
         { error: `Failed to fetch image: ${response.statusText}` },
         { status: response.status }
@@ -47,9 +38,6 @@ export async function GET(request: NextRequest) {
     // Get the image data
     const imageBuffer = await response.arrayBuffer();
     const contentType = response.headers.get('content-type') || 'image/jpeg';
-
-    console.log('✅ Successfully proxied image:', imageUrl, 'Type:', contentType, 'Size:', imageBuffer.byteLength);
-
     // Return the image with proper headers
     return new NextResponse(imageBuffer, {
       status: 200,
@@ -59,7 +47,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('💥 Error proxying image:', error);
     return NextResponse.json(
       { error: 'Failed to proxy image', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

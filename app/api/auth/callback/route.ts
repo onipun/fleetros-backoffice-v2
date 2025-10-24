@@ -10,7 +10,6 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(request: NextRequest) {
   try {
-    console.log('[Callback] Received callback request');
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -36,7 +35,6 @@ export async function GET(request: NextRequest) {
     const cookieStore = await cookies();
     const storedState = cookieStore.get('oauth_state')?.value;
     
-    console.log('[Callback] Validating state - stored:', !!storedState, 'received:', !!state);
     
     if (!storedState || storedState !== state) {
       console.error('[Callback] Invalid state - stored:', storedState, 'received:', state);
@@ -47,19 +45,15 @@ export async function GET(request: NextRequest) {
 
     // Clear the state cookie
     cookieStore.delete('oauth_state');
-    console.log('[Callback] State validated, exchanging code for tokens');
 
     // Exchange code for tokens
     const tokens = await exchangeCodeForTokens(code);
-    console.log('[Callback] Tokens received, fetching user info');
 
     // Get user information
     const userInfo = await getUserInfo(tokens.access_token);
-    console.log('[Callback] User info received:', userInfo.email);
 
     // Map to our User type
     const user = mapUserInfo(userInfo, tokens.access_token);
-    console.log('[Callback] User mapped - username:', user.username, 'roles:', user.roles);
 
     // Create session data
     const sessionData = createSession(
@@ -89,8 +83,6 @@ export async function GET(request: NextRequest) {
       path: cookieOptions.path ?? '/',
     });
     
-    console.log('[Callback] Session created, redirecting to dashboard');
-    console.log('[Callback] Cookie set:', sessionOptions.cookieName);
     
     return response;
   } catch (error) {

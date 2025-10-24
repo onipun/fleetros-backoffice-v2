@@ -7,6 +7,7 @@ import { useCollection } from '@/lib/api/hooks';
 import { formatDate, parseHalResource } from '@/lib/utils';
 import type { Package } from '@/types';
 import { Box, Download, Plus, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function PackagesPage() {
@@ -40,10 +41,12 @@ export default function PackagesPage() {
             Manage rental packages and bundles
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Package
-        </Button>
+        <Link href="/packages/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Package
+          </Button>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -82,17 +85,23 @@ export default function PackagesPage() {
       ) : packages.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No packages found</p>
-          <Button className="mt-4">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Your First Package
-          </Button>
+          <Link href="/packages/new">
+            <Button className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Your First Package
+            </Button>
+          </Link>
         </div>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {packages.map((pkg) => (
-              <Card key={pkg.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
+            {packages.map((pkg) => {
+              const selfLink = pkg._links?.self?.href;
+              const packageId = selfLink ? selfLink.split('/').pop() : pkg.id;
+              
+              return (
+                <Card key={pkg.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <Box className="h-5 w-5 text-primary" />
@@ -147,16 +156,21 @@ export default function PackagesPage() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button size="sm" className="flex-1">
-                      View Details
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      Edit
-                    </Button>
+                    <Link href={`/packages/${packageId}`} className="flex-1">
+                      <Button size="sm" className="w-full">
+                        View Details
+                      </Button>
+                    </Link>
+                    <Link href={`/packages/${packageId}/edit`} className="flex-1">
+                      <Button size="sm" variant="outline" className="w-full">
+                        Edit
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+          })}
           </div>
 
           {/* Pagination */}

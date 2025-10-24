@@ -1,5 +1,6 @@
 'use client';
 
+import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Car, DollarSign, FileText, Package } from 'lucide-react';
 
@@ -64,6 +65,8 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      <EventCalendar />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">

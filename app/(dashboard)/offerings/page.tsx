@@ -7,6 +7,7 @@ import { useCollection } from '@/lib/api/hooks';
 import { formatCurrency, parseHalResource } from '@/lib/utils';
 import type { Offering } from '@/types';
 import { Download, Plus, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function OfferingsPage() {
@@ -45,10 +46,12 @@ export default function OfferingsPage() {
             Manage additional services and add-ons
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Offering
-        </Button>
+        <Link href="/offerings/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Offering
+          </Button>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -100,17 +103,23 @@ export default function OfferingsPage() {
       ) : offerings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No offerings found</p>
-          <Button className="mt-4">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Your First Offering
-          </Button>
+          <Link href="/offerings/new">
+            <Button className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Your First Offering
+            </Button>
+          </Link>
         </div>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {offerings.map((offering) => (
-              <Card key={offering.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
+            {offerings.map((offering) => {
+              const selfLink = offering._links?.self?.href;
+              const offeringId = selfLink ? selfLink.split('/').pop() : offering.id;
+              
+              return (
+                <Card key={offering.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">
@@ -167,16 +176,21 @@ export default function OfferingsPage() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button size="sm" className="flex-1">
-                      View Details
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      Edit
-                    </Button>
+                    <Link href={`/offerings/${offeringId}`} className="flex-1">
+                      <Button size="sm" className="w-full">
+                        View Details
+                      </Button>
+                    </Link>
+                    <Link href={`/offerings/${offeringId}/edit`} className="flex-1">
+                      <Button size="sm" variant="outline" className="w-full">
+                        Edit
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+          })}
           </div>
 
           {/* Pagination */}

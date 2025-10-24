@@ -135,7 +135,6 @@ export async function getUserInfo(accessToken: string): Promise<UserInfoResponse
   // First, try to get user info from backend API at /api/auth/me
   try {
     const backendUrl = APP_CONFIG.backendUserInfoEndpoint || `${APP_CONFIG.apiUrl}/api/auth/me`;
-    console.log('[OAuth] Fetching user info from backend API:', backendUrl);
     
     const backendResponse = await fetch(backendUrl, {
       headers: {
@@ -144,11 +143,8 @@ export async function getUserInfo(accessToken: string): Promise<UserInfoResponse
       },
     });
 
-    console.log('[OAuth] Backend response status:', backendResponse.status);
-
     if (backendResponse.ok) {
       const backendData: BackendAuthMeResponse = await backendResponse.json();
-      console.log('[OAuth] User info received from backend:', JSON.stringify(backendData, null, 2));
       
       // Convert backend response to UserInfoResponse format
       const userInfo: UserInfoResponse = {
@@ -174,20 +170,13 @@ export async function getUserInfo(accessToken: string): Promise<UserInfoResponse
         }
       };
       
-      console.log('[OAuth] Converted backend response to UserInfoResponse format');
       return userInfo;
     }
-    
-    const errorText = await backendResponse.text();
-    console.log('[OAuth] Backend /api/auth/me error:', backendResponse.status, errorText);
-    console.log('[OAuth] Falling back to Keycloak');
   } catch (error) {
-    console.log('[OAuth] Error fetching from backend:', error instanceof Error ? error.message : error);
-    console.log('[OAuth] Falling back to Keycloak');
+    // Fallback to Keycloak silently
   }
 
   // Fallback to Keycloak userinfo endpoint
-  console.log('[OAuth] Fetching user info from Keycloak:', KEYCLOAK_CONFIG.userInfoEndpoint);
   const response = await fetch(KEYCLOAK_CONFIG.userInfoEndpoint, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -196,13 +185,10 @@ export async function getUserInfo(accessToken: string): Promise<UserInfoResponse
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('[OAuth] Keycloak userinfo error:', error);
     throw new Error(`Failed to fetch user info: ${error}`);
   }
 
-  const keycloakUserInfo = await response.json();
-  console.log('[OAuth] User info received from Keycloak:', JSON.stringify(keycloakUserInfo, null, 2));
-  return keycloakUserInfo;
+  return response.json();
 }
 
 /**

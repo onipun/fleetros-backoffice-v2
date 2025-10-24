@@ -108,6 +108,14 @@ export interface VehicleImage {
 
 export interface Pricing {
   id?: number;
+  vehicle?: string; // HATEOAS link to vehicle
+  vehicleId?: number; // For display purposes
+  package?: string; // HATEOAS link to package
+  packageId?: number; // For display purposes
+  booking?: string; // HATEOAS link to booking
+  bookingId?: number; // For display purposes
+  offering?: string; // HATEOAS link to offering
+  offeringId?: number; // For display purposes
   baseRate: number;
   rateType: string;
   depositAmount: number;
@@ -121,9 +129,9 @@ export interface Pricing {
 
 export interface Booking {
   id?: number;
-  vehicleId: number;
-  startDate: string;
-  endDate: string;
+  vehicleId?: number;
+  startDate?: string;
+  endDate?: string;
   pickupLocation: string;
   dropoffLocation: string;
   insurancePolicy?: string;
@@ -135,6 +143,11 @@ export interface Booking {
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;
+  // Expanded relations when available
+  vehicle?: Vehicle;
+  customer?: User;
+  bookingStartDate?: string;
+  bookingEndDate?: string;
 }
 
 export interface BookingOffering {

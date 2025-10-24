@@ -48,8 +48,6 @@ export default function VehicleDetailPage() {
   const { data: imagesData, isLoading: imagesLoading, refetch: refetchImages } = useQuery({
     queryKey: ['vehicle', vehicleId, 'images'],
     queryFn: async () => {
-      console.log('🔄 Fetching images for vehicle:', vehicleId);
-      
       // Get access token
       const sessionResponse = await fetch('/api/auth/session');
       if (!sessionResponse.ok) {
@@ -74,7 +72,6 @@ export default function VehicleDetailPage() {
 
       if (!response.ok) {
         if (response.status === 404) {
-          console.log('⚠️ Images endpoint returned 404, returning empty array');
           return { images: [] };
         }
         throw new Error(`Failed to fetch images: ${response.statusText}`);
@@ -82,15 +79,11 @@ export default function VehicleDetailPage() {
 
       const data = await response.json();
       
-      console.log('📸 Images API response:', data);
-      
       // Handle both array response and paginated response
       if (Array.isArray(data)) {
-        console.log('✅ Response is array, wrapping in images object');
         return { images: data };
       }
       
-      console.log('✅ Response is object, returning as-is');
       return data;
     },
     enabled: !!vehicle,
@@ -99,10 +92,6 @@ export default function VehicleDetailPage() {
   const images: VehicleImage[] = Array.isArray(imagesData?.images) 
     ? imagesData.images 
     : (imagesData?._embedded?.images || []);
-
-  console.log('📦 Images data received:', imagesData);
-  console.log('🖼️ Extracted images array (count:', images.length, '):', images);
-  console.log('🎯 Images loading state:', imagesLoading);
 
   // Delete vehicle mutation
   const deleteMutation = useMutation({
@@ -306,14 +295,9 @@ export default function VehicleDetailPage() {
 
       const result = await uploadResponse.json();
 
-      console.log('✅ Upload result:', result);
-      console.log('📷 Uploaded image:', result.image);
-
       // Refresh images list - force refetch
-      console.log('🔄 Invalidating and refetching images query...');
       await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
-      const refetchResult = await queryClient.refetchQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
-      console.log('✅ Refetch complete:', refetchResult);
+      await queryClient.refetchQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
       
       toast({
         title: 'Success',
@@ -326,8 +310,6 @@ export default function VehicleDetailPage() {
       setImageDescription('');
       setIsPrimaryImage(false);
     } catch (error) {
-      console.error('Image upload error:', error);
-      
       let errorMessage = 'Failed to upload image';
       
       if (error instanceof Error) {
@@ -381,14 +363,6 @@ export default function VehicleDetailPage() {
 
   const primaryImage = images.find(img => img.isPrimary);
   const displayImageUrl = selectedImage || primaryImage?.imageUrl || images[0]?.imageUrl;
-
-  console.log('🎨 Display state:', {
-    selectedImage,
-    primaryImage,
-    displayImageUrl,
-    imagesCount: images.length,
-    firstImageUrl: images[0]?.imageUrl
-  });
 
   return (
     <div className="space-y-8">
@@ -467,12 +441,6 @@ export default function VehicleDetailPage() {
                   sizes="(max-width: 768px) 100vw, 50vw"
                   priority
                   quality={85}
-                  onError={(e) => {
-                    console.error('❌ Failed to load main image:', displayImageUrl);
-                  }}
-                  onLoad={() => {
-                    console.log('✅ Main image loaded successfully:', displayImageUrl);
-                  }}
                 />
               </div>
             ) : (
@@ -508,12 +476,6 @@ export default function VehicleDetailPage() {
                           className="object-cover"
                           sizes="(max-width: 768px) 25vw, 12vw"
                           quality={75}
-                          onError={(e) => {
-                            console.error('❌ Failed to load thumbnail:', image.imageUrl, image);
-                          }}
-                          onLoad={() => {
-                            console.log('✅ Thumbnail loaded:', image.id, image.imageUrl);
-                          }}
                         />
                       </div>
                       {image.isPrimary && (

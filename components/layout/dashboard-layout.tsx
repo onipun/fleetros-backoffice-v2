@@ -40,6 +40,7 @@ const navigation = [
   { name: 'Vehicles', href: '/vehicles', icon: Car },
   { name: 'Bookings', href: '/bookings', icon: FileText },
   { name: 'Offerings', href: '/offerings', icon: Package },
+  { name: 'Pricings', href: '/pricings', icon: DollarSign },
   { name: 'Discounts', href: '/discounts', icon: Percent },
   { name: 'Packages', href: '/packages', icon: Package },
   { name: 'Payments', href: '/payments', icon: DollarSign },

@@ -1,0 +1,260 @@
+'use client';
+
+import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
+import { hateoasClient } from '@/lib/api/hateoas-client';
+import type { Offering, OfferingType } from '@/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Save } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+export default function NewOfferingPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    offeringType: 'GPS' as OfferingType,
+    availability: 100,
+    price: 0,
+    maxQuantityPerBooking: 1,
+    isMandatory: false,
+    description: '',
+  });
+
+  const [pricingData, setPricingData] = useState<PricingFormData>({
+    baseRate: 0,
+    rateType: 'DAILY',
+    depositAmount: 0,
+    minimumRentalDays: 1,
+    validFrom: '',
+    validTo: '',
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      return hateoasClient.create<Offering>('offerings', data);
+    },
+    onSuccess: async (offering: Offering) => {
+      try {
+        const offeringId = offering.id;
+        if (
+          offeringId &&
+          pricingData.baseRate > 0 &&
+          pricingData.validFrom &&
+          pricingData.validTo
+        ) {
+          const pricingPayload = {
+            ...pricingData,
+            offering: `/api/offerings/${offeringId}`,
+          };
+          await hateoasClient.create('pricings', pricingPayload);
+          toast({
+            title: 'Success',
+            description: 'Offering and pricing created successfully',
+          });
+        } else {
+          toast({
+            title: 'Success',
+            description: 'Offering created successfully',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to create pricing:', error);
+        toast({
+          title: 'Warning',
+          description: 'Offering created but pricing failed',
+          variant: 'destructive',
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      queryClient.invalidateQueries({ queryKey: ['pricings'] });
+      router.push('/offerings');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'number' ? parseFloat(value) || 0 : name === 'offeringType' ? (value as OfferingType) : value,
+    }));
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link href="/offerings">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold">Create New Offering</h1>
+          <p className="text-muted-foreground">Add a new service or add-on</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Basic Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Basic Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="e.g., GPS Navigation"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="offeringType">Offering Type *</Label>
+                  <select
+                    id="offeringType"
+                    name="offeringType"
+                    value={formData.offeringType}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    required
+                  >
+                    <option value="GPS">GPS</option>
+                    <option value="INSURANCE">Insurance</option>
+                    <option value="CHILD_SEAT">Child Seat</option>
+                    <option value="WIFI">WiFi</option>
+                    <option value="ADDITIONAL_DRIVER">Additional Driver</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Describe the offering..."
+                    rows={4}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing & Availability */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Pricing & Availability</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price (per unit) *</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="availability">Available Units *</Label>
+                  <Input
+                    id="availability"
+                    name="availability"
+                    type="number"
+                    min="0"
+                    value={formData.availability}
+                    onChange={handleInputChange}
+                    placeholder="100"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxQuantityPerBooking">Max Quantity per Booking *</Label>
+                  <Input
+                    id="maxQuantityPerBooking"
+                    name="maxQuantityPerBooking"
+                    type="number"
+                    min="1"
+                    value={formData.maxQuantityPerBooking}
+                    onChange={handleInputChange}
+                    placeholder="1"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isMandatory"
+                    checked={formData.isMandatory}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, isMandatory: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="isMandatory" className="cursor-pointer">
+                    Mandatory offering (automatically included in all bookings)
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pricing Panel */}
+          <PricingPanel onDataChange={setPricingData} />
+
+          {/* Actions */}
+          <div className="flex justify-end gap-4">
+            <Link href="/offerings">
+              <Button variant="outline" type="button">
+                Cancel
+              </Button>
+            </Link>
+            <Button type="submit" disabled={createMutation.isPending}>
+              <Save className="mr-2 h-4 w-4" />
+              {createMutation.isPending ? 'Creating...' : 'Create Offering'}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
