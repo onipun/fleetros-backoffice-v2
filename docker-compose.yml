@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backoffice-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fleetros-backoffice
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_BRAND_NAME=Fleetros
+      - NEXT_PUBLIC_I18N_DEFAULT_LOCALE=en
+      - NEXT_PUBLIC_API_BASE_URL=http://host.docker.internal:8082
+      - AUTH_ISSUER_URL=http://host.docker.internal:8080/realms/car-rental
+      - AUTH_REALM=car-rental
+      - AUTH_CLIENT_ID=backoffice-dashboard
+      - AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET:-dev-secret}
+      - AUTH_REDIRECT_URI=http://localhost:3000/api/auth/callback
+      - AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:3000/login
+      - SESSION_SECRET=${SESSION_SECRET:-development-secret-key-min-32-characters}
+      - SESSION_MAX_AGE=3600000
+      - NEXT_PUBLIC_ENABLE_ONBOARDING=true
+      - NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
+      - NEXT_PUBLIC_ENABLE_COMMAND_PALETTE=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - fleetros-network
+
+networks:
+  fleetros-network:
+    driver: bridge
