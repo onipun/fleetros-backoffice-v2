@@ -155,6 +155,22 @@ export default function PackagesPage() {
                     </div>
                   </div>
 
+                  {pkg.offerings && pkg.offerings.length > 0 && (
+                    <div className="space-y-2 text-sm">
+                      <span className="text-muted-foreground">Included Offerings</span>
+                      <div className="flex flex-wrap gap-2">
+                        {pkg.offerings.map((offering) => (
+                          <span
+                            key={offering.id ?? offering.name}
+                            className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                          >
+                            {offering?.name || `Offering #${offering?.id ?? 'N/A'}`}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-2 pt-2">
                     <Link href={`/packages/${packageId}`} className="flex-1">
                       <Button size="sm" className="w-full">

@@ -4,6 +4,7 @@ import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -103,6 +104,13 @@ export default function NewOfferingPage() {
     }));
   };
 
+  const handlePriceChange = (value: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      price: value,
+    }));
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -181,15 +189,10 @@ export default function NewOfferingPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">Price (per unit) *</Label>
-                  <Input
+                  <CurrencyInput
                     id="price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    min="0"
                     value={formData.price}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
+                    onChange={handlePriceChange}
                     required
                   />
                 </div>

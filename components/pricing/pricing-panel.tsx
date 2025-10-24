@@ -1,6 +1,8 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { PricingFormData } from '@/lib/validations/schemas';
@@ -75,13 +77,10 @@ export function PricingPanel({
 
           <div className="space-y-2">
             <Label htmlFor="baseRate">Base Rate (MYR) *</Label>
-            <Input
+            <CurrencyInput
               id="baseRate"
-              type="number"
-              min="0"
-              step="0.01"
               value={formData.baseRate}
-              onChange={(e) => handleChange({ baseRate: parseFloat(e.target.value) || 0 })}
+              onChange={(value) => handleChange({ baseRate: value })}
               disabled={readOnly}
               required
             />
@@ -92,13 +91,10 @@ export function PricingPanel({
 
           <div className="space-y-2">
             <Label htmlFor="depositAmount">Deposit Amount (MYR) *</Label>
-            <Input
+            <CurrencyInput
               id="depositAmount"
-              type="number"
-              min="0"
-              step="0.01"
               value={formData.depositAmount}
-              onChange={(e) => handleChange({ depositAmount: parseFloat(e.target.value) || 0 })}
+              onChange={(value) => handleChange({ depositAmount: value })}
               disabled={readOnly}
               required
             />
@@ -127,13 +123,11 @@ export function PricingPanel({
             <>
               <div className="space-y-2">
                 <Label htmlFor="validFrom">Valid From *</Label>
-                <Input
+                <DateTimePicker
                   id="validFrom"
-                  type="datetime-local"
                   value={formData.validFrom}
-                  onChange={(e) => handleChange({ validFrom: e.target.value })}
+                  onChange={(value) => handleChange({ validFrom: value })}
                   disabled={readOnly}
-                  required
                 />
                 <p className="text-xs text-muted-foreground">
                   Start date and time for this pricing
@@ -142,13 +136,11 @@ export function PricingPanel({
 
               <div className="space-y-2">
                 <Label htmlFor="validTo">Valid To *</Label>
-                <Input
+                <DateTimePicker
                   id="validTo"
-                  type="datetime-local"
                   value={formData.validTo}
-                  onChange={(e) => handleChange({ validTo: e.target.value })}
+                  onChange={(value) => handleChange({ validTo: value })}
                   disabled={readOnly}
-                  required
                 />
                 <p className="text-xs text-muted-foreground">
                   End date and time for this pricing

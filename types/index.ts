@@ -62,6 +62,8 @@ export enum DiscountStatus {
   EXPIRED = 'EXPIRED',
 }
 
+export type DiscountScope = 'ALL' | 'PACKAGE' | 'OFFERING' | 'BOOKING';
+
 export enum OfferingType {
   GPS = 'GPS',
   INSURANCE = 'INSURANCE',
@@ -143,11 +145,18 @@ export interface Booking {
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;
+  package?: string; // HATEOAS link to package
+  packageId?: number; // For display purposes
+  discount?: string; // HATEOAS link to discount
+  discountId?: number; // For display purposes
   // Expanded relations when available
   vehicle?: Vehicle;
   customer?: User;
   bookingStartDate?: string;
   bookingEndDate?: string;
+  offerings?: BookingOffering[] | Offering[]; // Supports direct offering payloads for creation
+  offerings?: BookingOffering[] | Offering[]; // Supports direct offering payloads for creation
+  images?: BookingImage[]; // Mirrors vehicle image handling for damage reports
 }
 
 export interface BookingOffering {
@@ -157,6 +166,7 @@ export interface BookingOffering {
   price: number;
   totalPrice: number;
   _links?: Links;
+  offering?: Offering;
 }
 
 export interface BookingImage {
@@ -191,6 +201,8 @@ export interface Package {
   minRentalDays: number;
   createdAt?: string;
   updatedAt?: string;
+  offerings?: Offering[];
+  offeringIds?: number[];
   _links?: Links;
 }
 
@@ -204,9 +216,15 @@ export interface Discount {
   minBookingAmount: number;
   maxUses: number;
   usesCount: number;
-  applicableScope: string;
+  applicableScope: DiscountScope;
   description?: string;
   status: DiscountStatus;
+  package?: string;
+  packageId?: number;
+  offering?: string;
+  offeringId?: number;
+  booking?: string;
+  bookingId?: number;
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;

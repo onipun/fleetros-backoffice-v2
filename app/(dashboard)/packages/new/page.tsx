@@ -1,15 +1,18 @@
 'use client';
 
+import { OfferingMultiSelect } from '@/components/offering/offering-multi-select';
 import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import type { Package } from '@/types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseHalResource } from '@/lib/utils';
+import type { Offering, Package } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,6 +31,8 @@ export default function NewPackagePage() {
     minRentalDays: 2,
   });
 
+  const [selectedOfferingIds, setSelectedOfferingIds] = useState<number[]>([]);
+
   const [pricingData, setPricingData] = useState<PricingFormData>({
     baseRate: 0,
     rateType: 'DAILY',
@@ -37,8 +42,17 @@ export default function NewPackagePage() {
     validTo: '',
   });
 
+  const { data: offeringsData, isLoading: offeringsLoading, error: offeringsError } = useQuery({
+    queryKey: ['offerings', 'all'],
+    queryFn: async () => {
+      return hateoasClient.getCollection<Offering>('offerings', { page: 0, size: 100 });
+    },
+  });
+
+  const offerings = offeringsData ? parseHalResource<Offering>(offeringsData, 'offerings') : [];
+
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: typeof formData & { offerings: Offering[] }) => {
       return hateoasClient.create<Package>('packages', data);
     },
     onSuccess: async (pkg: Package) => {
@@ -85,7 +99,33 @@ export default function NewPackagePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+
+    if (!formData.validFrom || !formData.validTo) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select both valid from and valid to dates.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
+      toast({
+        title: 'Validation Error',
+        description: 'Valid from date must be before valid to date.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const selectedOfferings = offerings.filter(
+      (item) => item.id != null && selectedOfferingIds.includes(item.id)
+    );
+
+    createMutation.mutate({
+      ...formData,
+      offerings: selectedOfferings,
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -93,6 +133,13 @@ export default function NewPackagePage() {
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : value,
+    }));
+  };
+
+  const handleDateChange = (field: 'validFrom' | 'validTo') => (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
     }));
   };
 
@@ -195,29 +242,32 @@ export default function NewPackagePage() {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="validFrom">Valid From *</Label>
-                <Input
+                <DateTimePicker
                   id="validFrom"
-                  name="validFrom"
-                  type="datetime-local"
                   value={formData.validFrom}
-                  onChange={handleInputChange}
-                  required
+                  onChange={handleDateChange('validFrom')}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="validTo">Valid To *</Label>
-                <Input
+                <DateTimePicker
                   id="validTo"
-                  name="validTo"
-                  type="datetime-local"
                   value={formData.validTo}
-                  onChange={handleInputChange}
-                  required
+                  onChange={handleDateChange('validTo')}
                 />
               </div>
             </CardContent>
           </Card>
+
+          <OfferingMultiSelect
+            className="md:col-span-2"
+            offerings={offerings}
+            selectedIds={selectedOfferingIds}
+            onChange={setSelectedOfferingIds}
+            isLoading={offeringsLoading}
+            errorMessage={offeringsError instanceof Error ? offeringsError.message : undefined}
+          />
         </div>
 
         <div className="mt-6">

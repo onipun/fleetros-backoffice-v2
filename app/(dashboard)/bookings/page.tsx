@@ -8,6 +8,7 @@ import { useCollection } from '@/lib/api/hooks';
 import { formatCurrency, formatDate, parseHalResource } from '@/lib/utils';
 import type { Booking } from '@/types';
 import { Calendar, Download, Plus, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function BookingsPage() {
@@ -49,10 +50,12 @@ export default function BookingsPage() {
             Manage customer reservations and bookings
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Booking
-        </Button>
+        <Link href="/bookings/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Booking
+          </Button>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -100,18 +103,24 @@ export default function BookingsPage() {
       ) : bookings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No bookings found</p>
-          <Button className="mt-4">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Your First Booking
-          </Button>
+          <Link href="/bookings/new">
+            <Button className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Your First Booking
+            </Button>
+          </Link>
         </div>
       ) : (
         <>
           <div className="space-y-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
+            {bookings.map((booking) => {
+              const selfLink = booking._links?.self?.href;
+              const bookingId = booking.id ?? (selfLink ? selfLink.split('/').pop() : undefined);
+
+              return (
+                <Card key={booking.id ?? selfLink} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
                         <h3 className="text-lg font-semibold">
@@ -184,15 +193,34 @@ export default function BookingsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button size="sm">View Details</Button>
-                      <Button size="sm" variant="outline">
-                        Edit
-                      </Button>
+                      {bookingId ? (
+                        <Button size="sm" asChild>
+                          <Link href={`/bookings/${bookingId}`}>
+                            View Details
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button size="sm" disabled>
+                          View Details
+                        </Button>
+                      )}
+                      {bookingId ? (
+                        <Button size="sm" variant="outline" asChild>
+                          <Link href={`/bookings/${bookingId}/edit`}>
+                            Edit
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline" disabled>
+                          Edit
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
 
           {/* Pagination */}

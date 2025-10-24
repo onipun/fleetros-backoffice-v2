@@ -10,10 +10,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 interface PricingsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
     q?: string;
-  };
+  }>;
 }
 
 function extractIdFromLink(link?: string) {
@@ -63,10 +63,11 @@ function formatDate(dateString?: string) {
 const PAGE_SIZE = 20;
 
 export default async function PricingsPage({ searchParams }: PricingsPageProps) {
-  const pageParam = Number(searchParams.page ?? '1');
+  const resolvedSearchParams = await searchParams;
+  const pageParam = Number(resolvedSearchParams?.page ?? '1');
   const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
   const queryPage = currentPage - 1; // API is zero-based
-  const rawSearchTerm = searchParams.q?.trim() ?? '';
+  const rawSearchTerm = resolvedSearchParams?.q?.trim() ?? '';
   const normalizedSearchTerm = rawSearchTerm.toLowerCase();
 
   const client = getServerHateoasClient();

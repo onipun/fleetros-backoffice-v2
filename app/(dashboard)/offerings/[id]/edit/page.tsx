@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -91,6 +92,13 @@ export default function EditOfferingPage() {
     }));
   };
 
+  const handlePriceChange = (value: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      price: value,
+    }));
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -176,15 +184,10 @@ export default function EditOfferingPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="price">Price (per unit) *</Label>
-                <Input
+                <CurrencyInput
                   id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
                   value={formData.price}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
+                  onChange={handlePriceChange}
                   required
                 />
               </div>

@@ -9,7 +9,7 @@ import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import * as React from 'react';
 
 export interface EntitySelectProps {
-  entityType: 'vehicle' | 'package' | 'booking';
+  entityType: 'vehicle' | 'package' | 'booking' | 'offering' | 'discount';
   value?: number;
   onChange?: (id: number, label: string) => void;
   className?: string;
@@ -25,10 +25,17 @@ const EntitySelect = React.forwardRef<HTMLButtonElement, EntitySelectProps>(
     const { data, isLoading } = useQuery({
       queryKey: [entityType, 'list'],
       queryFn: async () => {
-        const response = await hateoasClient.getCollection<any>(
-          entityType === 'booking' ? 'bookings' : entityType === 'package' ? 'packages' : 'vehicles',
-          { page: 0, size: 100 }
-        );
+        const resource = entityType === 'booking'
+          ? 'bookings'
+          : entityType === 'package'
+            ? 'packages'
+            : entityType === 'offering'
+              ? 'offerings'
+              : entityType === 'discount'
+                ? 'discounts'
+              : 'vehicles';
+
+        const response = await hateoasClient.getCollection<any>(resource, { page: 0, size: 100 });
         // Extract items from _embedded
         if (!response._embedded) return [];
         const key = Object.keys(response._embedded)[0];
@@ -44,6 +51,12 @@ const EntitySelect = React.forwardRef<HTMLButtonElement, EntitySelectProps>(
         return entity.name || `Package #${entity.id}`;
       } else if (entityType === 'booking') {
         return `Booking #${entity.id} - ${entity.pickupLocation}`;
+      } else if (entityType === 'offering') {
+        return entity.name || `Offering #${entity.id}`;
+      } else if (entityType === 'discount') {
+        return entity.code
+          ? `${entity.code} (${entity.type ?? 'DISCOUNT'})`
+          : `Discount #${entity.id}`;
       }
       return 'Unknown';
     };

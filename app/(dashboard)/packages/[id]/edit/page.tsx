@@ -1,13 +1,16 @@
 'use client';
 
+import { OfferingMultiSelect } from '@/components/offering/offering-multi-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import type { Package } from '@/types';
+import { parseHalResource } from '@/lib/utils';
+import type { Offering, Package } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
@@ -28,6 +31,7 @@ export default function EditPackagePage() {
     validTo: '',
     minRentalDays: 2,
   });
+  const [selectedOfferingIds, setSelectedOfferingIds] = useState<number[]>([]);
 
   // Fetch package details
   const { data: pkg, isLoading } = useQuery({
@@ -37,29 +41,40 @@ export default function EditPackagePage() {
     },
   });
 
+  const { data: offeringsData, isLoading: offeringsLoading, error: offeringsError } = useQuery({
+    queryKey: ['offerings', 'all'],
+    queryFn: async () => {
+      return hateoasClient.getCollection<Offering>('offerings', { page: 0, size: 100 });
+    },
+  });
+
+  const offerings = offeringsData ? parseHalResource<Offering>(offeringsData, 'offerings') : [];
+
   // Pre-populate form when data loads
   useEffect(() => {
     if (pkg) {
-      // Format datetime for input[type="datetime-local"]
-      const formatDateTime = (dateStr: string) => {
-        if (!dateStr) return '';
-        const date = new Date(dateStr);
-        return date.toISOString().slice(0, 16);
-      };
-
       setFormData({
         name: pkg.name || '',
         description: pkg.description || '',
         priceModifier: pkg.priceModifier || 0.90,
-        validFrom: formatDateTime(pkg.validFrom || ''),
-        validTo: formatDateTime(pkg.validTo || ''),
+        validFrom: pkg.validFrom || '',
+        validTo: pkg.validTo || '',
         minRentalDays: pkg.minRentalDays || 2,
       });
+      if (pkg.offerings && Array.isArray(pkg.offerings)) {
+        setSelectedOfferingIds(
+          pkg.offerings
+            .map((item) => item.id)
+            .filter((id): id is number => id != null)
+        );
+      } else {
+        setSelectedOfferingIds([]);
+      }
     }
   }, [pkg]);
 
   const updateMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: typeof formData & { offerings: Offering[] }) => {
       return hateoasClient.update<Package>('packages', packageId, data);
     },
     onSuccess: () => {
@@ -82,7 +97,33 @@ export default function EditPackagePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate(formData);
+
+    if (!formData.validFrom || !formData.validTo) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select both valid from and valid to dates.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
+      toast({
+        title: 'Validation Error',
+        description: 'Valid from date must be before valid to date.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const selectedOfferings = offerings.filter(
+      (item) => item.id != null && selectedOfferingIds.includes(item.id)
+    );
+
+    updateMutation.mutate({
+      ...formData,
+      offerings: selectedOfferings,
+    });
   };
 
   const handleInputChange = (
@@ -92,6 +133,13 @@ export default function EditPackagePage() {
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : value,
+    }));
+  };
+
+  const handleDateChange = (field: 'validFrom' | 'validTo') => (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
     }));
   };
 
@@ -202,29 +250,32 @@ export default function EditPackagePage() {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="validFrom">Valid From *</Label>
-                <Input
+                <DateTimePicker
                   id="validFrom"
-                  name="validFrom"
-                  type="datetime-local"
                   value={formData.validFrom}
-                  onChange={handleInputChange}
-                  required
+                  onChange={handleDateChange('validFrom')}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="validTo">Valid To *</Label>
-                <Input
+                <DateTimePicker
                   id="validTo"
-                  name="validTo"
-                  type="datetime-local"
                   value={formData.validTo}
-                  onChange={handleInputChange}
-                  required
+                  onChange={handleDateChange('validTo')}
                 />
               </div>
             </CardContent>
           </Card>
+
+          <OfferingMultiSelect
+            className="md:col-span-2"
+            offerings={offerings}
+            selectedIds={selectedOfferingIds}
+            onChange={setSelectedOfferingIds}
+            isLoading={offeringsLoading}
+            errorMessage={offeringsError instanceof Error ? offeringsError.message : undefined}
+          />
         </div>
 
         {/* Actions */}
