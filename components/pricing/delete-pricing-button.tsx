@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { deletePricing } from '@/app/(dashboard)/pricings/actions';
+import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { useTransition } from 'react';
 
