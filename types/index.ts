@@ -99,7 +99,9 @@ export interface VehicleImage {
   imageUrl: string;
   thumbnail?: string;
   isPrimary: boolean;
+  description?: string;
   caption?: string;
+  uploadedAt?: string;
   createdAt?: string;
   _links?: Links;
 }

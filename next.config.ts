@@ -22,12 +22,14 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
     remotePatterns: [
+      // Local backend API
       {
         protocol: 'http',
         hostname: 'localhost',
         port: '8082',
-        pathname: '/api/**',
+        pathname: '/**',
       },
+      // AWS S3 and CloudFront
       {
         protocol: 'https',
         hostname: '**.amazonaws.com',
@@ -38,9 +40,26 @@ const nextConfig: NextConfig = {
         hostname: '**.cloudfront.net',
         pathname: '/**',
       },
+      // Azure Storage
+      {
+        protocol: 'https',
+        hostname: '**.blob.core.windows.net',
+        pathname: '/**',
+      },
       {
         protocol: 'https',
         hostname: '**.azure.com',
+        pathname: '/**',
+      },
+      // Google Cloud Storage
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.storage.googleapis.com',
         pathname: '/**',
       },
     ],
@@ -69,6 +88,16 @@ const nextConfig: NextConfig = {
             value: 'strict-origin-when-cross-origin',
           },
         ],
+      },
+    ];
+  },
+
+  // Rewrites for API proxy (alternative to proxy route)
+  async rewrites() {
+    return [
+      {
+        source: '/backend-files/:path*',
+        destination: 'http://localhost:8082/api/files/:path*',
       },
     ];
   },

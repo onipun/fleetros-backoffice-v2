@@ -19,6 +19,7 @@ import { hateoasClient } from '@/lib/api/hateoas-client';
 import type { Vehicle, VehicleImage } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Edit, Image as ImageIcon, Trash2, Upload } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -44,9 +45,11 @@ export default function VehicleDetailPage() {
   });
 
   // Fetch vehicle images
-  const { data: imagesData, isLoading: imagesLoading } = useQuery({
+  const { data: imagesData, isLoading: imagesLoading, refetch: refetchImages } = useQuery({
     queryKey: ['vehicle', vehicleId, 'images'],
     queryFn: async () => {
+      console.log('🔄 Fetching images for vehicle:', vehicleId);
+      
       // Get access token
       const sessionResponse = await fetch('/api/auth/session');
       if (!sessionResponse.ok) {
@@ -71,6 +74,7 @@ export default function VehicleDetailPage() {
 
       if (!response.ok) {
         if (response.status === 404) {
+          console.log('⚠️ Images endpoint returned 404, returning empty array');
           return { images: [] };
         }
         throw new Error(`Failed to fetch images: ${response.statusText}`);
@@ -78,11 +82,15 @@ export default function VehicleDetailPage() {
 
       const data = await response.json();
       
+      console.log('📸 Images API response:', data);
+      
       // Handle both array response and paginated response
       if (Array.isArray(data)) {
+        console.log('✅ Response is array, wrapping in images object');
         return { images: data };
       }
       
+      console.log('✅ Response is object, returning as-is');
       return data;
     },
     enabled: !!vehicle,
@@ -91,6 +99,10 @@ export default function VehicleDetailPage() {
   const images: VehicleImage[] = Array.isArray(imagesData?.images) 
     ? imagesData.images 
     : (imagesData?._embedded?.images || []);
+
+  console.log('📦 Images data received:', imagesData);
+  console.log('🖼️ Extracted images array (count:', images.length, '):', images);
+  console.log('🎯 Images loading state:', imagesLoading);
 
   // Delete vehicle mutation
   const deleteMutation = useMutation({
@@ -294,8 +306,14 @@ export default function VehicleDetailPage() {
 
       const result = await uploadResponse.json();
 
-      // Refresh images list
-      queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
+      console.log('✅ Upload result:', result);
+      console.log('📷 Uploaded image:', result.image);
+
+      // Refresh images list - force refetch
+      console.log('🔄 Invalidating and refetching images query...');
+      await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
+      const refetchResult = await queryClient.refetchQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
+      console.log('✅ Refetch complete:', refetchResult);
       
       toast({
         title: 'Success',
@@ -362,7 +380,15 @@ export default function VehicleDetailPage() {
   }
 
   const primaryImage = images.find(img => img.isPrimary);
-  const displayImage = selectedImage || primaryImage?.imageUrl || images[0]?.imageUrl;
+  const displayImageUrl = selectedImage || primaryImage?.imageUrl || images[0]?.imageUrl;
+
+  console.log('🎨 Display state:', {
+    selectedImage,
+    primaryImage,
+    displayImageUrl,
+    imagesCount: images.length,
+    firstImageUrl: images[0]?.imageUrl
+  });
 
   return (
     <div className="space-y-8">
@@ -431,12 +457,22 @@ export default function VehicleDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Main Display Image */}
-            {displayImage ? (
+            {displayImageUrl ? (
               <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
-                <img
-                  src={displayImage}
+                <Image
+                  src={displayImageUrl}
                   alt={vehicle.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                  quality={85}
+                  onError={(e) => {
+                    console.error('❌ Failed to load main image:', displayImageUrl);
+                  }}
+                  onLoad={() => {
+                    console.log('✅ Main image loaded successfully:', displayImageUrl);
+                  }}
                 />
               </div>
             ) : (
@@ -451,43 +487,54 @@ export default function VehicleDetailPage() {
             {/* Thumbnail Gallery */}
             {images.length > 0 && (
               <div className="grid grid-cols-4 gap-2">
-                {images.map((image) => (
-                  <div
-                    key={image.id}
-                    className="relative group cursor-pointer"
-                    onClick={() => setSelectedImage(image.imageUrl)}
-                  >
+                {images.map((image) => {
+                  return (
                     <div
-                      className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${
-                        selectedImage === image.imageUrl || (selectedImage === null && image.isPrimary)
-                          ? 'border-primary'
-                          : 'border-transparent hover:border-muted-foreground'
-                      }`}
+                      key={image.id}
+                      className="relative group cursor-pointer"
+                      onClick={() => setSelectedImage(image.imageUrl)}
                     >
-                      <img
-                        src={image.imageUrl}
-                        alt={image.caption || 'Vehicle image'}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    {image.isPrimary && (
-                      <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
-                        Primary
+                      <div
+                        className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                          selectedImage === image.imageUrl || (selectedImage === null && image.isPrimary)
+                            ? 'border-primary'
+                            : 'border-transparent hover:border-muted-foreground'
+                        }`}
+                      >
+                        <Image
+                          src={image.imageUrl}
+                          alt={image.description || image.caption || 'Vehicle image'}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 25vw, 12vw"
+                          quality={75}
+                          onError={(e) => {
+                            console.error('❌ Failed to load thumbnail:', image.imageUrl, image);
+                          }}
+                          onLoad={() => {
+                            console.log('✅ Thumbnail loaded:', image.id, image.imageUrl);
+                          }}
+                        />
                       </div>
-                    )}
-                    <button
-                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm('Delete this image?')) {
-                          deleteImageMutation.mutate(image.id!);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
+                      {image.isPrimary && (
+                        <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
+                          Primary
+                        </div>
+                      )}
+                      <button
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Delete this image?')) {
+                            deleteImageMutation.mutate(image.id!);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>

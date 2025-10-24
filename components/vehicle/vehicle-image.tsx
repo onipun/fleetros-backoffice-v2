@@ -13,14 +13,15 @@ interface VehicleImageProps {
 }
 
 /**
- * Optimized vehicle image component with enterprise-grade practices:
+ * Optimized vehicle image component following Next.js best practices:
  * - Uses Next.js Image for automatic optimization
+ * - Direct image loading from configured remote patterns
  * - Lazy loading by default (priority prop for above-the-fold images)
  * - Responsive sizing with srcset
  * - Placeholder while loading
  * - Error state with fallback
  * - Prevents layout shift with aspect ratio
- * - WebP/AVIF format conversion
+ * - Automatic WebP/AVIF format conversion
  * - Automatic quality optimization
  */
 export function VehicleImage({ 
@@ -52,24 +53,25 @@ export function VehicleImage({
         <div className="absolute inset-0 bg-muted animate-pulse" />
       )}
       
-      {/* Next.js optimized image */}
+      {/* Next.js optimized image - loads directly from backend with automatic optimization */}
       <Image
         src={src}
         alt={alt}
         fill
         sizes={sizes}
-        className={`object-cover transition-opacity duration-300 ${
-          isLoading ? 'opacity-0' : 'opacity-100'
-        }`}
+        className="object-cover transition-opacity duration-300"
+        style={{ 
+          opacity: isLoading ? 0 : 1,
+          objectFit: 'cover'
+        }}
         quality={85} // Balance between quality and file size
         priority={priority} // For above-the-fold images
-        onLoadingComplete={() => setIsLoading(false)}
+        onLoad={() => setIsLoading(false)}
         onError={() => {
+          console.error('Failed to load image:', src);
           setError(true);
           setIsLoading(false);
         }}
-        // Prevent layout shift
-        style={{ objectFit: 'cover' }}
       />
     </div>
   );

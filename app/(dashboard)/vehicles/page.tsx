@@ -86,6 +86,17 @@ export default function VehiclesPage() {
   const vehicles = data ? parseHalResource<Vehicle>(data, 'vehicles') : [];
   const totalPages = data?.page?.totalPages || 0;
 
+  // Debug: Log vehicle data to check primaryImageUrl
+  console.log('Vehicles loaded:', vehicles.length);
+  if (vehicles.length > 0) {
+    console.log('First vehicle sample:', {
+      id: vehicles[0].id,
+      name: vehicles[0].name,
+      primaryImageUrl: vehicles[0].primaryImageUrl,
+      hasImage: !!vehicles[0].primaryImageUrl
+    });
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
