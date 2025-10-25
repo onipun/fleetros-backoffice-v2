@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { formatDate } from '@/lib/utils';
 import type { Discount } from '@/types';
-import { Edit, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
@@ -260,8 +260,8 @@ export function DiscountsDashboard({
                             <div className="flex items-center justify-center gap-2">
                               {identifier ? (
                                 <Link href={`/discounts/${identifier}/edit`}>
-                                  <Button size="sm" variant="ghost" aria-label={`${t('common.edit')} ${discount.code ?? ''}`}>
-                                    <Edit className="h-4 w-4" />
+                                  <Button size="sm" variant="ghost">
+                                    {t('common.edit')}
                                   </Button>
                                 </Link>
                               ) : null}

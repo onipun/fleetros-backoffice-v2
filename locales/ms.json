@@ -530,7 +530,19 @@
       "untitled": "Perkhidmatan tanpa nama",
       "selectedSingular": "{count} perkhidmatan dipilih",
       "selectedPlural": "{count} perkhidmatan dipilih"
-    }
+    },
+    "table": {
+      "name": "Nama",
+      "type": "Jenis",
+      "price": "Harga",
+      "availability": "Ketersediaan",
+      "maxQuantity": "Kuantiti Maks",
+      "mandatory": "Wajib",
+      "status": "Status",
+      "actions": "Tindakan"
+    },
+    "yes": "Ya",
+    "no": "Tidak"
   },
   "package": {
     "title": "Pakej",
@@ -568,7 +580,17 @@
     "minRentalDaysPlaceholder": "2",
     "validityPeriod": "Tempoh Sah",
     "pricingRequirements": "Harga & Keperluan",
-    "priceModifierHelper": "Masukkan faktor pengubah harga. Nilai 1.00 mengekalkan harga asal, nilai di bawah 1 memberikan diskaun."
+    "priceModifierHelper": "Masukkan faktor pengubah harga. Nilai 1.00 mengekalkan harga asal, nilai di bawah 1 memberikan diskaun.",
+    "table": {
+      "name": "Nama",
+      "priceModifier": "Pengubah Harga",
+      "minRentalDays": "Min. Hari Sewa",
+      "validFrom": "Sah Dari",
+      "validTo": "Sah Hingga",
+      "offerings": "Penawaran Termasuk",
+      "status": "Status",
+      "actions": "Tindakan"
+    }
   },
   "payment": {
     "title": "Pembayaran",

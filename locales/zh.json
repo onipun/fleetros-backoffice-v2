@@ -538,7 +538,19 @@
       "untitled": "未命名服务",
       "selectedSingular": "已选择 {count} 项服务",
       "selectedPlural": "已选择 {count} 项服务"
-    }
+    },
+    "table": {
+      "name": "名称",
+      "type": "类型",
+      "price": "价格",
+      "availability": "可用数量",
+      "maxQuantity": "最大数量",
+      "mandatory": "必选",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "yes": "是",
+    "no": "否"
   },
   "package": {
     "title": "套餐",
@@ -576,7 +588,17 @@
     "minRentalDaysPlaceholder": "2",
     "validityPeriod": "有效期",
     "pricingRequirements": "定价与要求",
-    "priceModifierHelper": "输入用于调整最终价格的系数。1.00 保持原价，小于 1 的值表示折扣。"
+    "priceModifierHelper": "输入用于调整最终价格的系数。1.00 保持原价，小于 1 的值表示折扣。",
+    "table": {
+      "name": "名称",
+      "priceModifier": "价格调整",
+      "minRentalDays": "最少租赁天数",
+      "validFrom": "有效期开始",
+      "validTo": "有效期结束",
+      "offerings": "包含服务",
+      "status": "状态",
+      "actions": "操作"
+    }
   },
   "payment": {
     "title": "付款",

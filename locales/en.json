@@ -539,7 +539,19 @@
       "untitled": "Untitled Offering",
       "selectedSingular": "{count} offering selected",
       "selectedPlural": "{count} offerings selected"
-    }
+    },
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "price": "Price",
+      "availability": "Availability",
+      "maxQuantity": "Max Quantity",
+      "mandatory": "Mandatory",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "yes": "Yes",
+    "no": "No"
   },
   "package": {
     "title": "Packages",
@@ -577,7 +589,17 @@
     "minRentalDaysPlaceholder": "2",
     "validityPeriod": "Validity Period",
     "pricingRequirements": "Pricing & Requirements",
-    "priceModifierHelper": "Enter the factor used to adjust final pricing. 1.00 keeps the base price, values below 1 apply a discount."
+    "priceModifierHelper": "Enter the factor used to adjust final pricing. 1.00 keeps the base price, values below 1 apply a discount.",
+    "table": {
+      "name": "Name",
+      "priceModifier": "Price Modifier",
+      "minRentalDays": "Min. Rental Days",
+      "validFrom": "Valid From",
+      "validTo": "Valid To",
+      "offerings": "Included Offerings",
+      "status": "Status",
+      "actions": "Actions"
+    }
   },
   "payment": {
     "title": "Payments",

@@ -103,7 +103,7 @@ export default function OfferingsPage() {
         </CardContent>
       </Card>
 
-      {/* Offerings Grid */}
+      {/* Offerings Table */}
       {isLoading ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('offering.loading')}</p>
@@ -126,92 +126,95 @@ export default function OfferingsPage() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {offerings.map((offering) => {
-              const selfLink = offering._links?.self?.href;
-              const offeringId = selfLink ? selfLink.split('/').pop() : offering.id;
-              
-              return (
-                <Card key={offering.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">
-                        {typeIcons[offering.offeringType || 'OTHER'] || typeIcons.OTHER}
-                      </span>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {offering.name || t('offering.unnamedOffering')}
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground">
-                          {offering.offeringType
-                            ? typeLabels[offering.offeringType as keyof typeof typeLabels] || typeLabels.OTHER
-                            : t('common.notAvailable')}
-                        </p>
-                      </div>
-                    </div>
-                    {offering.isMandatory && (
-                      <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/20 text-primary">
-                        {t('offering.mandatory')}
-                      </span>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {offering.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {offering.description}
-                    </p>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">{t('offering.priceLabel')}</span>
-                      <p className="font-bold text-lg text-primary">
-                        {offering.price != null ? formatCurrency(offering.price) : t('common.notAvailable')}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">{t('offering.availabilityLabel')}</span>
-                      <p className="font-medium">
-                        {offering.availability ?? 0} {t('offering.unitsSuffix')}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">{t('offering.maxQuantityLabel')}</span>
-                      <p className="font-medium">
-                        {offering.maxQuantityPerBooking ?? 0} {t('offering.perBookingSuffix')}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">{t('offering.statusLabel')}</span>
-                      <p className="font-medium">
-                        {(offering.availability ?? 0) > 0 ? (
-                          <span className="text-success">{t('offering.inStock')}</span>
-                        ) : (
-                          <span className="text-destructive">{t('offering.outOfStock')}</span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Link href={`/offerings/${offeringId}`} className="flex-1">
-                      <Button size="sm" className="w-full">
-                        {t('common.viewDetails')}
-                      </Button>
-                    </Link>
-                    <Link href={`/offerings/${offeringId}/edit`} className="flex-1">
-                      <Button size="sm" variant="outline" className="w-full">
-                        {t('common.edit')}
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-          </div>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium">{t('offering.table.name')}</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">{t('offering.table.type')}</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">{t('offering.table.price')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.availability')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.maxQuantity')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.mandatory')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.status')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {offerings.map((offering) => {
+                      const selfLink = offering._links?.self?.href;
+                      const offeringId = selfLink ? selfLink.split('/').pop() : offering.id;
+                      
+                      return (
+                        <tr key={offering.id} className="hover:bg-muted/30">
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">
+                                {typeIcons[offering.offeringType || 'OTHER'] || typeIcons.OTHER}
+                              </span>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{offering.name || t('offering.unnamedOffering')}</span>
+                                {offering.description && (
+                                  <span className="text-xs text-muted-foreground line-clamp-1">
+                                    {offering.description}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {offering.offeringType
+                              ? typeLabels[offering.offeringType as keyof typeof typeLabels] || typeLabels.OTHER
+                              : t('common.notAvailable')}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right font-semibold text-primary">
+                            {offering.price != null ? formatCurrency(offering.price) : t('common.notAvailable')}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            {offering.availability ?? 0}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            {offering.maxQuantityPerBooking ?? 0}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            {offering.isMandatory ? (
+                              <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/20 text-primary">
+                                {t('offering.yes')}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{t('offering.no')}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            {(offering.availability ?? 0) > 0 ? (
+                              <span className="px-2 py-1 rounded-md text-xs font-medium bg-success/20 text-success">
+                                {t('offering.inStock')}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 rounded-md text-xs font-medium bg-destructive/20 text-destructive">
+                                {t('offering.outOfStock')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex items-center justify-center gap-2">
+                              <Link href={`/offerings/${offeringId}/edit`}>
+                                <Button size="sm" variant="ghost">
+                                  {t('common.edit')}
+                                </Button>
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Pagination */}
           {totalPages > 1 && (
