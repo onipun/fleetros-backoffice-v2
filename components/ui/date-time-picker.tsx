@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { cn } from '@/lib/utils';
 import { endOfMonth, endOfYear, format, isValid, startOfMonth, startOfToday, startOfYear } from 'date-fns';
 import { Calendar, Clock, X } from 'lucide-react';
@@ -16,7 +17,8 @@ export interface DateTimePickerProps
 
 const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
   ({ className, value = '', onChange, showTimeSelect = true, disabled, ..._rest }, ref) => {
-    const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
+  const { t } = useLocale();
+  const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
     const [showQuickSelect, setShowQuickSelect] = React.useState(false);
     const [showDatePicker, setShowDatePicker] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -108,13 +110,19 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
       setShowDatePicker(true);
     };
 
-    const quickDateOptions = [
-      { label: 'Today', date: startOfToday(), icon: '📅' },
-      { label: 'Start of Month', date: startOfMonth(new Date()), icon: '📆' },
-      { label: 'End of Month', date: endOfMonth(new Date()), icon: '📆' },
-      { label: 'Start of Year', date: startOfYear(new Date()), icon: '🗓️' },
-      { label: 'End of Year', date: endOfYear(new Date()), icon: '🗓️' },
-    ];
+    const placeholder = t('dateTimePicker.placeholder');
+    const quickSelectTitle = t('dateTimePicker.quickSelectTitle');
+    const openCalendarLabel = t('dateTimePicker.openCalendar');
+    const quickDateOptions = React.useMemo(
+      () => [
+        { label: t('dateTimePicker.options.today'), date: startOfToday(), icon: '📅' },
+        { label: t('dateTimePicker.options.startOfMonth'), date: startOfMonth(new Date()), icon: '📆' },
+        { label: t('dateTimePicker.options.endOfMonth'), date: endOfMonth(new Date()), icon: '📆' },
+        { label: t('dateTimePicker.options.startOfYear'), date: startOfYear(new Date()), icon: '🗓️' },
+        { label: t('dateTimePicker.options.endOfYear'), date: endOfYear(new Date()), icon: '🗓️' },
+      ],
+      [t],
+    );
 
     const formatDisplayValue = (): string => {
       if (!selectedDate) return '';
@@ -147,7 +155,7 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
             ) : (
               <Calendar className="h-4 w-4" />
             )}
-            <span>{formatDisplayValue() || 'Select date and time'}</span>
+            <span>{formatDisplayValue() || placeholder}</span>
           </div>
           {selectedDate && (
             <X
@@ -162,13 +170,13 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-md border bg-popover shadow-lg">
             <div className="p-2 space-y-1">
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center justify-between">
-                <span>Quick Select</span>
+                <span>{quickSelectTitle}</span>
                 <button
                   type="button"
                   onClick={handleOpenCalendar}
                   className="text-primary hover:text-primary/80 hover:underline text-xs font-medium"
                 >
-                  📅 Open Calendar
+                  📅 {openCalendarLabel}
                 </button>
               </div>
               {quickDateOptions.map((option) => (

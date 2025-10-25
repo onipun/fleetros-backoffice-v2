@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { EntitySelect } from '@/components/ui/entity-select';
@@ -34,6 +35,7 @@ export default function NewPricingPage() {
     minimumRentalDays: 1,
     validFrom: '',
     validTo: '',
+    isDefault: false,
   });
 
   const createMutation = useMutation({
@@ -46,6 +48,7 @@ export default function NewPricingPage() {
         minimumRentalDays: data.minimumRentalDays,
         validFrom: data.validFrom,
         validTo: data.validTo,
+        isDefault: Boolean(data.isDefault),
       };
 
       // Add the appropriate entity link
@@ -278,6 +281,24 @@ export default function NewPricingPage() {
                   />
                   <p className="text-xs text-muted-foreground">
                     Required security deposit amount
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-md border border-dashed p-3">
+                <Checkbox
+                  id="isDefault"
+                  checked={Boolean(formData.isDefault)}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, isDefault: checked === true })
+                  }
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="isDefault" className="text-sm font-medium leading-none">
+                    Set as default pricing
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Each vehicle can only have one default pricing. New defaults override the previous one.
                   </p>
                 </div>
               </div>

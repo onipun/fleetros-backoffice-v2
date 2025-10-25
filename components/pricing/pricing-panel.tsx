@@ -2,6 +2,7 @@
 
 import { useLocale } from '@/components/providers/locale-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { TagInput } from '@/components/ui/tag-input';
 import type { PricingFormData } from '@/lib/validations/schemas';
 import { DollarSign } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export type { PricingFormData } from '@/lib/validations/schemas';
 
@@ -35,17 +36,34 @@ export function PricingPanel({
   entityInfo,
 }: PricingPanelProps) {
   const { t, formatCurrency } = useLocale();
-  const [formData, setFormData] = useState<PricingFormData>(
-    initialData || {
-      baseRate: 0,
-      rateType: 'Daily',
-      depositAmount: 0,
-      minimumRentalDays: 1,
-      validFrom: '',
-      validTo: '',
-      tags: [],
+  const [formData, setFormData] = useState<PricingFormData>({
+    baseRate: initialData?.baseRate ?? 0,
+    rateType: initialData?.rateType ?? 'Daily',
+    depositAmount: initialData?.depositAmount ?? 0,
+    minimumRentalDays: initialData?.minimumRentalDays ?? 1,
+    validFrom: initialData?.validFrom ?? '',
+    validTo: initialData?.validTo ?? '',
+    tags: initialData?.tags ?? [],
+    isDefault: initialData?.isDefault ?? false,
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      const nextData: PricingFormData = {
+        baseRate: initialData.baseRate ?? 0,
+        rateType: initialData.rateType ?? 'Daily',
+        depositAmount: initialData.depositAmount ?? 0,
+        minimumRentalDays: initialData.minimumRentalDays ?? 1,
+        validFrom: initialData.validFrom ?? '',
+        validTo: initialData.validTo ?? '',
+        tags: initialData.tags ?? [],
+        isDefault: initialData.isDefault ?? false,
+      };
+      setFormData(nextData);
+      onDataChange?.(nextData);
     }
-  );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData]);
 
   const handleChange = (updates: Partial<PricingFormData>) => {
     const newData = { ...formData, ...updates };
@@ -181,6 +199,28 @@ export function PricingPanel({
             />
             <p className="text-xs text-muted-foreground">{t('pricing.form.tagsSuggestion')}</p>
           </div>
+
+          <div className="md:col-span-2">
+            <div className="flex items-start gap-3 rounded-md border border-dashed p-3">
+              <Checkbox
+                id="isDefault"
+                checked={Boolean(formData.isDefault)}
+                onCheckedChange={(checked) =>
+                  !readOnly && handleChange({ isDefault: checked === true })
+                }
+                disabled={readOnly}
+                className="mt-1"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="isDefault" className="text-sm font-medium leading-none">
+                  {t('pricing.form.defaultLabel')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('pricing.form.defaultHelper')}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="rounded-lg border bg-muted/50 p-4">
@@ -216,6 +256,12 @@ export function PricingPanel({
               <span className="text-muted-foreground">{t('pricing.tags')}:</span>
               <span className="font-medium">
                 {formData.tags?.length ? formData.tags.join(', ') : t('pricing.form.noTags')}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('pricing.form.defaultLabel')}:</span>
+              <span className="font-medium">
+                {formData.isDefault ? t('pricing.form.defaultSummaryOn') : t('pricing.form.defaultSummaryOff')}
               </span>
             </div>
           </div>

@@ -1,20 +1,21 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
 import type { Booking, BookingImage, Offering } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Edit, Image as ImageIcon, Trash2, Upload } from 'lucide-react';
@@ -34,6 +35,7 @@ type BookingOfferingSummary = {
 };
 
 export default function BookingDetailPage() {
+  const { t, formatCurrency } = useLocale();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -127,15 +129,15 @@ export default function BookingDetailPage() {
     mutationFn: async () => hateoasClient.delete('bookings', bookingId),
     onSuccess: () => {
       toast({
-        title: 'Booking Deleted',
-        description: 'The booking has been removed.',
+        title: t('booking.detail.deleteBookingSuccess'),
+        description: t('booking.detail.deleteBookingDescription'),
       });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       router.push('/bookings');
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to delete booking',
+        title: t('booking.detail.deleteBookingError'),
         description: error.message,
         variant: 'destructive',
       });
@@ -183,13 +185,13 @@ export default function BookingDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['booking', bookingId, 'images'] });
       setSelectedImage(null);
       toast({
-        title: 'Image Deleted',
-        description: 'The booking image has been removed.',
+        title: t('booking.detail.images.deleteSuccess'),
+        description: t('booking.detail.images.deleteSuccessDescription'),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to delete image',
+        title: t('booking.detail.images.deleteError'),
         description: error.message,
         variant: 'destructive',
       });
@@ -205,8 +207,8 @@ export default function BookingDetailPage() {
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       toast({
-        title: 'Invalid file type',
-        description: 'Please choose a JPEG, PNG, GIF, or WebP image.',
+        title: t('booking.detail.images.invalidFileType'),
+        description: t('booking.detail.images.invalidFileTypeDescription'),
         variant: 'destructive',
       });
       event.target.value = '';
@@ -216,8 +218,8 @@ export default function BookingDetailPage() {
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({
-        title: 'File too large',
-        description: 'Image must be smaller than 10MB.',
+        title: t('booking.detail.images.fileTooLarge'),
+        description: t('booking.detail.images.fileTooLargeDescription'),
         variant: 'destructive',
       });
       event.target.value = '';
@@ -280,17 +282,17 @@ export default function BookingDetailPage() {
 
       await queryClient.invalidateQueries({ queryKey: ['booking', bookingId, 'images'] });
       toast({
-        title: 'Image Uploaded',
-        description: 'The booking image has been added.',
+        title: t('booking.detail.images.uploadSuccess'),
+        description: t('booking.detail.images.uploadSuccessDescription'),
       });
 
       setUploadDialogOpen(false);
       setPendingFile(null);
       setImageDescription('');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to upload booking image';
+      const message = error instanceof Error ? error.message : t('booking.detail.images.uploadError');
       toast({
-        title: 'Upload failed',
+        title: t('booking.detail.images.uploadError'),
         description: message,
         variant: 'destructive',
       });
@@ -302,7 +304,7 @@ export default function BookingDetailPage() {
   if (bookingLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
-        Loading booking details...
+        {t('booking.detail.loading')}
       </div>
     );
   }
@@ -310,11 +312,11 @@ export default function BookingDetailPage() {
   if (bookingError || !booking) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
-        <p className="text-destructive">Failed to load booking details.</p>
+        <p className="text-destructive">{t('booking.detail.errorLoading')}</p>
         <Button asChild variant="outline">
           <Link href="/bookings">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Bookings
+            {t('booking.detail.backToBookings')}
           </Link>
         </Button>
       </div>
@@ -330,19 +332,19 @@ export default function BookingDetailPage() {
           <Button asChild variant="outline" size="sm">
             <Link href="/bookings">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {t('common.back')}
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Booking #{booking.id ?? bookingId}</h1>
-            <p className="text-muted-foreground">Manage booking details and assets</p>
+            <h1 className="text-3xl font-bold">{t('booking.detail.title')} #{booking.id ?? bookingId}</h1>
+            <p className="text-muted-foreground">{t('booking.detail.subtitle')}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button asChild>
             <Link href={`/bookings/${bookingId}/edit`}>
               <Edit className="mr-2 h-4 w-4" />
-              Edit
+              {t('booking.detail.edit')}
             </Link>
           </Button>
           <Button
@@ -350,13 +352,13 @@ export default function BookingDetailPage() {
             disabled={deleteBookingMutation.isPending}
             onClick={() => {
               if (deleteBookingMutation.isPending) return;
-              if (confirm('Delete this booking? This action cannot be undone.')) {
+              if (confirm(t('booking.detail.deleteConfirm'))) {
                 deleteBookingMutation.mutate();
               }
             }}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            {t('booking.detail.delete')}
           </Button>
         </div>
       </div>
@@ -364,12 +366,12 @@ export default function BookingDetailPage() {
       <div className="grid gap-8 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Booking Images</CardTitle>
+            <CardTitle>{t('booking.detail.images.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Manage inspection and reference photos for this booking.
+                {t('booking.detail.images.subtitle')}
               </div>
               <div>
                 <label htmlFor="booking-image-upload" className="inline-flex">
@@ -382,7 +384,7 @@ export default function BookingDetailPage() {
                   />
                   <Button variant="outline" size="sm" disabled={isUploading}>
                     <Upload className="mr-2 h-4 w-4" />
-                    {isUploading ? 'Uploading...' : 'Upload'}
+                    {isUploading ? t('booking.detail.images.uploading') : t('booking.detail.images.upload')}
                   </Button>
                 </label>
               </div>
@@ -392,7 +394,7 @@ export default function BookingDetailPage() {
               <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
                 <Image
                   src={displayImage}
-                  alt="Booking image"
+                  alt={t('booking.detail.images.title')}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -402,13 +404,13 @@ export default function BookingDetailPage() {
               <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-muted-foreground/40 text-muted-foreground">
                 <div className="text-center">
                   <ImageIcon className="mx-auto mb-2 h-8 w-8" />
-                  <p>No images uploaded yet</p>
+                  <p>{t('booking.detail.images.noImages')}</p>
                 </div>
               </div>
             )}
 
             {imagesLoading ? (
-              <p className="text-sm text-muted-foreground">Loading images...</p>
+              <p className="text-sm text-muted-foreground">{t('booking.detail.images.loading')}</p>
             ) : images.length > 0 ? (
               <div className="grid grid-cols-4 gap-2">
                 {images.map((image) => (
@@ -422,7 +424,7 @@ export default function BookingDetailPage() {
                     >
                       <Image
                         src={image.imageUrl}
-                        alt={image.description || 'Booking image'}
+                        alt={image.description || t('booking.detail.images.title')}
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 25vw, 12vw"
@@ -432,7 +434,7 @@ export default function BookingDetailPage() {
                       type="button"
                       className="absolute top-1 right-1 rounded bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
                       onClick={() => {
-                        if (image.id && confirm('Remove this image?')) {
+                        if (image.id && confirm(t('booking.detail.images.deleteConfirm'))) {
                           deleteImageMutation.mutate(image.id);
                         }
                       }}
@@ -449,68 +451,68 @@ export default function BookingDetailPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Reservation Summary</CardTitle>
+              <CardTitle>{t('booking.detail.sections.reservation')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
-                <span className="text-sm text-muted-foreground">Vehicle ID</span>
-                <p className="font-medium">{booking.vehicleId ? `#${booking.vehicleId}` : 'N/A'}</p>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.vehicleId')}</span>
+                <p className="font-medium">{booking.vehicleId ? `#${booking.vehicleId}` : t('common.notAvailable')}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Package</span>
-                <p className="font-medium">{booking.packageId ? `#${booking.packageId}` : 'None'}</p>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.package')}</span>
+                <p className="font-medium">{booking.packageId ? `#${booking.packageId}` : t('common.none')}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Discount</span>
-                <p className="font-medium">{booking.discountId ? `#${booking.discountId}` : 'None'}</p>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.discount')}</span>
+                <p className="font-medium">{booking.discountId ? `#${booking.discountId}` : t('common.none')}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Status</span>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.status')}</span>
                 <p className="font-medium">{booking.status}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Start</span>
-                <p className="font-medium">{booking.startDate ? formatDateTime(booking.startDate) : 'N/A'}</p>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.start')}</span>
+                <p className="font-medium">{booking.startDate ? formatDateTime(booking.startDate) : t('common.notAvailable')}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">End</span>
-                <p className="font-medium">{booking.endDate ? formatDateTime(booking.endDate) : 'N/A'}</p>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.end')}</span>
+                <p className="font-medium">{booking.endDate ? formatDateTime(booking.endDate) : t('common.notAvailable')}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Pickup Location</span>
-                <p className="font-medium">{booking.pickupLocation || 'N/A'}</p>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.pickupLocation')}</span>
+                <p className="font-medium">{booking.pickupLocation || t('common.notAvailable')}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Dropoff Location</span>
-                <p className="font-medium">{booking.dropoffLocation || 'N/A'}</p>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.dropoffLocation')}</span>
+                <p className="font-medium">{booking.dropoffLocation || t('common.notAvailable')}</p>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Financial Details</CardTitle>
+              <CardTitle>{t('booking.detail.sections.financial')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
-                <span className="text-sm text-muted-foreground">Total Days</span>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.totalDays')}</span>
                 <p className="font-medium">{booking.totalDays ?? 0}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Total Rental Fee</span>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.totalRentalFee')}</span>
                 <p className="font-medium">{formatCurrency(booking.totalRentalFee ?? 0)}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Final Price</span>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.finalPrice')}</span>
                 <p className="font-medium">{formatCurrency(booking.finalPrice ?? 0)}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Balance Payment</span>
+                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.balancePayment')}</span>
                 <p className="font-medium text-warning">{formatCurrency(booking.balancePayment ?? 0)}</p>
               </div>
               {booking.insurancePolicy && (
                 <div className="md:col-span-2">
-                  <span className="text-sm text-muted-foreground">Insurance Policy</span>
+                  <span className="text-sm text-muted-foreground">{t('booking.detail.fields.insurancePolicy')}</span>
                   <p className="text-sm text-muted-foreground">{booking.insurancePolicy}</p>
                 </div>
               )}
@@ -519,11 +521,11 @@ export default function BookingDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Included Offerings</CardTitle>
+              <CardTitle>{t('booking.detail.sections.offerings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {bookingOfferings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No additional offerings selected.</p>
+                <p className="text-sm text-muted-foreground">{t('booking.detail.noOfferings')}</p>
               ) : (
                 <div className="space-y-2">
                   {bookingOfferings.map((offering) => (
@@ -532,17 +534,17 @@ export default function BookingDetailPage() {
                       className="flex flex-wrap items-center justify-between rounded-md border p-3"
                     >
                       <div>
-                        <p className="font-medium">{offering.name || `Offering #${offering.id}`}</p>
+                        <p className="font-medium">{offering.name || `${t('offering.unnamedOffering')} #${offering.id}`}</p>
                         {offering.quantity != null && (
-                          <p className="text-xs text-muted-foreground">Quantity: {offering.quantity}</p>
+                          <p className="text-xs text-muted-foreground">{t('booking.detail.offeringQuantity')} {offering.quantity}</p>
                         )}
                       </div>
                       <div className="text-right text-sm text-muted-foreground">
                         {offering.price != null && (
-                          <p>Price: {formatCurrency(offering.price)}</p>
+                          <p>{t('booking.detail.offeringPrice')} {formatCurrency(offering.price)}</p>
                         )}
                         {offering.totalPrice != null && (
-                          <p>Total: {formatCurrency(offering.totalPrice)}</p>
+                          <p>{t('booking.detail.offeringTotal')} {formatCurrency(offering.totalPrice)}</p>
                         )}
                       </div>
                     </div>
@@ -557,17 +559,17 @@ export default function BookingDetailPage() {
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Upload Booking Image</DialogTitle>
-            <DialogDescription>Attach inspection or damage photos to this booking.</DialogDescription>
+            <DialogTitle>{t('booking.detail.images.uploadDialog.title')}</DialogTitle>
+            <DialogDescription>{t('booking.detail.images.uploadDialog.description')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="booking-image-description">Description (optional)</Label>
+              <Label htmlFor="booking-image-description">{t('booking.detail.images.uploadDialog.descriptionLabel')}</Label>
               <Textarea
                 id="booking-image-description"
                 value={imageDescription}
                 onChange={(event) => setImageDescription(event.target.value)}
-                placeholder="Describe the context of this image"
+                placeholder={t('booking.detail.images.uploadDialog.descriptionPlaceholder')}
                 rows={3}
               />
             </div>
@@ -588,10 +590,10 @@ export default function BookingDetailPage() {
               }}
               disabled={isUploading}
             >
-              Cancel
+              {t('booking.detail.images.uploadDialog.cancel')}
             </Button>
             <Button type="button" onClick={handleImageUpload} disabled={isUploading || !pendingFile}>
-              {isUploading ? 'Uploading...' : 'Upload'}
+              {isUploading ? t('booking.detail.images.uploading') : t('booking.detail.images.uploadDialog.upload')}
             </Button>
           </DialogFooter>
         </DialogContent>

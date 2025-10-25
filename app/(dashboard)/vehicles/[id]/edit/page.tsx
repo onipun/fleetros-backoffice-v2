@@ -53,6 +53,8 @@ export default function EditVehiclePage() {
     minimumRentalDays: 1,
     validFrom: '',
     validTo: '',
+    tags: [],
+    isDefault: false,
   });
 
   const statusOptions = useMemo(
@@ -138,6 +140,7 @@ export default function EditVehiclePage() {
             minimumRentalDays: Number(pricingData.minimumRentalDays),
             validFrom: pricingData.validFrom,
             validTo: pricingData.validTo,
+            isDefault: Boolean(pricingData.isDefault),
             ...(pricingData.tags && pricingData.tags.length > 0 && { tagNames: pricingData.tags }),
           };
           

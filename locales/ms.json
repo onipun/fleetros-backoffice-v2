@@ -90,13 +90,44 @@
   "newVehicle": "Kenderaan Baharu",
     "addVehicle": "Tambah Kenderaan",
     "addNewVehicle": "Tambah Kenderaan Baharu",
-    "editVehicle": "Edit Kenderaan",
+    "createNewVehicleInFleet": "Cipta kenderaan baharu dalam armada anda",
+    "editVehicle": "Sunting Kenderaan",
     "deleteVehicle": "Padam Kenderaan",
     "vehicleDetails": "Butiran Kenderaan",
     "basicInfo": "Maklumat Asas",
     "specifications": "Spesifikasi",
     "rentalSettings": "Tetapan Sewa",
     "additionalDetails": "Butiran Tambahan",
+    "pricingConfig": "Konfigurasi Harga",
+    "steps": {
+      "vehicleInfo": "Maklumat Kenderaan",
+      "vehicleInfoDesc": "Butiran asas",
+      "specification": "Spesifikasi",
+      "specificationDesc": "Spesifikasi teknikal",
+      "rentalSetting": "Tetapan Sewa",
+      "rentalSettingDesc": "Peraturan tempahan",
+      "additionalDetail": "Butiran Tambahan",
+      "additionalDetailDesc": "Maklumat tambahan",
+      "pricingConfig": "Konfigurasi Harga",
+      "pricingConfigDesc": "Tetapan kadar"
+    },
+    "draft": {
+      "unsavedChanges": "Perubahan Tidak Disimpan Dikesan",
+      "unsavedMessage": "Anda mempunyai draf yang tidak disimpan dari sesi sebelumnya. Adakah anda ingin meneruskan menyuntingnya atau mulakan semula?",
+      "continueEditing": "Terus Sunting",
+      "startFresh": "Mulakan Semula",
+      "savedAsDraft": "Draf Disimpan",
+      "draftSavedMessage": "Perubahan anda telah disimpan secara automatik sebagai draf.",
+      "autoSaving": "Menyimpan automatik...",
+      "lastSaved": "Terakhir disimpan"
+    },
+    "navigation": {
+      "next": "Seterusnya",
+      "previous": "Sebelumnya",
+      "saveDraft": "Simpan Draf",
+      "createVehicle": "Buat Kenderaan",
+      "creating": "Membuat..."
+    },
     "status": "Status",
     "licensePlate": "Plat Nombor",
     "plateNumber": "Plat Nombor",
@@ -130,15 +161,18 @@
     "pricingInfo": "💡 Maklumat Harga",
     "addPricingMessage": "Selepas mencipta kenderaan, anda boleh menambah konfigurasi harga dari halaman butiran kenderaan.",
     "addNewPricingTitle": "💡 Tambah Harga Baharu",
+  "addNewPricingDescription": "Gunakan panel harga di atas untuk menambah kadar baharu selepas menyimpan kenderaan ini.",
     "uploadImages": "Muat Naik Imej",
     "addCaption": "Tambah Kapsyen",
     "captionPlaceholder": "cth., Pandangan hadapan kenderaan",
     "cancel": "Batal",
     "saveChanges": "Simpan Perubahan",
     "bufferMinutes": "Minit Penampan",
+  "bufferMinutesHelp": "Minit yang disekat secara automatik sebelum dan selepas setiap tempahan.",
     "minRentalHours": "Jam Sewa Minimum",
     "maxRentalDays": "Hari Sewa Maksimum",
     "maxFutureBookingDays": "Hari Tempahan Masa Hadapan Maksimum",
+  "maxFutureBookingDaysHelp": "Bilangan maksimum hari lebih awal pelanggan boleh menempah kenderaan ini.",
     "details": "Butiran",
     "detailsPlaceholder": "Maklumat tambahan tentang kenderaan...",
     "makePlaceholder": "Tesla",
@@ -180,9 +214,15 @@
     "selectedFileLabel": "Fail:",
     "uploadImageTitle": "Muat Naik Imej Kenderaan",
     "imageDialogDescription": "Tambah keterangan dan tetapkan sama ada imej ini perlu menjadi imej utama.",
-    "imageDescriptionLabel": "Keterangan (Pilihan)",
+    "imageDescriptionLabel": "Penerangan (Pilihan)",
     "noImage": "Tiada Imej",
-    "errorLoadingDetails": "Ralat memuatkan butiran kenderaan"
+    "errorLoadingDetails": "Ralat memuatkan butiran kenderaan",
+    "createSuccess": "Kenderaan berjaya dicipta",
+    "createError": "Gagal mencipta kenderaan",
+    "validationError": "Ralat Pengesahan",
+    "pleaseFillRequired": "Sila isi semua medan yang diperlukan",
+    "pricingCreationError": "Gagal mencipta harga untuk kenderaan",
+    "outOfService": "Tidak Beroperasi"
   },
   "pricing": {
     "title": "Harga",
@@ -200,6 +240,7 @@
     "hideFilter": "Sembunyi Tapisan",
     "selectTags": "Pilih tag untuk tapis...",
     "filterDescription": "Pilih satu atau lebih tag untuk menapis harga. Menunjukkan harga yang mempunyai mana-mana tag yang dipilih.",
+    "defaultBadge": "Lalai",
     "perUnit": "setiap unit",
     "perDay": "setiap hari",
     "minRental": "Sewa Minimum",
@@ -236,7 +277,22 @@
       "summaryTitle": "Ringkasan Harga",
       "validity": "Kesahan",
       "validityNotSet": "Belum ditetapkan",
-      "noTags": "Tiada tag ditambah"
+      "noTags": "Tiada tag ditambah",
+      "defaultLabel": "Tetapkan sebagai harga lalai",
+      "defaultHelper": "Setiap kenderaan hanya boleh mempunyai satu harga lalai. Menetapkan harga lalai baharu akan menggantikan yang sedia ada untuk tarikh bertindih.",
+      "defaultSummaryOn": "Ditandakan sebagai harga lalai",
+      "defaultSummaryOff": "Tidak ditandakan sebagai lalai",
+      "updateSuccess": "Harga berjaya dikemas kini",
+      "updating": "Mengemas kini...",
+      "updatePricing": "Kemas Kini Harga",
+      "editDescription": "Kemas kini butiran harga dan skop.",
+      "loadingPricing": "Memuatkan butiran harga...",
+      "notFound": "Harga tidak ditemui",
+      "entityCannotChange": "Entiti yang dipautkan tidak boleh diubah selepas penciptaan. Untuk menetapkan semula harga ini, cipta konfigurasi harga baharu.",
+      "baseRateRequired": "Kadar asas mesti lebih daripada 0",
+      "depositNonNegative": "Jumlah deposit tidak boleh negatif",
+      "validityRequired": "Sila pilih tarikh sah dari dan hingga",
+      "validityOrder": "Tarikh Sah Dari mesti sebelum tarikh Sah Hingga"
     }
   },
   "booking": {
@@ -268,20 +324,84 @@
       "unknown": "Tidak diketahui"
     },
     "cancelBooking": "Batalkan Tempahan",
+    "detail": {
+      "title": "Tempahan",
+      "subtitle": "Urus butiran tempahan dan aset",
+      "loading": "Memuatkan butiran tempahan...",
+      "errorLoading": "Gagal memuatkan butiran tempahan.",
+      "backToBookings": "Kembali ke Tempahan",
+      "edit": "Sunting",
+      "delete": "Padam",
+      "deleteConfirm": "Padam tempahan ini? Tindakan ini tidak boleh dibatalkan.",
+      "images": {
+        "title": "Imej Tempahan",
+        "subtitle": "Urus pemeriksaan dan foto rujukan untuk tempahan ini.",
+        "upload": "Muat Naik",
+        "uploading": "Memuatkan naik...",
+        "noImages": "Tiada imej dimuatkan lagi",
+        "loading": "Memuatkan imej...",
+        "deleteConfirm": "Keluarkan imej ini?",
+        "uploadDialog": {
+          "title": "Muat Naik Imej Tempahan",
+          "description": "Lampirkan foto pemeriksaan atau kerosakan untuk tempahan ini.",
+          "descriptionLabel": "Keterangan (pilihan)",
+          "descriptionPlaceholder": "Terangkan konteks imej ini",
+          "cancel": "Batal",
+          "upload": "Muat Naik"
+        },
+        "deleteSuccess": "Imej Dipadam",
+        "deleteSuccessDescription": "Imej tempahan telah dikeluarkan.",
+        "deleteError": "Gagal memadam imej",
+        "uploadSuccess": "Imej Dimuatkan Naik",
+        "uploadSuccessDescription": "Imej tempahan telah ditambahkan.",
+        "uploadError": "Muat naik gagal",
+        "invalidFileType": "Jenis fail tidak sah",
+        "invalidFileTypeDescription": "Sila pilih imej JPEG, PNG, GIF, atau WebP.",
+        "fileTooLarge": "Fail terlalu besar",
+        "fileTooLargeDescription": "Imej mestilah lebih kecil daripada 10MB."
+      },
+      "sections": {
+        "reservation": "Ringkasan Tempahan",
+        "financial": "Butiran Kewangan",
+        "offerings": "Tawaran Termasuk"
+      },
+      "fields": {
+        "vehicleId": "ID Kenderaan",
+        "package": "Pakej",
+        "discount": "Diskaun",
+        "status": "Status",
+        "start": "Mula",
+        "end": "Tamat",
+        "pickupLocation": "Lokasi Ambil",
+        "dropoffLocation": "Lokasi Hantar",
+        "totalDays": "Jumlah Hari",
+        "totalRentalFee": "Jumlah Yuran Sewa",
+        "finalPrice": "Harga Akhir",
+        "balancePayment": "Bayaran Baki",
+        "insurancePolicy": "Polisi Insurans"
+      },
+      "noOfferings": "Tiada tawaran tambahan dipilih.",
+      "offeringQuantity": "Kuantiti:",
+      "offeringPrice": "Harga:",
+      "offeringTotal": "Jumlah:",
+      "deleteBookingSuccess": "Tempahan Dipadam",
+      "deleteBookingDescription": "Tempahan telah dikeluarkan.",
+      "deleteBookingError": "Gagal memadam tempahan"
+    },
     "form": {
       "daySingular": "hari",
       "dayPlural": "hari",
       "pageTitle": {
-        "create": "Cipta Tempahan",
-        "edit": "Edit Tempahan"
+        "create": "Buat Tempahan",
+        "edit": "Sunting Tempahan"
       },
       "pageSubtitle": {
-        "create": "Rekod tempahan sewaan baharu",
-        "edit": "Kemaskini butiran tempahan dan harga"
+        "create": "Rekod tempahan sewa baharu",
+        "edit": "Kemas kini butiran tempahan dan harga"
       },
       "submit": {
-        "create": "Cipta Tempahan",
-        "update": "Kemaskini Tempahan"
+        "create": "Buat Tempahan",
+        "update": "Kemas Kini Tempahan"
       },
       "sections": {
         "reservation": "Butiran Tempahan",
@@ -355,6 +475,7 @@
     "manage": "Urus perkhidmatan tambahan dan add-on",
     "addOffering": "Tambah Perkhidmatan",
     "newOffering": "Cipta Perkhidmatan Baharu",
+    "createDescription": "Konfigurasikan butiran dan ketersediaan perkhidmatan baharu.",
     "filters": "Tapisan",
     "searchPlaceholder": "Cari perkhidmatan...",
     "allTypes": "Semua Jenis",
@@ -386,11 +507,16 @@
     "description": "Penerangan",
     "descriptionPlaceholder": "Terangkan perkhidmatan...",
     "pricingAvailability": "Harga & Ketersediaan",
+    "typeLabel": "Jenis Perkhidmatan",
     "unitPrice": "Harga Seunit",
+    "unitPriceLabel": "Harga Seunit",
     "unitPricePlaceholder": "100",
     "quantity": "Kuantiti Tersedia",
+    "availableUnits": "Unit Tersedia",
     "quantityPlaceholder": "1",
+    "maxQuantityPerBooking": "Kuantiti maksimum setiap tempahan",
     "isActive": "Aktif?",
+    "mandatoryToggleLabel": "Wajib untuk semua tempahan",
     "selector": {
       "description": "Pilih perkhidmatan pilihan untuk digabungkan dengan item ini.",
       "searchPlaceholder": "Cari perkhidmatan...",
@@ -437,7 +563,8 @@
     "minRentalDays": "Hari Sewa Minimum",
     "minRentalDaysPlaceholder": "2",
     "validityPeriod": "Tempoh Sah",
-    "pricingRequirements": "Harga & Keperluan"
+    "pricingRequirements": "Harga & Keperluan",
+    "priceModifierHelper": "Masukkan faktor pengubah harga. Nilai 1.00 mengekalkan harga asal, nilai di bawah 1 memberikan diskaun."
   },
   "payment": {
     "title": "Pembayaran",
@@ -562,6 +689,18 @@
       "minBooking": "Tempahan Minimum",
       "usage": "Penggunaan",
       "actions": "Tindakan"
+    }
+  },
+  "dateTimePicker": {
+    "placeholder": "Pilih tarikh dan masa",
+    "quickSelectTitle": "Pilihan Pantas",
+    "openCalendar": "Buka Kalendar",
+    "options": {
+      "today": "Hari Ini",
+      "startOfMonth": "Awal Bulan",
+      "endOfMonth": "Akhir Bulan",
+      "startOfYear": "Awal Tahun",
+      "endOfYear": "Akhir Tahun"
     }
   },
   "table": {

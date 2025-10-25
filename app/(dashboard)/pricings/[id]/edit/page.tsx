@@ -1,7 +1,9 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
@@ -34,6 +36,7 @@ const extractEntityId = (link?: string) => {
 };
 
 export default function EditPricingPage() {
+  const { t } = useLocale();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -52,6 +55,7 @@ export default function EditPricingPage() {
     validFrom: '',
     validTo: '',
     tags: [],
+    isDefault: false,
   });
 
   // Fetch pricing details
@@ -129,6 +133,7 @@ export default function EditPricingPage() {
         validFrom: pricing.validFrom?.substring(0, 16) || '',
         validTo: pricing.validTo?.substring(0, 16) || '',
         tags: pricing.tags?.map((tag) => tag.name) || [],
+        isDefault: pricing.isDefault || false,
       });
     }
   }, [pricing]);
@@ -144,6 +149,7 @@ export default function EditPricingPage() {
         minimumRentalDays: data.minimumRentalDays,
         validFrom: data.validFrom,
         validTo: data.validTo,
+        isDefault: data.isDefault,
         // Always include tagNames, even if empty array (to clear tags)
         tagNames: data.tags || [],
       };
@@ -155,15 +161,15 @@ export default function EditPricingPage() {
       queryClient.invalidateQueries({ queryKey: ['pricings'] });
       queryClient.invalidateQueries({ queryKey: ['vehicle', formData.entityId, 'pricings'] });
       toast({
-        title: 'Success',
-        description: 'Pricing updated successfully',
+        title: t('common.success'),
+        description: t('pricing.form.updateSuccess'),
       });
       // Redirect back to the entity (vehicle/package/booking)
       router.push(`/${formData.entityType}s/${formData.entityId}`);
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -175,8 +181,8 @@ export default function EditPricingPage() {
 
     if (formData.baseRate <= 0) {
       toast({
-        title: 'Validation Error',
-        description: 'Base rate must be greater than 0',
+        title: t('pricing.form.validationErrorTitle'),
+        description: t('pricing.form.baseRateRequired'),
         variant: 'destructive',
       });
       return;
@@ -184,8 +190,8 @@ export default function EditPricingPage() {
 
     if (formData.depositAmount < 0) {
       toast({
-        title: 'Validation Error',
-        description: 'Deposit amount cannot be negative',
+        title: t('pricing.form.validationErrorTitle'),
+        description: t('pricing.form.depositNonNegative'),
         variant: 'destructive',
       });
       return;
@@ -193,8 +199,8 @@ export default function EditPricingPage() {
 
     if (!formData.validFrom || !formData.validTo) {
       toast({
-        title: 'Validation Error',
-        description: 'Please select valid from and to dates',
+        title: t('pricing.form.validationErrorTitle'),
+        description: t('pricing.form.validityRequired'),
         variant: 'destructive',
       });
       return;
@@ -202,8 +208,8 @@ export default function EditPricingPage() {
 
     if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
       toast({
-        title: 'Validation Error',
-        description: 'Valid From date must be before Valid To date',
+        title: t('pricing.form.validationErrorTitle'),
+        description: t('pricing.form.validityOrder'),
         variant: 'destructive',
       });
       return;
@@ -215,7 +221,7 @@ export default function EditPricingPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading pricing details...</p>
+        <p className="text-muted-foreground">{t('pricing.form.loadingPricing')}</p>
       </div>
     );
   }
@@ -223,11 +229,11 @@ export default function EditPricingPage() {
   if (!pricing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <p className="text-destructive">Pricing not found</p>
+        <p className="text-destructive">{t('pricing.form.notFound')}</p>
         <Link href="/vehicles">
           <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Vehicles
+            {t('common.back')}
           </Button>
         </Link>
       </div>
@@ -243,12 +249,12 @@ export default function EditPricingPage() {
         <Link href={backUrl}>
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Edit Pricing</h1>
-          <p className="text-muted-foreground">Update pricing configuration</p>
+          <h1 className="text-3xl font-bold">{t('pricing.editPricing')}</h1>
+          <p className="text-muted-foreground">{t('pricing.form.editDescription')}</p>
         </div>
       </div>
 
@@ -258,12 +264,12 @@ export default function EditPricingPage() {
           {/* Entity Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Linked Entity</CardTitle>
+              <CardTitle>{t('pricing.linkedEntity')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="p-4 rounded-lg bg-muted/50 border">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium text-muted-foreground">Connected to:</span>
+                  <span className="font-medium text-muted-foreground">{t('pricing.form.connectedTo')}:</span>
                   <Link 
                     href={`/${formData.entityType}s/${formData.entityId}`}
                     className="font-semibold hover:underline"
@@ -274,7 +280,7 @@ export default function EditPricingPage() {
                   <span className="font-medium">ID: {formData.entityId}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  The linked entity cannot be changed after creation. To reassign this pricing, create a new pricing configuration.
+                  {t('pricing.form.entityCannotChange')}
                 </p>
               </div>
             </CardContent>
@@ -283,12 +289,12 @@ export default function EditPricingPage() {
           {/* Rate Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>Rate Configuration</CardTitle>
+              <CardTitle>{t('pricing.rateConfiguration')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="rateType">Rate Type *</Label>
+                  <Label htmlFor="rateType">{t('pricing.rateType')} *</Label>
                   <select
                     id="rateType"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -296,19 +302,19 @@ export default function EditPricingPage() {
                     onChange={(e) => setFormData({ ...formData, rateType: e.target.value })}
                     required
                   >
-                    <option value="HOURLY">Hourly</option>
-                    <option value="DAILY">Daily</option>
-                    <option value="WEEKLY">Weekly</option>
-                    <option value="MONTHLY">Monthly</option>
-                    <option value="FLAT">Flat Rate</option>
+                    <option value="HOURLY">{t('pricing.rateTypes.hourly')}</option>
+                    <option value="DAILY">{t('pricing.rateTypes.daily')}</option>
+                    <option value="WEEKLY">{t('pricing.rateTypes.weekly')}</option>
+                    <option value="MONTHLY">{t('pricing.rateTypes.monthly')}</option>
+                    <option value="FLAT">{t('pricing.rateTypes.flat')}</option>
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    Billing frequency for this pricing
+                    {t('pricing.form.rateTypeHint')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="minimumRentalDays">Minimum Rental Days *</Label>
+                  <Label htmlFor="minimumRentalDays">{t('pricing.minimumRentalDays')} *</Label>
                   <Input
                     id="minimumRentalDays"
                     type="number"
@@ -323,7 +329,7 @@ export default function EditPricingPage() {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Minimum number of days for rental
+                    {t('pricing.form.minimumRentalHint')}
                   </p>
                 </div>
               </div>
@@ -333,12 +339,12 @@ export default function EditPricingPage() {
           {/* Pricing Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Pricing Details</CardTitle>
+              <CardTitle>{t('pricing.pricingDetails')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="baseRate">Base Rate *</Label>
+                  <Label htmlFor="baseRate">{t('pricing.baseRate')} *</Label>
                   <CurrencyInput
                     id="baseRate"
                     value={formData.baseRate}
@@ -347,12 +353,12 @@ export default function EditPricingPage() {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Base rate per period in Malaysian Ringgit
+                    {t('pricing.form.baseRateHint')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="depositAmount">Deposit Amount *</Label>
+                  <Label htmlFor="depositAmount">{t('pricing.depositAmount')} *</Label>
                   <CurrencyInput
                     id="depositAmount"
                     value={formData.depositAmount}
@@ -361,7 +367,7 @@ export default function EditPricingPage() {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Required security deposit amount
+                    {t('pricing.form.depositHint')}
                   </p>
                 </div>
               </div>
@@ -371,12 +377,12 @@ export default function EditPricingPage() {
           {/* Validity Period */}
           <Card>
             <CardHeader>
-              <CardTitle>Validity Period</CardTitle>
+              <CardTitle>{t('pricing.validityPeriod')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="validFrom">Valid From *</Label>
+                  <Label htmlFor="validFrom">{t('pricing.validFrom')} *</Label>
                   <DateTimePicker
                     id="validFrom"
                     value={formData.validFrom}
@@ -384,12 +390,12 @@ export default function EditPricingPage() {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Start date and time for this pricing
+                    {t('pricing.form.validFromHint')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="validTo">Valid To *</Label>
+                  <Label htmlFor="validTo">{t('pricing.validTo')} *</Label>
                   <DateTimePicker
                     id="validTo"
                     value={formData.validTo}
@@ -397,7 +403,7 @@ export default function EditPricingPage() {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    End date and time for this pricing
+                    {t('pricing.form.validToHint')}
                   </p>
                 </div>
               </div>
@@ -407,20 +413,42 @@ export default function EditPricingPage() {
           {/* Tags */}
           <Card>
             <CardHeader>
-              <CardTitle>Tags</CardTitle>
+              <CardTitle>{t('pricing.tags')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="tags">Tags (Optional)</Label>
+                <Label htmlFor="tags">{t('pricing.tags')} ({t('common.optional')})</Label>
                 <TagInput
                   value={formData.tags || []}
                   onChange={(tags) => setFormData({ ...formData, tags })}
-                  placeholder="Add tags to categorize this pricing..."
+                  placeholder={t('pricing.addTagsPlaceholder')}
                   suggestions={existingTags}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use tags like "seasonal", "weekend", "holiday", "early-bird", etc.
+                  {t('pricing.form.tagsSuggestion')}
                 </p>
+              </div>
+              
+              {/* Default Pricing Checkbox */}
+              <div className="mt-4 rounded-md border border-dashed p-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="isDefault"
+                    checked={Boolean(formData.isDefault)}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDefault: checked === true })
+                    }
+                    className="mt-1"
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="isDefault" className="text-sm font-medium leading-none">
+                      {t('pricing.form.defaultLabel')}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t('pricing.form.defaultHelper')}
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -429,11 +457,11 @@ export default function EditPricingPage() {
           <div className="flex gap-4 justify-end">
             <Link href={backUrl}>
               <Button type="button" variant="outline">
-                Cancel
+                {t('common.cancel')}
               </Button>
             </Link>
             <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Updating...' : 'Update Pricing'}
+              {updateMutation.isPending ? t('pricing.form.updating') : t('pricing.form.updatePricing')}
             </Button>
           </div>
         </div>

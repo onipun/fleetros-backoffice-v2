@@ -126,6 +126,7 @@ export interface Pricing {
   validTo: string;
   tags?: PricingTag[]; // Array of pricing tag objects
   tagNames?: string[]; // Array of tag names from v1 API
+  isDefault?: boolean;
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;

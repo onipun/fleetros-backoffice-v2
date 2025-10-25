@@ -73,8 +73,46 @@ export class HATEOASClient {
         throw new Error('Unauthorized - please login again');
       }
 
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+      // Try to parse error response
+      let errorMessage = response.statusText;
+      let errorDetails: any = null;
+      let errorTitle: string | null = null;
+      
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          const errorData = await response.json();
+          errorDetails = errorData;
+          
+          // Extract error title if available
+          if (errorData.error && typeof errorData.error === 'string') {
+            errorTitle = errorData.error;
+          }
+          
+          // Extract meaningful error message from common API error formats
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error && typeof errorData.error !== 'string') {
+            errorMessage = JSON.stringify(errorData.error);
+          } else if (errorData.errors && Array.isArray(errorData.errors)) {
+            errorMessage = errorData.errors.map((e: any) => e.message || e).join(', ');
+          } else if (errorData.violations && Array.isArray(errorData.violations)) {
+            errorMessage = errorData.violations.map((v: any) => `${v.field}: ${v.message}`).join(', ');
+          }
+        } else {
+          errorMessage = await response.text();
+        }
+      } catch (parseError) {
+        // If parsing fails, use the text response
+        errorMessage = await response.text().catch(() => response.statusText);
+      }
+
+      const error: any = new Error(errorMessage || `Request failed with status ${response.status}`);
+      error.status = response.status;
+      error.details = errorDetails?.details || errorDetails;
+      error.error = errorTitle || errorDetails?.error;
+      error.timestamp = errorDetails?.timestamp;
+      throw error;
     }
 
     // Handle 204 No Content

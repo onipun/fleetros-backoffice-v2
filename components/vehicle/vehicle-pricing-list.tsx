@@ -10,7 +10,7 @@ import type { Pricing } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, ChevronLeft, ChevronRight, DollarSign, Edit, Filter, Loader2, Tag, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface VehiclePricingListProps {
   vehicleId: string | number;
@@ -100,6 +100,27 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
   const totalElements = pageInfo?.totalElements || 0;
   const isRefetching = isFetching && !isLoading;
 
+  const displayPricings = useMemo(() => {
+    if (selectedTags.length > 0) {
+      return pricings;
+    }
+
+    const sorted = [...pricings].sort((a, b) => {
+      const aDefault = a.isDefault ? 1 : 0;
+      const bDefault = b.isDefault ? 1 : 0;
+
+      if (bDefault !== aDefault) {
+        return bDefault - aDefault;
+      }
+
+      const aTime = a.validFrom ? new Date(a.validFrom).getTime() : 0;
+      const bTime = b.validFrom ? new Date(b.validFrom).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    return sorted;
+  }, [pricings, selectedTags]);
+
   const handleClearFilters = () => {
     setSelectedTags([]);
     setCurrentPage(0); // Reset to first page
@@ -143,7 +164,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
           <div>
             <CardTitle>{t('vehicle.pricings')}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {t('common.showing')} {pricings.length} {t('common.of')} {totalElements} {t('pricing.titlePlural')}
+              {t('common.showing')} {displayPricings.length} {t('common.of')} {totalElements} {t('pricing.titlePlural')}
             </p>
           </div>
           <Button
@@ -205,7 +226,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
         )}
 
         {/* Pricings List */}
-        {pricings.length === 0 ? (
+  {displayPricings.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground">
               {selectedTags.length > 0
@@ -230,7 +251,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
           </div>
         ) : (
           <div className="space-y-3">
-            {pricings.map((pricing) => {
+            {displayPricings.map((pricing) => {
               const pricingId = pricing.id || pricing._links?.self?.href?.split('/').pop();
               
               return (
@@ -254,6 +275,11 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                         <span className="text-sm text-muted-foreground">
                           / {pricing.rateType || t('common.notAvailable')}
                         </span>
+                        {pricing.isDefault && (
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                            {t('pricing.defaultBadge')}
+                          </span>
+                        )}
                       </div>
                       {pricing.depositAmount && pricing.depositAmount > 0 && (
                         <div className="text-sm text-muted-foreground">

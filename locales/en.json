@@ -99,6 +99,7 @@
     "newVehicle": "New Vehicle",
     "addVehicle": "Add Vehicle",
     "addNewVehicle": "Add New Vehicle",
+    "createNewVehicleInFleet": "Create a new vehicle in your fleet",
     "editVehicle": "Edit Vehicle",
     "deleteVehicle": "Delete Vehicle",
     "vehicleDetails": "Vehicle Details",
@@ -106,6 +107,36 @@
     "specifications": "Specifications",
     "rentalSettings": "Rental Settings",
     "additionalDetails": "Additional Details",
+    "pricingConfig": "Pricing Configuration",
+    "steps": {
+      "vehicleInfo": "Vehicle Information",
+      "vehicleInfoDesc": "Basic details",
+      "specification": "Specifications",
+      "specificationDesc": "Technical specs",
+      "rentalSetting": "Rental Settings",
+      "rentalSettingDesc": "Booking rules",
+      "additionalDetail": "Additional Details",
+      "additionalDetailDesc": "Extra information",
+      "pricingConfig": "Pricing Configuration",
+      "pricingConfigDesc": "Rate settings"
+    },
+    "draft": {
+      "unsavedChanges": "Unsaved Changes Detected",
+      "unsavedMessage": "You have an unsaved draft from a previous session. Would you like to continue editing it or start fresh?",
+      "continueEditing": "Continue Editing",
+      "startFresh": "Start Fresh",
+      "savedAsDraft": "Draft Saved",
+      "draftSavedMessage": "Your changes have been automatically saved as a draft.",
+      "autoSaving": "Auto-saving...",
+      "lastSaved": "Last saved"
+    },
+    "navigation": {
+      "next": "Next",
+      "previous": "Previous",
+      "saveDraft": "Save Draft",
+      "createVehicle": "Create Vehicle",
+      "creating": "Creating..."
+    },
     "status": "Status",
     "licensePlate": "License Plate",
     "vin": "VIN",
@@ -137,15 +168,18 @@
     "pricingInfo": "💡 Pricing Information",
     "addPricingMessage": "After creating the vehicle, you can add pricing configurations from the vehicle detail page.",
     "addNewPricingTitle": "💡 Add New Pricing",
+  "addNewPricingDescription": "Use the pricing panel above to add more rates after saving this vehicle.",
     "uploadImages": "Upload Images",
     "addCaption": "Add Caption",
     "captionPlaceholder": "e.g., Front view of the vehicle",
     "cancel": "Cancel",
   "saveChanges": "Save Changes",
     "bufferMinutes": "Buffer Minutes",
+  "bufferMinutesHelp": "Minutes automatically blocked before and after each booking.",
     "minRentalHours": "Min Rental Hours",
     "maxRentalDays": "Max Rental Days",
     "maxFutureBookingDays": "Max Future Booking Days",
+  "maxFutureBookingDaysHelp": "Maximum days in advance customers can book this vehicle.",
     "details": "Details",
     "detailsPlaceholder": "Additional information about the vehicle...",
     "plateNumber": "License Plate",
@@ -191,7 +225,13 @@
     "imageDialogDescription": "Add a description and set whether this image should be the primary image.",
     "imageDescriptionLabel": "Description (Optional)",
     "noImage": "No Image",
-    "errorLoadingDetails": "Error loading vehicle details"
+    "errorLoadingDetails": "Error loading vehicle details",
+    "createSuccess": "Vehicle created successfully",
+    "createError": "Failed to create vehicle",
+    "validationError": "Validation Error",
+    "pleaseFillRequired": "Please fill in all required fields",
+    "pricingCreationError": "Failed to create pricing for vehicle",
+    "outOfService": "Out of Service"
   },
   "pricing": {
     "title": "Pricing",
@@ -209,6 +249,7 @@
     "hideFilter": "Hide Filter",
     "selectTags": "Select tags to filter...",
     "filterDescription": "Select one or more tags to filter pricings. Shows pricings that have any of the selected tags.",
+  "defaultBadge": "Default",
     "perUnit": "per unit",
     "perDay": "per day",
     "minRental": "Min Rental",
@@ -245,7 +286,22 @@
       "summaryTitle": "Pricing Summary",
       "validity": "Validity",
       "validityNotSet": "Not specified",
-      "noTags": "No tags added"
+      "noTags": "No tags added",
+      "defaultLabel": "Set as default pricing",
+      "defaultHelper": "Each vehicle can have one default pricing. Setting a new default overrides any existing one for overlapping dates.",
+      "defaultSummaryOn": "Marked as default pricing",
+      "defaultSummaryOff": "Not marked as default",
+      "updateSuccess": "Pricing updated successfully",
+      "updating": "Updating...",
+      "updatePricing": "Update Pricing",
+      "editDescription": "Update the pricing details and scope.",
+      "loadingPricing": "Loading pricing details...",
+      "notFound": "Pricing not found",
+      "entityCannotChange": "The linked entity cannot be changed after creation. To reassign this pricing, create a new pricing configuration.",
+      "baseRateRequired": "Base rate must be greater than 0",
+      "depositNonNegative": "Deposit amount cannot be negative",
+      "validityRequired": "Please select valid from and to dates",
+      "validityOrder": "Valid From date must be before Valid To date"
     }
   },
   "booking": {
@@ -277,6 +333,70 @@
       "unknown": "Unknown"
     },
     "cancelBooking": "Cancel Booking",
+    "detail": {
+      "title": "Booking",
+      "subtitle": "Manage booking details and assets",
+      "loading": "Loading booking details...",
+      "errorLoading": "Failed to load booking details.",
+      "backToBookings": "Back to Bookings",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this booking? This action cannot be undone.",
+      "images": {
+        "title": "Booking Images",
+        "subtitle": "Manage inspection and reference photos for this booking.",
+        "upload": "Upload",
+        "uploading": "Uploading...",
+        "noImages": "No images uploaded yet",
+        "loading": "Loading images...",
+        "deleteConfirm": "Remove this image?",
+        "uploadDialog": {
+          "title": "Upload Booking Image",
+          "description": "Attach inspection or damage photos to this booking.",
+          "descriptionLabel": "Description (optional)",
+          "descriptionPlaceholder": "Describe the context of this image",
+          "cancel": "Cancel",
+          "upload": "Upload"
+        },
+        "deleteSuccess": "Image Deleted",
+        "deleteSuccessDescription": "The booking image has been removed.",
+        "deleteError": "Failed to delete image",
+        "uploadSuccess": "Image Uploaded",
+        "uploadSuccessDescription": "The booking image has been added.",
+        "uploadError": "Upload failed",
+        "invalidFileType": "Invalid file type",
+        "invalidFileTypeDescription": "Please choose a JPEG, PNG, GIF, or WebP image.",
+        "fileTooLarge": "File too large",
+        "fileTooLargeDescription": "Image must be smaller than 10MB."
+      },
+      "sections": {
+        "reservation": "Reservation Summary",
+        "financial": "Financial Details",
+        "offerings": "Included Offerings"
+      },
+      "fields": {
+        "vehicleId": "Vehicle ID",
+        "package": "Package",
+        "discount": "Discount",
+        "status": "Status",
+        "start": "Start",
+        "end": "End",
+        "pickupLocation": "Pickup Location",
+        "dropoffLocation": "Dropoff Location",
+        "totalDays": "Total Days",
+        "totalRentalFee": "Total Rental Fee",
+        "finalPrice": "Final Price",
+        "balancePayment": "Balance Payment",
+        "insurancePolicy": "Insurance Policy"
+      },
+      "noOfferings": "No additional offerings selected.",
+      "offeringQuantity": "Quantity:",
+      "offeringPrice": "Price:",
+      "offeringTotal": "Total:",
+      "deleteBookingSuccess": "Booking Deleted",
+      "deleteBookingDescription": "The booking has been removed.",
+      "deleteBookingError": "Failed to delete booking"
+    },
     "form": {
       "daySingular": "day",
       "dayPlural": "days",
@@ -364,6 +484,7 @@
     "manage": "Manage additional services and add-ons",
     "addOffering": "Add Offering",
     "newOffering": "Create New Offering",
+    "createDescription": "Configure details and availability for a new offering.",
     "filters": "Filters",
     "searchPlaceholder": "Search offerings...",
     "allTypes": "All Types",
@@ -395,11 +516,16 @@
     "description": "Description",
     "descriptionPlaceholder": "Describe the offering...",
     "pricingAvailability": "Pricing & Availability",
+    "typeLabel": "Offering Type",
     "unitPrice": "Unit Price",
+    "unitPriceLabel": "Unit Price",
     "unitPricePlaceholder": "100",
     "quantity": "Available Quantity",
+    "availableUnits": "Available Units",
     "quantityPlaceholder": "1",
+    "maxQuantityPerBooking": "Maximum Quantity per Booking",
     "isActive": "Is Active?",
+    "mandatoryToggleLabel": "Mandatory for all bookings",
     "selector": {
       "description": "Select the optional offerings to bundle with this item.",
       "searchPlaceholder": "Search offerings...",
@@ -446,7 +572,8 @@
     "minRentalDays": "Minimum Rental Days",
     "minRentalDaysPlaceholder": "2",
     "validityPeriod": "Validity Period",
-    "pricingRequirements": "Pricing & Requirements"
+    "pricingRequirements": "Pricing & Requirements",
+    "priceModifierHelper": "Enter the factor used to adjust final pricing. 1.00 keeps the base price, values below 1 apply a discount."
   },
   "payment": {
     "title": "Payments",
@@ -571,6 +698,18 @@
       "minBooking": "Min Booking",
       "usage": "Usage",
       "actions": "Actions"
+    }
+  },
+  "dateTimePicker": {
+    "placeholder": "Select date and time",
+    "quickSelectTitle": "Quick Select",
+    "openCalendar": "Open Calendar",
+    "options": {
+      "today": "Today",
+      "startOfMonth": "Start of Month",
+      "endOfMonth": "End of Month",
+      "startOfYear": "Start of Year",
+      "endOfYear": "End of Year"
     }
   },
   "table": {

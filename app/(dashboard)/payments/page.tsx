@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useCollection } from '@/lib/api/hooks';
 import { formatDate, parseHalResource } from '@/lib/utils';
 import type { Payment } from '@/types';
-import { CreditCard, Download, Plus, Search } from 'lucide-react';
+import { CreditCard, Download, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 export default function PaymentsPage() {
@@ -83,10 +83,6 @@ export default function PaymentsPage() {
           <h1 className="text-3xl font-bold">{t('payment.title')}</h1>
           <p className="text-muted-foreground">{t('payment.manage')}</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('payment.recordPayment')}
-        </Button>
       </div>
 
       {/* Filters */}
@@ -136,10 +132,6 @@ export default function PaymentsPage() {
       ) : payments.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('payment.noResults')}</p>
-          <Button className="mt-4">
-            <Plus className="mr-2 h-4 w-4" />
-            {t('payment.recordFirstPayment')}
-          </Button>
         </div>
       ) : (
         <>
@@ -210,9 +202,6 @@ export default function PaymentsPage() {
 
                     <div className="flex gap-2">
                       <Button size="sm">{t('common.viewDetails')}</Button>
-                      <Button size="sm" variant="outline">
-                        {t('payment.receiptLabel')}
-                      </Button>
                     </div>
                   </div>
                 </CardContent>

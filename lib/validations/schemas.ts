@@ -72,6 +72,7 @@ export const pricingSchema = z.object({
   validFrom: z.string().min(1, 'Valid from date is required'),
   validTo: z.string().min(1, 'Valid to date is required'),
   tags: z.array(z.string()).optional(),
+  isDefault: z.boolean().optional(),
 });
 
 export const loginSchema = z.object({
