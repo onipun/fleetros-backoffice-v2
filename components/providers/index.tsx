@@ -3,6 +3,7 @@
 import { Toaster } from '@/components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
+import { LocaleProvider } from './locale-provider';
 import { PermissionProvider } from './permission-provider';
 import { ThemeProvider } from './theme-provider';
 
@@ -25,10 +26,12 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <PermissionProvider>
-          {children}
-          <Toaster />
-        </PermissionProvider>
+        <LocaleProvider>
+          <PermissionProvider>
+            {children}
+            <Toaster />
+          </PermissionProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TagInput } from '@/components/ui/tag-input';
@@ -30,6 +31,7 @@ interface SearchPricingResponse {
 }
 
 export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehiclePricingListProps) {
+  const { t } = useLocale();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(0); // 0-based page index
@@ -124,10 +126,10 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Vehicle Pricings</CardTitle>
+          <CardTitle>{t('vehicle.pricings')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Loading pricings...</p>
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         </CardContent>
       </Card>
     );
@@ -138,9 +140,9 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Vehicle Pricings</CardTitle>
+            <CardTitle>{t('vehicle.pricings')}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Showing {pricings.length} of {totalElements} pricing{totalElements !== 1 ? 's' : ''}
+              {t('common.showing')} {pricings.length} {t('common.of')} {totalElements} {t('pricing.title').toLowerCase()}{totalElements !== 1 ? 's' : ''}
             </p>
           </div>
           <Button
@@ -155,7 +157,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
             className="gap-2"
           >
             <Filter className="h-4 w-4" />
-            {showFilter ? 'Hide Filter' : 'Filter by Tags'}
+            {showFilter ? t('pricing.hideFilter') : t('pricing.filterByTags')}
           </Button>
         </div>
       </CardHeader>
@@ -165,7 +167,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
           <div className="mb-4 p-4 border rounded-lg bg-muted/50">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Filter by Tags</label>
+                <label className="text-sm font-medium">{t('pricing.filterByTags')}</label>
                 {selectedTags.length > 0 && (
                   <Button
                     variant="ghost"
@@ -179,18 +181,18 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                     className="h-8 text-xs"
                   >
                     <X className="h-3 w-3 mr-1" />
-                    Clear
+                    {t('common.clear')}
                   </Button>
                 )}
               </div>
               <TagInput
                 value={selectedTags}
                 onChange={handleTagsChange}
-                placeholder="Select tags to filter..."
+                placeholder={t('pricing.selectTags')}
                 suggestions={existingTags}
               />
               <p className="text-xs text-muted-foreground">
-                Select one or more tags to filter pricings. Shows pricings that have any of the selected tags.
+                {t('pricing.filterDescription')}
               </p>
             </div>
           </div>
@@ -201,8 +203,8 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground">
               {selectedTags.length > 0
-                ? 'No pricings found with the selected tags.'
-                : 'No pricings configured for this vehicle yet.'}
+                ? t('vehicle.noPricingsFiltered')
+                : t('vehicle.noPricings')}
             </p>
             {selectedTags.length > 0 && (
               <Button
@@ -216,7 +218,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                 type="button"
                 className="mt-3"
               >
-                Clear Filters
+                {t('common.clearFilters')}
               </Button>
             )}
           </div>
@@ -249,7 +251,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                       </div>
                       {pricing.depositAmount && pricing.depositAmount > 0 && (
                         <div className="text-sm text-muted-foreground">
-                          Deposit: ${pricing.depositAmount.toFixed(2)}
+                          {t('pricing.deposit')}: ${pricing.depositAmount.toFixed(2)}
                         </div>
                       )}
                     </div>
@@ -257,8 +259,8 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {pricing.minimumRentalDays && pricing.minimumRentalDays > 0 && (
                         <div>
-                          <span className="text-muted-foreground">Min Rental:</span>{' '}
-                          <span className="font-medium">{pricing.minimumRentalDays} days</span>
+                          <span className="text-muted-foreground">{t('pricing.minRental')}:</span>{' '}
+                          <span className="font-medium">{pricing.minimumRentalDays} {t('pricing.days')}</span>
                         </div>
                       )}
                       {pricing.validFrom && pricing.validTo && (
@@ -324,7 +326,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
         {totalPages > 1 && (
           <div className="mt-4 flex items-center justify-between border-t pt-4">
             <div className="text-sm text-muted-foreground">
-              Page {currentPage + 1} of {totalPages}
+              {t('common.page')} {currentPage + 1} {t('common.of')} {totalPages}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -340,7 +342,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous
+                {t('common.previous')}
               </Button>
               <Button
                 variant="outline"
@@ -354,7 +356,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                 type="button"
                 className="gap-1"
               >
-                Next
+                {t('common.next')}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,25 +37,26 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Vehicles', href: '/vehicles', icon: Car },
-  { name: 'Bookings', href: '/bookings', icon: FileText },
-  { name: 'Offerings', href: '/offerings', icon: Package },
-  { name: 'Discounts', href: '/discounts', icon: Percent },
-  { name: 'Packages', href: '/packages', icon: Package },
-  { name: 'Payments', href: '/payments', icon: DollarSign },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { t } = useLocale();
   const pathname = usePathname();
   const router = useRouter();
+
+  const navigation = [
+    { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { name: t('nav.vehicles'), href: '/vehicles', icon: Car },
+    { name: t('nav.bookings'), href: '/bookings', icon: FileText },
+    { name: t('nav.offerings'), href: '/offerings', icon: Package },
+    { name: t('nav.discounts'), href: '/discounts', icon: Percent },
+    { name: t('nav.packages'), href: '/packages', icon: Package },
+    { name: t('nav.payments'), href: '/payments', icon: DollarSign },
+    { name: t('nav.settings'), href: '/settings', icon: Settings },
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -213,13 +215,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={handleLogout}
                     disabled={isLoggingOut}
                     className="cursor-pointer text-red-600 focus:text-red-600"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    {isLoggingOut ? 'Logging out...' : 'Logout'}
+                    {isLoggingOut ? t('nav.logout') + '...' : t('nav.logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
