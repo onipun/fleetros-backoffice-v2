@@ -13,7 +13,6 @@ import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { usePricingTags } from '@/lib/api/hooks';
 import type { PricingFormData } from '@/lib/validations/schemas';
-import type { Pricing, PricingTag } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -34,6 +33,8 @@ const extractEntityId = (link?: string) => {
   const parsedId = Number.parseInt(lastSegment ?? '', 10);
   return Number.isNaN(parsedId) ? undefined : parsedId;
 };
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
 
 export default function EditPricingPage() {
   const { t } = useLocale();
@@ -58,27 +59,31 @@ export default function EditPricingPage() {
     isDefault: false,
   });
 
-  // Fetch pricing details
+  const [entityName, setEntityName] = useState<string>('');
+
+  // Fetch pricing details using v1 API
   const { data: pricing, isLoading } = useQuery({
     queryKey: ['pricing', pricingId],
     queryFn: async () => {
-      const pricingData = await hateoasClient.getResource<Pricing>('pricings', pricingId);
-      
-      // Fetch tags from the link if available
-      if (pricingData._links?.tags?.href) {
-        try {
-          const tagsResponse = await hateoasClient.followLink<{ _embedded?: { pricingTags?: PricingTag[] } }>(
-            pricingData,
-            'tags'
-          );
-          // Extract tags from embedded collection (response uses 'pricingTags' field)
-          pricingData.tags = tagsResponse._embedded?.pricingTags || [];
-        } catch (error) {
-          console.error('Failed to fetch pricing tags:', error);
-          pricingData.tags = [];
-        }
+      // Use v1 API endpoint which returns vehicleId directly
+      const token = await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
       
+      const response = await fetch(`${API_BASE_URL}/api/v1/pricings/${pricingId}`, {
+        headers,
+        cache: 'no-store',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pricing');
+      }
+      
+      const pricingData = await response.json();
       return pricingData;
     },
   });
@@ -86,42 +91,24 @@ export default function EditPricingPage() {
   // Populate form when pricing data is loaded
   useEffect(() => {
     if (pricing) {
+      console.log('Pricing data loaded:', pricing);
+      
       let entityType: 'vehicle' | 'package' | 'booking' = 'vehicle';
       let entityId = 0;
 
-      const vehicleId = pricing.vehicleId ?? extractEntityId(pricing._links?.vehicle?.href);
-      const packageId = pricing.packageId ?? extractEntityId(pricing._links?.package?.href);
-      const bookingId = pricing.bookingId ?? extractEntityId(pricing._links?.booking?.href);
-
-      // Also check string URIs
-      if (!vehicleId && typeof pricing.vehicle === 'string') {
-        const extracted = extractEntityId(pricing.vehicle);
-        if (extracted) {
-          entityType = 'vehicle';
-          entityId = extracted;
-        }
-      } else if (vehicleId) {
+      // Extract IDs directly from v1 API response fields
+      if (pricing.vehicleId) {
         entityType = 'vehicle';
-        entityId = vehicleId;
-      } else if (!packageId && typeof pricing.package === 'string') {
-        const extracted = extractEntityId(pricing.package);
-        if (extracted) {
-          entityType = 'package';
-          entityId = extracted;
-        }
-      } else if (packageId) {
+        entityId = pricing.vehicleId;
+      } else if (pricing.packageId) {
         entityType = 'package';
-        entityId = packageId;
-      } else if (!bookingId && typeof pricing.booking === 'string') {
-        const extracted = extractEntityId(pricing.booking);
-        if (extracted) {
-          entityType = 'booking';
-          entityId = extracted;
-        }
-      } else if (bookingId) {
+        entityId = pricing.packageId;
+      } else if (pricing.bookingId) {
         entityType = 'booking';
-        entityId = bookingId;
+        entityId = pricing.bookingId;
       }
+
+      console.log('Final entity:', { entityType, entityId });
 
       setFormData({
         entityType,
@@ -132,11 +119,35 @@ export default function EditPricingPage() {
         minimumRentalDays: pricing.minimumRentalDays,
         validFrom: pricing.validFrom?.substring(0, 16) || '',
         validTo: pricing.validTo?.substring(0, 16) || '',
-        tags: pricing.tags?.map((tag) => tag.name) || [],
+        tags: pricing.tags?.map((tag: any) => tag.name) || [],
         isDefault: pricing.isDefault || false,
       });
     }
   }, [pricing]);
+
+  // Fetch entity name when entityId is available
+  useEffect(() => {
+    const fetchEntityName = async () => {
+      if (formData.entityId > 0) {
+        try {
+          if (formData.entityType === 'vehicle') {
+            const vehicle = await hateoasClient.getResource<any>('vehicles', formData.entityId.toString());
+            setEntityName(vehicle.name || `Vehicle #${formData.entityId}`);
+          } else if (formData.entityType === 'package') {
+            const pkg = await hateoasClient.getResource<any>('packages', formData.entityId.toString());
+            setEntityName(pkg.name || `Package #${formData.entityId}`);
+          } else if (formData.entityType === 'booking') {
+            setEntityName(`Booking #${formData.entityId}`);
+          }
+        } catch (error) {
+          console.error('Failed to fetch entity name:', error);
+          setEntityName(`${formData.entityType.charAt(0).toUpperCase() + formData.entityType.slice(1)} #${formData.entityId}`);
+        }
+      }
+    };
+
+    fetchEntityName();
+  }, [formData.entityId, formData.entityType]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: PricingFormState) => {
@@ -272,12 +283,10 @@ export default function EditPricingPage() {
                   <span className="font-medium text-muted-foreground">{t('pricing.form.connectedTo')}:</span>
                   <Link 
                     href={`/${formData.entityType}s/${formData.entityId}`}
-                    className="font-semibold hover:underline"
+                    className="font-semibold hover:underline text-primary"
                   >
-                    {formData.entityType.charAt(0).toUpperCase() + formData.entityType.slice(1)}
+                    {entityName || `${formData.entityType.charAt(0).toUpperCase() + formData.entityType.slice(1)} #${formData.entityId}`}
                   </Link>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="font-medium">ID: {formData.entityId}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {t('pricing.form.entityCannotChange')}
