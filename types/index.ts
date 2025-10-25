@@ -124,6 +124,19 @@ export interface Pricing {
   minimumRentalDays: number;
   validFrom: string;
   validTo: string;
+  tags?: PricingTag[]; // Array of pricing tag objects
+  tagNames?: string[]; // Array of tag names from v1 API
+  createdAt?: string;
+  updatedAt?: string;
+  _links?: Links;
+}
+
+export interface PricingTag {
+  id?: number;
+  name: string;
+  description?: string;
+  color?: string;
+  active: boolean;
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;
@@ -154,7 +167,6 @@ export interface Booking {
   customer?: User;
   bookingStartDate?: string;
   bookingEndDate?: string;
-  offerings?: BookingOffering[] | Offering[]; // Supports direct offering payloads for creation
   offerings?: BookingOffering[] | Offering[]; // Supports direct offering payloads for creation
   images?: BookingImage[]; // Mirrors vehicle image handling for damage reports
 }

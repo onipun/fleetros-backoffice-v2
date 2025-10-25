@@ -1,12 +1,15 @@
 'use client';
 
+import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { VehiclePricingList } from '@/components/vehicle/vehicle-pricing-list';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
+import { usePricingTags } from '@/lib/api/hooks';
 import type { Vehicle, VehicleStatus } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
@@ -19,6 +22,9 @@ export default function EditVehiclePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const vehicleId = params.id as string;
+  
+  // Fetch existing tags for autocomplete
+  const { data: existingTags = [] } = usePricingTags();
 
   const [formData, setFormData] = useState<Partial<Vehicle>>({
     name: '',
@@ -36,6 +42,15 @@ export default function EditVehiclePage() {
     minRentalHours: 24,
     maxRentalDays: 30,
     maxFutureBookingDays: 90,
+  });
+
+  const [pricingData, setPricingData] = useState<PricingFormData>({
+    baseRate: 0,
+    rateType: 'Daily',
+    depositAmount: 0,
+    minimumRentalDays: 1,
+    validFrom: '',
+    validTo: '',
   });
 
   // Fetch vehicle details
@@ -73,16 +88,75 @@ export default function EditVehiclePage() {
     mutationFn: async (data: Partial<Vehicle>) => {
       return hateoasClient.update<Vehicle>('vehicles', vehicleId, data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId] });
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast({
-        title: 'Success',
-        description: 'Vehicle updated successfully',
-      });
+    onSuccess: async () => {
+      // Create pricing if base rate is provided and dates are set
+      let pricingSuccess = false;
+      let pricingError: string | null = null;
+      
+      try {
+        if (pricingData.baseRate > 0 && pricingData.validFrom && pricingData.validTo) {
+          // Format the pricing payload for v1 API
+          // v1 API requires vehicleId as numeric ID and vehicle path for association
+          const pricingPayload = {
+            vehicleId: Number(vehicleId), // v1 API requires numeric vehicleId
+            vehicle: `/api/vehicles/${vehicleId}`,
+            baseRate: Number(pricingData.baseRate),
+            rateType: pricingData.rateType,
+            depositAmount: Number(pricingData.depositAmount),
+            minimumRentalDays: Number(pricingData.minimumRentalDays),
+            validFrom: pricingData.validFrom,
+            validTo: pricingData.validTo,
+            ...(pricingData.tags && pricingData.tags.length > 0 && { tagNames: pricingData.tags }),
+          };
+          
+          console.log('Creating pricing with payload:', JSON.stringify(pricingPayload, null, 2));
+          const result = await hateoasClient.create('pricings', pricingPayload);
+          console.log('Pricing created successfully:', result);
+          
+          pricingSuccess = true;
+        }
+      } catch (error) {
+        console.error('Failed to create pricing - Full error:', error);
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+          pricingError = error.message;
+        }
+      }
+      
+      // Invalidate ALL related queries AFTER pricing creation
+      await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId] });
+      await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      await queryClient.invalidateQueries({ queryKey: ['pricings'] });
+      
+      // Show appropriate toast message
+      if (pricingSuccess) {
+        toast({
+          title: 'Success',
+          description: 'Vehicle and pricing updated successfully',
+        });
+      } else if (pricingError) {
+        toast({
+          title: 'Partial Success',
+          description: `Vehicle updated but pricing failed: ${pricingError}`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: 'Vehicle updated successfully',
+        });
+      }
+      
+      // Small delay to let user see the toast before navigating
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Force a hard refresh by navigating and then reloading
       router.push(`/vehicles/${vehicleId}`);
+      router.refresh();
     },
     onError: (error: Error) => {
+      console.error('Vehicle update failed:', error);
       toast({
         title: 'Error',
         description: error.message,
@@ -93,6 +167,7 @@ export default function EditVehiclePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Updating vehicle with pricing data:', pricingData);
     updateMutation.mutate(formData);
   };
 
@@ -129,7 +204,7 @@ export default function EditVehiclePage() {
   }
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Link href={`/vehicles/${vehicleId}`}>
           <Button variant="outline" size="sm">
@@ -144,14 +219,16 @@ export default function EditVehiclePage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
+        <div className="grid gap-8 xl:grid-cols-2">
+          {/* Left Column */}
+          <div className="space-y-6">
           {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Vehicle Name *</Label>
                   <Input
@@ -226,8 +303,8 @@ export default function EditVehiclePage() {
             <CardHeader>
               <CardTitle>Specifications</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="make">Make *</Label>
                   <Input
@@ -308,8 +385,8 @@ export default function EditVehiclePage() {
             <CardHeader>
               <CardTitle>Rental Settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="bufferMinutes">Buffer Minutes</Label>
                   <Input
@@ -386,18 +463,47 @@ export default function EditVehiclePage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Actions */}
-          <div className="flex gap-4 justify-end">
-            <Link href={`/vehicles/${vehicleId}`}>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </Link>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Updating...' : 'Update Vehicle'}
-            </Button>
           </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            <PricingPanel 
+              onDataChange={setPricingData} 
+              showValidity={true}
+              existingTags={existingTags}
+              entityInfo={{
+                type: 'Vehicle',
+                id: vehicleId,
+                name: vehicle?.name,
+              }}
+            />
+            
+            {/* Existing Pricings */}
+            <VehiclePricingList vehicleId={vehicleId} />
+            
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle>💡 Add New Pricing</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Fill in the pricing form above to add a new pricing configuration. Existing pricings are shown below and can be managed separately.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-4 justify-end mt-8">
+          <Link href={`/vehicles/${vehicleId}`}>
+            <Button type="button" variant="outline" size="lg">
+              Cancel
+            </Button>
+          </Link>
+          <Button type="submit" disabled={updateMutation.isPending} size="lg">
+            {updateMutation.isPending ? 'Updating...' : 'Update Vehicle'}
+          </Button>
         </div>
       </form>
     </div>

@@ -10,12 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { parseHalResource } from '@/lib/utils';
-import type { Offering, Package } from '@/types';
+import type { HATEOASCollection, Offering, Package } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function EditPackagePage() {
   const params = useParams();
@@ -32,6 +32,7 @@ export default function EditPackagePage() {
     minRentalDays: 2,
   });
   const [selectedOfferingIds, setSelectedOfferingIds] = useState<number[]>([]);
+  const [initialOfferingsApplied, setInitialOfferingsApplied] = useState(false);
 
   // Fetch package details
   const { data: pkg, isLoading } = useQuery({
@@ -41,6 +42,18 @@ export default function EditPackagePage() {
     },
   });
 
+  const packageOfferingsLink = pkg?._links?.offerings?.href;
+
+  const {
+    data: packageOfferingsData,
+    isLoading: packageOfferingsLoading,
+    error: packageOfferingsError,
+  } = useQuery<HATEOASCollection<Offering>>({
+    queryKey: ['package', packageId, 'offerings', packageOfferingsLink],
+    queryFn: async () => hateoasClient.followLink<HATEOASCollection<Offering>>(packageOfferingsLink!),
+    enabled: Boolean(packageOfferingsLink),
+  });
+
   const { data: offeringsData, isLoading: offeringsLoading, error: offeringsError } = useQuery({
     queryKey: ['offerings', 'all'],
     queryFn: async () => {
@@ -48,7 +61,57 @@ export default function EditPackagePage() {
     },
   });
 
-  const offerings = offeringsData ? parseHalResource<Offering>(offeringsData, 'offerings') : [];
+  const baseOfferings = useMemo(() => {
+    if (!offeringsData) {
+      return [] as Offering[];
+    }
+    return parseHalResource<Offering>(offeringsData, 'offerings');
+  }, [offeringsData]);
+
+  const packageOfferings = useMemo(() => {
+    if (!packageOfferingsData) {
+      return [] as Offering[];
+    }
+    return parseHalResource<Offering>(packageOfferingsData, 'offerings');
+  }, [packageOfferingsData]);
+
+  const resolvedPackageOfferings = packageOfferings.length > 0
+    ? packageOfferings
+    : Array.isArray(pkg?.offerings)
+      ? pkg.offerings
+      : [];
+
+  const availableOfferings = useMemo(() => {
+    if (resolvedPackageOfferings.length === 0) {
+      return baseOfferings;
+    }
+
+    const seenIds = new Set<number>();
+    const prioritized: Offering[] = [];
+
+    resolvedPackageOfferings.forEach((pkgOffering) => {
+      const id = pkgOffering.id;
+      if (id == null || seenIds.has(id)) {
+        return;
+      }
+
+      const match = baseOfferings.find((offering) => offering.id === id);
+      prioritized.push(match ?? pkgOffering);
+      seenIds.add(id);
+    });
+
+    const remaining = baseOfferings.filter((offering) => {
+      const id = offering.id;
+      return id == null || !seenIds.has(id);
+    });
+
+    return [...prioritized, ...remaining];
+  }, [baseOfferings, resolvedPackageOfferings]);
+
+  const isOfferingsLoading = offeringsLoading || packageOfferingsLoading;
+  const offeringErrorMessage =
+    (offeringsError instanceof Error ? offeringsError.message : undefined) ||
+    (packageOfferingsError instanceof Error ? packageOfferingsError.message : undefined);
 
   // Pre-populate form when data loads
   useEffect(() => {
@@ -61,25 +124,75 @@ export default function EditPackagePage() {
         validTo: pkg.validTo || '',
         minRentalDays: pkg.minRentalDays || 2,
       });
-      if (pkg.offerings && Array.isArray(pkg.offerings)) {
-        setSelectedOfferingIds(
-          pkg.offerings
-            .map((item) => item.id)
-            .filter((id): id is number => id != null)
-        );
-      } else {
-        setSelectedOfferingIds([]);
-      }
     }
   }, [pkg]);
 
+  useEffect(() => {
+    setInitialOfferingsApplied(false);
+    setSelectedOfferingIds([]);
+  }, [packageId, packageOfferingsLink]);
+
+  useEffect(() => {
+    if (initialOfferingsApplied) {
+      return;
+    }
+
+    if (!pkg) {
+      return;
+    }
+
+    if (packageOfferingsLink && !packageOfferingsError) {
+      if (packageOfferingsLoading || !packageOfferingsData) {
+        return;
+      }
+    }
+
+    const initialIds = resolvedPackageOfferings
+      .map((item) => item.id)
+      .filter((id): id is number => id != null);
+
+    setSelectedOfferingIds(initialIds);
+    setInitialOfferingsApplied(true);
+  }, [
+    initialOfferingsApplied,
+    pkg,
+    packageOfferingsLink,
+    packageOfferingsLoading,
+    packageOfferingsData,
+    packageOfferingsError,
+    resolvedPackageOfferings,
+  ]);
+
   const updateMutation = useMutation({
-    mutationFn: async (data: typeof formData & { offerings: Offering[] }) => {
-      return hateoasClient.update<Package>('packages', packageId, data);
+    mutationFn: async (data: typeof formData & { offeringUris: string[] }) => {
+      // First update the package without offerings
+      const { offeringUris, ...packageData } = data;
+      const updatedPackage = await hateoasClient.update<Package>('packages', packageId, packageData);
+      
+      // Then update the offerings association using PUT (replaces all)
+      if (offeringUris.length > 0) {
+        const uriList = offeringUris.join('\n');
+        await hateoasClient.addAssociation(
+          'packages',
+          packageId,
+          'offerings',
+          uriList
+        );
+      } else {
+        // If no offerings selected, remove all associations
+        await hateoasClient.removeAssociation(
+          'packages',
+          packageId,
+          'offerings'
+        );
+      }
+      
+      return updatedPackage;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       queryClient.invalidateQueries({ queryKey: ['package', packageId] });
+      queryClient.invalidateQueries({ queryKey: ['package', packageId, 'offerings'] });
       toast({
         title: 'Success',
         description: 'Package updated successfully',
@@ -116,13 +229,15 @@ export default function EditPackagePage() {
       return;
     }
 
-    const selectedOfferings = offerings.filter(
-      (item) => item.id != null && selectedOfferingIds.includes(item.id)
+    // Build offering URIs for HATEOAS association
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
+    const offeringUris = selectedOfferingIds.map(
+      (id) => `${baseUrl}/api/offerings/${id}`
     );
 
     updateMutation.mutate({
       ...formData,
-      offerings: selectedOfferings,
+      offeringUris,
     });
   };
 
@@ -270,11 +385,11 @@ export default function EditPackagePage() {
 
           <OfferingMultiSelect
             className="md:col-span-2"
-            offerings={offerings}
+            offerings={availableOfferings}
             selectedIds={selectedOfferingIds}
             onChange={setSelectedOfferingIds}
-            isLoading={offeringsLoading}
-            errorMessage={offeringsError instanceof Error ? offeringsError.message : undefined}
+            isLoading={isOfferingsLoading}
+            errorMessage={offeringErrorMessage}
           />
         </div>
 

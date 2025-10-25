@@ -1,7 +1,6 @@
 'use client';
 
 import { OfferingMultiSelect } from '@/components/offering/offering-multi-select';
-import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -33,15 +32,6 @@ export default function NewPackagePage() {
 
   const [selectedOfferingIds, setSelectedOfferingIds] = useState<number[]>([]);
 
-  const [pricingData, setPricingData] = useState<PricingFormData>({
-    baseRate: 0,
-    rateType: 'DAILY',
-    depositAmount: 0,
-    minimumRentalDays: 1,
-    validFrom: '',
-    validTo: '',
-  });
-
   const { data: offeringsData, isLoading: offeringsLoading, error: offeringsError } = useQuery({
     queryKey: ['offerings', 'all'],
     queryFn: async () => {
@@ -52,40 +42,30 @@ export default function NewPackagePage() {
   const offerings = offeringsData ? parseHalResource<Offering>(offeringsData, 'offerings') : [];
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData & { offerings: Offering[] }) => {
-      return hateoasClient.create<Package>('packages', data);
+    mutationFn: async (data: typeof formData & { offeringUris: string[] }) => {
+      // First create the package without offerings
+      const { offeringUris, ...packageData } = data;
+      const createdPackage = await hateoasClient.create<Package>('packages', packageData);
+      
+      // Then associate offerings if any were selected
+      if (createdPackage.id && offeringUris.length > 0) {
+        const uriList = offeringUris.join('\n');
+        await hateoasClient.addAssociation(
+          'packages',
+          createdPackage.id,
+          'offerings',
+          uriList
+        );
+      }
+      
+      return createdPackage;
     },
     onSuccess: async (pkg: Package) => {
-      try {
-        const packageId = pkg.id;
-        if (packageId && pricingData.baseRate > 0) {
-          const pricingPayload = {
-            ...pricingData,
-            package: `/api/packages/${packageId}`,
-            validFrom: formData.validFrom,
-            validTo: formData.validTo,
-          };
-          await hateoasClient.create('pricings', pricingPayload);
-          toast({
-            title: 'Success',
-            description: 'Package and pricing created successfully',
-          });
-        } else {
-          toast({
-            title: 'Success',
-            description: 'Package created successfully',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to create pricing:', error);
-        toast({
-          title: 'Warning',
-          description: 'Package created but pricing failed',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Success',
+        description: 'Package created successfully',
+      });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
-      queryClient.invalidateQueries({ queryKey: ['pricings'] });
       router.push('/packages');
     },
     onError: (error: Error) => {
@@ -118,13 +98,15 @@ export default function NewPackagePage() {
       return;
     }
 
-    const selectedOfferings = offerings.filter(
-      (item) => item.id != null && selectedOfferingIds.includes(item.id)
+    // Build offering URIs for HATEOAS association
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
+    const offeringUris = selectedOfferingIds.map(
+      (id) => `${baseUrl}/api/offerings/${id}`
     );
 
     createMutation.mutate({
       ...formData,
-      offerings: selectedOfferings,
+      offeringUris,
     });
   };
 
@@ -268,10 +250,6 @@ export default function NewPackagePage() {
             isLoading={offeringsLoading}
             errorMessage={offeringsError instanceof Error ? offeringsError.message : undefined}
           />
-        </div>
-
-        <div className="mt-6">
-          <PricingPanel onDataChange={setPricingData} showValidity={false} />
         </div>
 
         {/* Actions */}

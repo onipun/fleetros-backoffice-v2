@@ -4,15 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { VehiclePricingList } from '@/components/vehicle/vehicle-pricing-list';
 import { VehicleDetailSkeleton } from '@/components/vehicle/vehicle-skeletons';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
@@ -404,105 +405,110 @@ export default function VehicleDetailPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {/* Images Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Vehicle Images</CardTitle>
-              <label htmlFor="image-upload">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  disabled={isUploading}
-                  onClick={() => document.getElementById('image-upload')?.click()}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  {isUploading ? 'Uploading...' : 'Upload'}
-                </Button>
-              </label>
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageFileSelect}
-              />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Main Display Image */}
-            {displayImageUrl ? (
-              <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
-                <Image
-                  src={displayImageUrl}
-                  alt={vehicle.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
-                  quality={85}
+        {/* Left Column - Images and Pricing */}
+        <div className="space-y-8">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Vehicle Images</CardTitle>
+                <label htmlFor="image-upload">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    disabled={isUploading}
+                    onClick={() => document.getElementById('image-upload')?.click()}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {isUploading ? 'Uploading...' : 'Upload'}
+                  </Button>
+                </label>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageFileSelect}
                 />
               </div>
-            ) : (
-              <div className="flex items-center justify-center aspect-video w-full bg-muted rounded-lg">
-                <div className="text-center text-muted-foreground">
-                  <ImageIcon className="h-12 w-12 mx-auto mb-2" />
-                  <p>No images available</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Main Display Image */}
+              {displayImageUrl ? (
+                <div className="relative w-full bg-muted rounded-lg overflow-hidden" style={{ height: '300px' }}>
+                  <Image
+                    src={displayImageUrl}
+                    alt={vehicle.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                    quality={85}
+                  />
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-center w-full bg-muted rounded-lg" style={{ height: '300px' }}>
+                  <div className="text-center text-muted-foreground">
+                    <ImageIcon className="h-12 w-12 mx-auto mb-2" />
+                    <p>No images available</p>
+                  </div>
+                </div>
+              )}
 
-            {/* Thumbnail Gallery */}
-            {images.length > 0 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((image) => {
-                  return (
-                    <div
-                      key={image.id}
-                      className="relative group cursor-pointer"
-                      onClick={() => setSelectedImage(image.imageUrl)}
-                    >
+              {/* Thumbnail Gallery */}
+              {images.length > 0 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {images.map((image) => {
+                    return (
                       <div
-                        className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${
-                          selectedImage === image.imageUrl || (selectedImage === null && image.isPrimary)
-                            ? 'border-primary'
-                            : 'border-transparent hover:border-muted-foreground'
-                        }`}
+                        key={image.id}
+                        className="relative group cursor-pointer"
+                        onClick={() => setSelectedImage(image.imageUrl)}
                       >
-                        <Image
-                          src={image.imageUrl}
-                          alt={image.description || image.caption || 'Vehicle image'}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 25vw, 12vw"
-                          quality={75}
-                        />
-                      </div>
-                      {image.isPrimary && (
-                        <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
-                          Primary
+                        <div
+                          className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                            selectedImage === image.imageUrl || (selectedImage === null && image.isPrimary)
+                              ? 'border-primary'
+                              : 'border-transparent hover:border-muted-foreground'
+                          }`}
+                        >
+                          <Image
+                            src={image.imageUrl}
+                            alt={image.description || image.caption || 'Vehicle image'}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 25vw, 12vw"
+                            quality={75}
+                          />
                         </div>
-                      )}
-                      <button
-                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Delete this image?')) {
-                            deleteImageMutation.mutate(image.id!);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                        {image.isPrimary && (
+                          <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
+                            Primary
+                          </div>
+                        )}
+                        <button
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Delete this image?')) {
+                              deleteImageMutation.mutate(image.id!);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Vehicle Details */}
+          {/* Pricing List Section - Now in left column */}
+          <VehiclePricingList vehicleId={vehicleId} />
+        </div>
+
+        {/* Right Column - Vehicle Details */}
         <div className="space-y-6">
           <Card>
             <CardHeader>

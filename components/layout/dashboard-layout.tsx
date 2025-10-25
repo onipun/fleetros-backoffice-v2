@@ -3,29 +3,30 @@
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PageTransition } from '@/components/ui/page-transition';
 import { cn } from '@/lib/utils';
 import {
-    Bell,
-    Car,
-    DollarSign,
-    FileText,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    Moon,
-    Package,
-    Percent,
-    Settings,
-    Sun,
-    User,
-    X,
+  Bell,
+  Car,
+  DollarSign,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Moon,
+  Package,
+  Percent,
+  Settings,
+  Sun,
+  User,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -40,7 +41,6 @@ const navigation = [
   { name: 'Vehicles', href: '/vehicles', icon: Car },
   { name: 'Bookings', href: '/bookings', icon: FileText },
   { name: 'Offerings', href: '/offerings', icon: Package },
-  { name: 'Pricings', href: '/pricings', icon: DollarSign },
   { name: 'Discounts', href: '/discounts', icon: Percent },
   { name: 'Packages', href: '/packages', icon: Package },
   { name: 'Payments', href: '/payments', icon: DollarSign },
@@ -229,7 +229,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page content */}
         <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">{children}</div>
+          <div className="px-4 sm:px-6 lg:px-8">
+            <PageTransition>{children}</PageTransition>
+          </div>
         </main>
       </div>
     </div>

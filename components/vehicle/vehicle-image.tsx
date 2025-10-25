@@ -62,7 +62,6 @@ export function VehicleImage({
         className="object-cover transition-opacity duration-300"
         style={{ 
           opacity: isLoading ? 0 : 1,
-          objectFit: 'cover'
         }}
         quality={85} // Balance between quality and file size
         priority={priority} // For above-the-fold images

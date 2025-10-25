@@ -1,6 +1,5 @@
 'use client';
 
-import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,53 +30,16 @@ export default function NewOfferingPage() {
     description: '',
   });
 
-  const [pricingData, setPricingData] = useState<PricingFormData>({
-    baseRate: 0,
-    rateType: 'DAILY',
-    depositAmount: 0,
-    minimumRentalDays: 1,
-    validFrom: '',
-    validTo: '',
-  });
-
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       return hateoasClient.create<Offering>('offerings', data);
     },
     onSuccess: async (offering: Offering) => {
-      try {
-        const offeringId = offering.id;
-        if (
-          offeringId &&
-          pricingData.baseRate > 0 &&
-          pricingData.validFrom &&
-          pricingData.validTo
-        ) {
-          const pricingPayload = {
-            ...pricingData,
-            offering: `/api/offerings/${offeringId}`,
-          };
-          await hateoasClient.create('pricings', pricingPayload);
-          toast({
-            title: 'Success',
-            description: 'Offering and pricing created successfully',
-          });
-        } else {
-          toast({
-            title: 'Success',
-            description: 'Offering created successfully',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to create pricing:', error);
-        toast({
-          title: 'Warning',
-          description: 'Offering created but pricing failed',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Success',
+        description: 'Offering created successfully',
+      });
       queryClient.invalidateQueries({ queryKey: ['offerings'] });
-      queryClient.invalidateQueries({ queryKey: ['pricings'] });
       router.push('/offerings');
     },
     onError: (error: Error) => {
@@ -240,9 +202,6 @@ export default function NewOfferingPage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Pricing Panel */}
-          <PricingPanel onDataChange={setPricingData} />
 
           {/* Actions */}
           <div className="flex justify-end gap-4">

@@ -5,6 +5,7 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TagInput } from '@/components/ui/tag-input';
 import type { PricingFormData } from '@/lib/validations/schemas';
 import { DollarSign } from 'lucide-react';
 import { useState } from 'react';
@@ -16,6 +17,12 @@ interface PricingPanelProps {
   onDataChange?: (data: PricingFormData) => void;
   readOnly?: boolean;
   showValidity?: boolean;
+  existingTags?: string[]; // Tags from previous pricing entries
+  entityInfo?: {
+    type: string; // e.g., "Vehicle", "Package", "Offering"
+    id: string | number;
+    name?: string;
+  };
 }
 
 export function PricingPanel({
@@ -23,15 +30,18 @@ export function PricingPanel({
   onDataChange,
   readOnly = false,
   showValidity = true,
+  existingTags = [],
+  entityInfo,
 }: PricingPanelProps) {
   const [formData, setFormData] = useState<PricingFormData>(
     initialData || {
       baseRate: 0,
-      rateType: 'DAILY',
+      rateType: 'Daily',
       depositAmount: 0,
       minimumRentalDays: 1,
       validFrom: '',
       validTo: '',
+      tags: [],
     }
   );
 
@@ -49,8 +59,20 @@ export function PricingPanel({
           <CardTitle>Pricing Configuration</CardTitle>
         </div>
         <p className="text-sm text-muted-foreground">
-          Set the pricing details for this offering or package
+          Set the pricing details for this {entityInfo ? entityInfo.type.toLowerCase() : 'entity'}
         </p>
+        {entityInfo && (
+          <div className="mt-3 p-3 rounded-lg bg-muted/50 border">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium text-muted-foreground">Connected to:</span>
+              <span className="font-semibold">{entityInfo.type}</span>
+              <span className="text-muted-foreground">•</span>
+              <span className="font-medium">
+                {entityInfo.name || `ID: ${entityInfo.id}`}
+              </span>
+            </div>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
@@ -64,11 +86,11 @@ export function PricingPanel({
               disabled={readOnly}
               required
             >
-              <option value="HOURLY">Hourly</option>
-              <option value="DAILY">Daily</option>
-              <option value="WEEKLY">Weekly</option>
-              <option value="MONTHLY">Monthly</option>
-              <option value="FLAT">Flat Rate</option>
+              <option value="Hourly">Hourly</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Flat">Flat Rate</option>
             </select>
             <p className="text-xs text-muted-foreground">
               How the base rate is calculated
@@ -148,6 +170,21 @@ export function PricingPanel({
               </div>
             </>
           )}
+
+          {/* Tags Input */}
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="tags">Tags (Optional)</Label>
+            <TagInput
+              value={formData.tags || []}
+              onChange={(tags) => handleChange({ tags })}
+              placeholder="Add tags to categorize this pricing..."
+              suggestions={existingTags}
+              disabled={readOnly}
+            />
+            <p className="text-xs text-muted-foreground">
+              Use tags like "seasonal", "weekend", "holiday", "early-bird", etc.
+            </p>
+          </div>
         </div>
 
         <div className="rounded-lg border bg-muted/50 p-4">
@@ -169,6 +206,21 @@ export function PricingPanel({
               <span className="text-muted-foreground">Min Period:</span>
               <span className="font-medium">{formData.minimumRentalDays}</span>
             </div>
+            {formData.tags && formData.tags.length > 0 && (
+              <div className="flex flex-col gap-1 pt-2 border-t">
+                <span className="text-muted-foreground">Tags:</span>
+                <div className="flex flex-wrap gap-1">
+                  {formData.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

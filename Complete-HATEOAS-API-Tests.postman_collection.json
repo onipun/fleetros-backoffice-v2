@@ -1,0 +1,649 @@
+{
+	"info": {
+		"_postman_id": "hateoas-complete-tests-2025-v2",
+		"name": "Complete HATEOAS API Tests - Updated with Pricing Tags",
+		"description": "Comprehensive test collection for all HATEOAS endpoints including pricing tags, packages with offerings/discounts, bookings with associations, and complete CRUD operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "car-rental-backoffice-2025"
+	},
+	"item": [
+		{
+			"name": "2. Vehicle with Pricings and Tags",
+			"description": "Create vehicle with multiple pricing tiers and tag them",
+			"item": [
+				{
+					"name": "2.1 Create Vehicle - Tesla Model S",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Tesla Model S Plaid\",\n  \"make\": \"Tesla\",\n  \"model\": \"Model S Plaid\",\n  \"year\": 2024,\n  \"licensePlate\": \"TESLA-001\",\n  \"vin\": \"5YJSA1E26MF123456\",\n  \"odometer\": 1000,\n  \"fuelType\": \"Electric\",\n  \"transmissionType\": \"Automatic\",\n  \"details\": \"High-performance electric sedan with tri-motor all-wheel drive\",\n  \"status\": \"AVAILABLE\",\n  \"bufferMinutes\": 45,\n  \"minRentalHours\": 4,\n  \"maxRentalDays\": 30,\n  \"maxFutureBookingDays\": 180\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Add Daily Pricing Tier 1",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vehicle\": \"/api/vehicles/{{vehicleId}}\",\n  \"baseRate\": 250.00,\n  \"rateType\": \"Daily\",\n  \"depositAmount\": 500.00,\n  \"minimumRentalDays\": 2,\n  \"validFrom\": \"2025-01-01T00:00:00\",\n  \"validTo\": \"2025-06-30T23:59:59\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.3 Add Weekend Pricing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vehicle\": \"/api/vehicles/{{vehicleId}}\",\n  \"baseRate\": 300.00,\n  \"rateType\": \"Daily\",\n  \"depositAmount\": 500.00,\n  \"minimumRentalDays\": 2,\n  \"validFrom\": \"2025-07-01T00:00:00\",\n  \"validTo\": \"2025-12-31T23:59:59\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.4 Get Vehicle Pricings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}/pricings",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles", "{{vehicleId}}", "pricings"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Pricing Tags - Complete CRUD",
+			"description": "NEW: Create and manage pricing tags for categorization",
+			"item": [
+				{
+					"name": "3.1 Create Tag - Weekend",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"weekend\",\n  \"description\": \"Weekend pricing rates\",\n  \"color\": \"#FF5733\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						},
+						"description": "Create a tag for categorizing weekend pricing"
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Create Tag - Holiday",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"holiday\",\n  \"description\": \"Holiday season rates\",\n  \"color\": \"#33FF57\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.3 Create Tag - Premium",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"premium\",\n  \"description\": \"Premium pricing tier\",\n  \"color\": \"#FFC300\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.4 Create Tag - Early Bird",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"early-bird\",\n  \"description\": \"Early booking discount rates\",\n  \"color\": \"#3498DB\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.5 Create Tag - Last Minute",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"last-minute\",\n  \"description\": \"Last minute booking rates\",\n  \"color\": \"#E74C3C\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.6 Create Tag - Seasonal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"seasonal\",\n  \"description\": \"Seasonal pricing adjustments\",\n  \"color\": \"#9B59B6\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.7 Get All Pricing Tags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags?page=0&size=20&sort=name,asc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "name,asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.8 Get Tag by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags/{{tagId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags", "{{tagId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.9 Search Active Tags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags/search/active",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags", "search", "active"]
+						},
+						"description": "Get all active pricing tags"
+					},
+					"response": []
+				},
+				{
+					"name": "3.10 Find Tag by Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags/search/by-name?name=weekend",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags", "search", "by-name"],
+							"query": [
+								{
+									"key": "name",
+									"value": "weekend"
+								}
+							]
+						},
+						"description": "Find tag by exact name (case-insensitive)"
+					},
+					"response": []
+				},
+				{
+					"name": "3.11 Search Tags by Partial Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags/search/search-by-name?name=day",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags", "search", "search-by-name"],
+							"query": [
+								{
+									"key": "name",
+									"value": "day"
+								}
+							]
+						},
+						"description": "Search tags containing partial name"
+					},
+					"response": []
+				},
+				{
+					"name": "3.12 Update Tag (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"weekend-special\",\n  \"description\": \"Special weekend rates - Updated\",\n  \"color\": \"#FF0000\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags/{{tagId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags", "{{tagId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.13 Update Tag (PATCH - Partial)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"active\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags/{{tagId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags", "{{tagId}}"]
+						},
+						"description": "Deactivate a tag (partial update)"
+					},
+					"response": []
+				},
+				{
+					"name": "3.14 Delete Tag",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags/{{tagId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags", "{{tagId}}"]
+						},
+						"description": "Delete a pricing tag (removes associations)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Pricing-Tag Associations",
+			"description": "NEW: Associate tags with pricings",
+			"item": [
+				{
+					"name": "4.1 Add Tags to Pricing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/uri-list"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "/api/pricing-tags/1\n/api/pricing-tags/2"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings/{{pricingId}}/tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings", "{{pricingId}}", "tags"]
+						},
+						"description": "Add multiple tags to a pricing"
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 Get Pricing Tags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings/{{pricingId}}/tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings", "{{pricingId}}", "tags"]
+						},
+						"description": "Get all tags associated with a pricing"
+					},
+					"response": []
+				},
+				{
+					"name": "4.3 Replace All Pricing Tags",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/uri-list"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "/api/pricing-tags/3\n/api/pricing-tags/4"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings/{{pricingId}}/tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings", "{{pricingId}}", "tags"]
+						},
+						"description": "Replace all tags with new set"
+					},
+					"response": []
+				},
+				{
+					"name": "4.4 Remove Tag from Pricing",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings/{{pricingId}}/tags/{{tagId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings", "{{pricingId}}", "tags", "{{tagId}}"]
+						},
+						"description": "Remove a specific tag from pricing"
+					},
+					"response": []
+				},
+				{
+					"name": "4.5 Remove All Tags from Pricing",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings/{{pricingId}}/tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings", "{{pricingId}}", "tags"]
+						},
+						"description": "Remove all tags from pricing"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. Complete Workflow - Tagged Pricing",
+			"description": "NEW: End-to-end workflow with pricing tags",
+			"item": [
+				{
+					"name": "5.1 Create BMW X5",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"BMW X5 M50i\",\n  \"make\": \"BMW\",\n  \"model\": \"X5 M50i\",\n  \"year\": 2024,\n  \"licensePlate\": \"BMW-X5-001\",\n  \"vin\": \"WBAKR9C50MF234567\",\n  \"odometer\": 500,\n  \"fuelType\": \"Gasoline\",\n  \"transmissionType\": \"Automatic\",\n  \"details\": \"Luxury performance SUV with M Sport package\",\n  \"status\": \"AVAILABLE\",\n  \"bufferMinutes\": 30,\n  \"minRentalHours\": 4,\n  \"maxRentalDays\": 30,\n  \"maxFutureBookingDays\": 90\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/vehicles",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "vehicles"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.2 Create Standard Pricing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vehicle\": \"/api/vehicles/{{vehicleId}}\",\n  \"baseRate\": 180.00,\n  \"rateType\": \"Daily\",\n  \"depositAmount\": 400.00,\n  \"minimumRentalDays\": 1,\n  \"validFrom\": \"2025-01-01T00:00:00\",\n  \"validTo\": \"2025-12-31T23:59:59\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.3 Create Weekend Tag",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"weekend\",\n  \"description\": \"Weekend rates\",\n  \"color\": \"#FF5733\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.4 Create Premium Tag",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"premium\",\n  \"description\": \"Premium tier\",\n  \"color\": \"#FFC300\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricing-tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricing-tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.5 Tag Pricing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/uri-list"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "/api/pricing-tags/{{weekendTagId}}\n/api/pricing-tags/{{premiumTagId}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings/{{pricingId}}/tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings", "{{pricingId}}", "tags"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.6 Verify Tagged Pricing",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pricings/{{pricingId}}/tags",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pricings", "{{pricingId}}", "tags"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8082",
+			"type": "string"
+		},
+		{
+			"key": "vehicleId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "pricingId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "tagId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "weekendTagId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "premiumTagId",
+			"value": "3",
+			"type": "string"
+		},
+		{
+			"key": "holidayTagId",
+			"value": "2",
+			"type": "string"
+		}
+	]
+}
+

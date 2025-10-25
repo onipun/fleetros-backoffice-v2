@@ -3,6 +3,7 @@
 import { TablePageSkeleton } from '@/components/skeletons/page-skeletons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { useCollection } from '@/lib/api/hooks';
 import { formatCurrency, formatDate, parseHalResource } from '@/lib/utils';
@@ -16,7 +17,7 @@ export default function BookingsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
 
-  const { data, isLoading, error } = useCollection<Booking>('bookings', {
+  const { data, isLoading, error, refetch } = useCollection<Booking>('bookings', {
     page,
     size: 20,
     sort: 'startDate,desc',
@@ -97,9 +98,13 @@ export default function BookingsPage() {
       {isLoading ? (
         <TablePageSkeleton rows={8} />
       ) : error ? (
-        <div className="text-center py-12">
-          <p className="text-destructive">Error loading bookings: {error.message}</p>
-        </div>
+        <Card>
+          <ErrorDisplay
+            title="Oops! Something Went Wrong"
+            message={`Error loading bookings: ${error.message}`}
+            onRetry={() => refetch()}
+          />
+        </Card>
       ) : bookings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No bookings found</p>

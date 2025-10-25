@@ -3,12 +3,19 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { hateoasClient } from '@/lib/api/hateoas-client';
 import { useCollection } from '@/lib/api/hooks';
 import { formatDate, parseHalResource } from '@/lib/utils';
-import type { Package } from '@/types';
+import type { HATEOASCollection, Offering, Package } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 import { Box, Download, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+
+interface PackageWithOfferings extends Package {
+  offeringsData?: Offering[];
+  offeringsLoading?: boolean;
+}
 
 export default function PackagesPage() {
   const [page, setPage] = useState(0);
@@ -29,6 +36,45 @@ export default function PackagesPage() {
     const validFrom = new Date(pkg.validFrom);
     const validTo = new Date(pkg.validTo);
     return now >= validFrom && now <= validTo;
+  };
+
+  // Component to fetch and display offerings for a single package
+  const PackageOfferings = ({ pkg }: { pkg: Package }) => {
+    const offeringsLink = pkg._links?.offerings?.href;
+    
+    const { data: offeringsData } = useQuery({
+      queryKey: ['package', pkg.id, 'offerings'],
+      queryFn: async () => {
+        if (!offeringsLink) return null;
+        return hateoasClient.followLink<HATEOASCollection<Offering>>(offeringsLink);
+      },
+      enabled: Boolean(offeringsLink),
+      staleTime: 60000, // Cache for 1 minute
+    });
+
+    const offerings = offeringsData ? parseHalResource<Offering>(offeringsData, 'offerings') : [];
+
+    if (offerings.length === 0 && !pkg.offerings?.length) {
+      return null;
+    }
+
+    const displayOfferings = offerings.length > 0 ? offerings : (pkg.offerings || []);
+
+    return (
+      <div className="space-y-2 text-sm">
+        <span className="text-muted-foreground">Included Offerings</span>
+        <div className="flex flex-wrap gap-2">
+          {displayOfferings.map((offering) => (
+            <span
+              key={offering.id ?? offering.name}
+              className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+            >
+              {offering?.name || `Offering #${offering?.id ?? 'N/A'}`}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -155,21 +201,7 @@ export default function PackagesPage() {
                     </div>
                   </div>
 
-                  {pkg.offerings && pkg.offerings.length > 0 && (
-                    <div className="space-y-2 text-sm">
-                      <span className="text-muted-foreground">Included Offerings</span>
-                      <div className="flex flex-wrap gap-2">
-                        {pkg.offerings.map((offering) => (
-                          <span
-                            key={offering.id ?? offering.name}
-                            className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                          >
-                            {offering?.name || `Offering #${offering?.id ?? 'N/A'}`}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <PackageOfferings pkg={pkg} />
 
                   <div className="flex gap-2 pt-2">
                     <Link href={`/packages/${packageId}`} className="flex-1">

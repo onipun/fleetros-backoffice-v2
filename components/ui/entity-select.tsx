@@ -13,13 +13,14 @@ export interface EntitySelectProps {
   value?: number;
   onChange?: (id: number, label: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 const EntitySelect = React.forwardRef<HTMLButtonElement, EntitySelectProps>(
-  ({ entityType, value, onChange, className }, ref) => {
+  ({ entityType, value, onChange, className, disabled = false }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
     // Fetch entities from API
     const { data, isLoading } = useQuery({
@@ -42,6 +43,12 @@ const EntitySelect = React.forwardRef<HTMLButtonElement, EntitySelectProps>(
         return response._embedded[key] || [];
       },
     });
+
+    React.useEffect(() => {
+      if (disabled) {
+        setIsOpen(false);
+      }
+    }, [disabled]);
 
     // Get label for entity
     const getEntityLabel = (entity: any): string => {
@@ -111,18 +118,22 @@ const EntitySelect = React.forwardRef<HTMLButtonElement, EntitySelectProps>(
           role="combobox"
           aria-expanded={isOpen}
           className={cn(
-            'w-full justify-between',
+            'w-full justify-between min-w-0',
             !value && 'text-muted-foreground',
             className
           )}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            if (disabled) return;
+            setIsOpen(!isOpen);
+          }}
+          disabled={disabled}
           ref={ref}
         >
           <span className="truncate">{selectedLabel}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
 
-        {isOpen && (
+        {isOpen && !disabled && (
           <div className="absolute z-50 mt-2 w-full rounded-md border bg-popover shadow-lg">
             {/* Search Input */}
             <div className="border-b p-2">

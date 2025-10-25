@@ -71,6 +71,7 @@ export const pricingSchema = z.object({
   minimumRentalDays: z.number().min(1),
   validFrom: z.string().min(1, 'Valid from date is required'),
   validTo: z.string().min(1, 'Valid to date is required'),
+  tags: z.array(z.string()).optional(),
 });
 
 export const loginSchema = z.object({

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { getServerHateoasClient } from '@/lib/api/server-client';
 import { parseHalResource } from '@/lib/utils';
 import type { Pricing } from '@/types';
-import { Edit, Plus, Search } from 'lucide-react';
+import { Edit, Search } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -25,16 +25,44 @@ function extractIdFromLink(link?: string) {
 }
 
 function getEntityInfo(pricing: Pricing) {
-  const vehicleId = pricing.vehicleId ?? extractIdFromLink(pricing._links?.vehicle?.href);
+  // Check for vehicleId first, then try to extract from _links, then from vehicle string
+  let vehicleId = pricing.vehicleId ?? extractIdFromLink(pricing._links?.vehicle?.href);
+  
+  // If still no vehicleId, check if vehicle is a string URI
+  if (!vehicleId && typeof pricing.vehicle === 'string') {
+    vehicleId = extractIdFromLink(pricing.vehicle);
+  }
+  
   if (vehicleId) return { type: 'Vehicle', id: vehicleId };
 
-  const packageId = pricing.packageId ?? extractIdFromLink(pricing._links?.package?.href);
+  // Check for packageId
+  let packageId = pricing.packageId ?? extractIdFromLink(pricing._links?.package?.href);
+  
+  if (!packageId && typeof pricing.package === 'string') {
+    packageId = extractIdFromLink(pricing.package);
+  }
+  
   if (packageId) return { type: 'Package', id: packageId };
 
-  const bookingId = pricing.bookingId ?? extractIdFromLink(pricing._links?.booking?.href);
+  // Check for bookingId
+  let bookingId = pricing.bookingId ?? extractIdFromLink(pricing._links?.booking?.href);
+  
+  if (!bookingId && typeof pricing.booking === 'string') {
+    bookingId = extractIdFromLink(pricing.booking);
+  }
+  
   if (bookingId) return { type: 'Booking', id: bookingId };
 
-  return { type: 'Unknown', id: '-' };
+  // Check for offeringId
+  let offeringId = pricing.offeringId ?? extractIdFromLink(pricing._links?.offering?.href);
+  
+  if (!offeringId && typeof pricing.offering === 'string') {
+    offeringId = extractIdFromLink(pricing.offering);
+  }
+  
+  if (offeringId) return { type: 'Offering', id: offeringId };
+
+  return { type: 'Not Assigned', id: '-' };
 }
 
 function formatCurrency(amount: number) {
@@ -101,12 +129,6 @@ export default async function PricingsPage({ searchParams }: PricingsPageProps) 
             Manage pricing configurations for vehicles, packages, and bookings
           </p>
         </div>
-        <Link href="/pricings/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Pricing
-          </Button>
-        </Link>
       </div>
 
       <Card>
@@ -114,23 +136,25 @@ export default async function PricingsPage({ searchParams }: PricingsPageProps) 
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-4 md:grid-cols-3" action="" method="get">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                name="q"
-                placeholder="Search by rate type..."
-                defaultValue={rawSearchTerm}
-                className="pl-8"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Button type="submit" variant="outline">
-                Apply Filters
-              </Button>
-              <Button asChild variant="ghost">
-                <Link href="/pricings">Clear</Link>
-              </Button>
+          <form className="flex flex-col gap-4" action="" method="get">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  name="q"
+                  placeholder="Search by rate type..."
+                  defaultValue={rawSearchTerm}
+                  className="pl-8"
+                />
+              </div>
+              <div className="flex items-center gap-2 md:col-span-2">
+                <Button type="submit">
+                  Apply Filters
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/pricings">Clear</Link>
+                </Button>
+              </div>
             </div>
           </form>
         </CardContent>
@@ -138,13 +162,9 @@ export default async function PricingsPage({ searchParams }: PricingsPageProps) 
 
       {filteredPricings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No pricings found</p>
-          <Link href="/pricings/new">
-            <Button className="mt-4">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Your First Pricing
-            </Button>
-          </Link>
+          <p className="text-muted-foreground">
+            No pricings found. Add pricing configurations through vehicle, package, or offering forms.
+          </p>
         </div>
       ) : (
         <>
@@ -176,10 +196,20 @@ export default async function PricingsPage({ searchParams }: PricingsPageProps) 
                         <tr key={pricing.id} className="hover:bg-muted/30">
                           <td className="px-4 py-3 text-sm">{pricing.id}</td>
                           <td className="px-4 py-3 text-sm">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{entity.type}</span>
-                              <span className="text-xs text-muted-foreground">ID: {entity.id}</span>
-                            </div>
+                            {entity.id !== '-' ? (
+                              <Link 
+                                href={`/${entity.type.toLowerCase()}s/${entity.id}`}
+                                className="flex flex-col hover:underline"
+                              >
+                                <span className="font-medium">{entity.type}</span>
+                                <span className="text-xs text-muted-foreground">ID: {entity.id}</span>
+                              </Link>
+                            ) : (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-muted-foreground">{entity.type}</span>
+                                <span className="text-xs text-muted-foreground italic">No entity assigned</span>
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <span className="px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">

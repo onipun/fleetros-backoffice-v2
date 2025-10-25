@@ -103,10 +103,14 @@ export class HATEOASClient {
   /**
    * Get the URL for a specific resource
    */
-  private getEndpoint(resource: string): string {
+  private getEndpoint(resource: string, useV1?: boolean): string {
     const endpoint = this.endpoints.get(resource);
     if (!endpoint) {
       // Fallback to convention-based URL
+      // Special case: pricings endpoint uses v1 API for CREATE/UPDATE operations (tagNames support)
+      if (resource === 'pricings' && useV1) {
+        return `${this.baseUrl}/api/v1/${resource}`;
+      }
       return `${this.baseUrl}/api/${resource}`;
     }
     return endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
@@ -195,7 +199,8 @@ export class HATEOASClient {
     resource: string,
     data: Partial<T>
   ): Promise<T & HATEOASResource> {
-    const endpoint = this.getEndpoint(resource);
+    // Use v1 API for pricings to support tagNames
+    const endpoint = this.getEndpoint(resource, resource === 'pricings');
     return this.request<T & HATEOASResource>(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
@@ -210,7 +215,8 @@ export class HATEOASClient {
     id: number | string,
     data: Partial<T>
   ): Promise<T & HATEOASResource> {
-    const endpoint = this.getEndpoint(resource);
+    // Use v1 API for pricings to support tagNames
+    const endpoint = this.getEndpoint(resource, resource === 'pricings');
     return this.request<T & HATEOASResource>(`${endpoint}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
