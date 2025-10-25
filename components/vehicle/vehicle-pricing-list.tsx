@@ -8,7 +8,7 @@ import { usePricingTags } from '@/lib/api/hooks';
 import { formatDate } from '@/lib/utils';
 import type { Pricing } from '@/types';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, ChevronLeft, ChevronRight, DollarSign, Edit, Filter, Tag, Trash2, X } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, DollarSign, Edit, Filter, Loader2, Tag, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -31,7 +31,7 @@ interface SearchPricingResponse {
 }
 
 export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehiclePricingListProps) {
-  const { t } = useLocale();
+  const { t, formatCurrency } = useLocale();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(0); // 0-based page index
@@ -41,7 +41,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
   const { data: existingTags = [] } = usePricingTags();
 
   // Fetch pricings for this vehicle with optional tag filter
-  const { data: pricingsResponse, isLoading, refetch } = useQuery({
+  const { data: pricingsResponse, isLoading, isFetching } = useQuery({
     queryKey: ['vehicle', vehicleId, 'pricings', selectedTags, currentPage],
     queryFn: async () => {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
@@ -98,6 +98,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
   const pageInfo = pricingsResponse?.page;
   const totalPages = pageInfo?.totalPages || 0;
   const totalElements = pageInfo?.totalElements || 0;
+  const isRefetching = isFetching && !isLoading;
 
   const handleClearFilters = () => {
     setSelectedTags([]);
@@ -142,7 +143,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
           <div>
             <CardTitle>{t('vehicle.pricings')}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {t('common.showing')} {pricings.length} {t('common.of')} {totalElements} {t('pricing.title').toLowerCase()}{totalElements !== 1 ? 's' : ''}
+              {t('common.showing')} {pricings.length} {t('common.of')} {totalElements} {t('pricing.titlePlural')}
             </p>
           </div>
           <Button
@@ -161,7 +162,12 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative">
+        {isRefetching && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-background/70">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        )}
         {/* Filter Section */}
         {showFilter && (
           <div className="mb-4 p-4 border rounded-lg bg-muted/50">
@@ -243,15 +249,15 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-primary" />
                         <span className="font-semibold text-lg">
-                          ${pricing.baseRate?.toFixed(2) || '0.00'}
+                          {formatCurrency(pricing.baseRate ?? 0)}
                         </span>
                         <span className="text-sm text-muted-foreground">
-                          / {pricing.rateType || 'N/A'}
+                          / {pricing.rateType || t('common.notAvailable')}
                         </span>
                       </div>
                       {pricing.depositAmount && pricing.depositAmount > 0 && (
                         <div className="text-sm text-muted-foreground">
-                          {t('pricing.deposit')}: ${pricing.depositAmount.toFixed(2)}
+                          {t('pricing.deposit')}: {formatCurrency(pricing.depositAmount)}
                         </div>
                       )}
                     </div>
@@ -337,7 +343,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                   e.stopPropagation();
                   handlePrevPage();
                 }}
-                disabled={currentPage === 0}
+                disabled={currentPage === 0 || isFetching}
                 type="button"
                 className="gap-1"
               >
@@ -352,7 +358,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                   e.stopPropagation();
                   handleNextPage();
                 }}
-                disabled={currentPage >= totalPages - 1}
+                disabled={currentPage >= totalPages - 1 || isFetching}
                 type="button"
                 className="gap-1"
               >

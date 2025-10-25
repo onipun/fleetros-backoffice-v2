@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Car } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -31,6 +32,7 @@ export function VehicleImage({
   priority = false,
   sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
 }: VehicleImageProps) {
+  const { t } = useLocale();
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,7 +42,7 @@ export function VehicleImage({
       <div className={`relative bg-muted flex items-center justify-center ${className}`}>
         <Car className="h-12 w-12 text-muted-foreground/50" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs text-muted-foreground/70">No Image</span>
+          <span className="text-xs text-muted-foreground/70">{t('vehicle.noImage')}</span>
         </div>
       </div>
     );

@@ -1,16 +1,18 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useCollection } from '@/lib/api/hooks';
-import { formatCurrency, parseHalResource } from '@/lib/utils';
+import { parseHalResource } from '@/lib/utils';
 import type { Offering } from '@/types';
 import { Download, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function OfferingsPage() {
+  const { t, formatCurrency } = useLocale();
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
@@ -24,32 +26,42 @@ export default function OfferingsPage() {
   const offerings = data ? parseHalResource<Offering>(data, 'offerings') : [];
   const totalPages = data?.page?.totalPages || 0;
 
-  const getOfferingTypeIcon = (type: string) => {
-    const icons: Record<string, string> = {
+  const typeIcons = useMemo(
+    () => ({
       GPS: '🗺️',
       INSURANCE: '🛡️',
       CHILD_SEAT: '👶',
       WIFI: '📡',
       ADDITIONAL_DRIVER: '👤',
       OTHER: '📦',
-    };
-    return icons[type] || '📦';
-  };
+    }),
+    []
+  );
+
+  const typeLabels = useMemo(
+    () => ({
+      GPS: t('offering.types.gps'),
+      INSURANCE: t('offering.types.insurance'),
+      CHILD_SEAT: t('offering.types.childSeat'),
+      WIFI: t('offering.types.wifi'),
+      ADDITIONAL_DRIVER: t('offering.types.additionalDriver'),
+      OTHER: t('offering.types.other'),
+    }),
+    [t]
+  );
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Offerings</h1>
-          <p className="text-muted-foreground">
-            Manage additional services and add-ons
-          </p>
+          <h1 className="text-3xl font-bold">{t('offering.title')}</h1>
+          <p className="text-muted-foreground">{t('offering.manage')}</p>
         </div>
         <Link href="/offerings/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Offering
+            {t('offering.addOffering')}
           </Button>
         </Link>
       </div>
@@ -57,14 +69,14 @@ export default function OfferingsPage() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>{t('offering.filters')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search offerings..."
+                placeholder={t('offering.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -75,17 +87,17 @@ export default function OfferingsPage() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
             >
-              <option value="">All Types</option>
-              <option value="GPS">GPS</option>
-              <option value="INSURANCE">Insurance</option>
-              <option value="CHILD_SEAT">Child Seat</option>
-              <option value="WIFI">WiFi</option>
-              <option value="ADDITIONAL_DRIVER">Additional Driver</option>
-              <option value="OTHER">Other</option>
+              <option value="">{t('offering.allTypes')}</option>
+              <option value="GPS">{typeLabels.GPS}</option>
+              <option value="INSURANCE">{typeLabels.INSURANCE}</option>
+              <option value="CHILD_SEAT">{typeLabels.CHILD_SEAT}</option>
+              <option value="WIFI">{typeLabels.WIFI}</option>
+              <option value="ADDITIONAL_DRIVER">{typeLabels.ADDITIONAL_DRIVER}</option>
+              <option value="OTHER">{typeLabels.OTHER}</option>
             </select>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
-              Export CSV
+              {t('common.exportCSV')}
             </Button>
           </div>
         </CardContent>
@@ -94,19 +106,21 @@ export default function OfferingsPage() {
       {/* Offerings Grid */}
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Loading offerings...</p>
+          <p className="text-muted-foreground">{t('offering.loading')}</p>
         </div>
       ) : error ? (
         <div className="text-center py-12">
-          <p className="text-destructive">Error loading offerings: {error.message}</p>
+          <p className="text-destructive">
+            {`${t('offering.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
+          </p>
         </div>
       ) : offerings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No offerings found</p>
+          <p className="text-muted-foreground">{t('offering.noResults')}</p>
           <Link href="/offerings/new">
             <Button className="mt-4">
               <Plus className="mr-2 h-4 w-4" />
-              Add Your First Offering
+              {t('offering.addFirstOffering')}
             </Button>
           </Link>
         </div>
@@ -123,18 +137,22 @@ export default function OfferingsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">
-                        {getOfferingTypeIcon(offering.offeringType || 'OTHER')}
+                        {typeIcons[offering.offeringType || 'OTHER'] || typeIcons.OTHER}
                       </span>
                       <div>
-                        <CardTitle className="text-lg">{offering.name || 'Unnamed Offering'}</CardTitle>
+                        <CardTitle className="text-lg">
+                          {offering.name || t('offering.unnamedOffering')}
+                        </CardTitle>
                         <p className="text-xs text-muted-foreground">
-                          {offering.offeringType ? offering.offeringType.replace('_', ' ') : 'N/A'}
+                          {offering.offeringType
+                            ? typeLabels[offering.offeringType as keyof typeof typeLabels] || typeLabels.OTHER
+                            : t('common.notAvailable')}
                         </p>
                       </div>
                     </div>
                     {offering.isMandatory && (
                       <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/20 text-primary">
-                        Mandatory
+                        {t('offering.mandatory')}
                       </span>
                     )}
                   </div>
@@ -148,28 +166,30 @@ export default function OfferingsPage() {
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Price:</span>
+                      <span className="text-muted-foreground">{t('offering.priceLabel')}</span>
                       <p className="font-bold text-lg text-primary">
-                        {offering.price != null ? formatCurrency(offering.price) : 'N/A'}
+                        {offering.price != null ? formatCurrency(offering.price) : t('common.notAvailable')}
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Availability:</span>
-                      <p className="font-medium">{offering.availability ?? 0} units</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Max Quantity:</span>
+                      <span className="text-muted-foreground">{t('offering.availabilityLabel')}</span>
                       <p className="font-medium">
-                        {offering.maxQuantityPerBooking ?? 0} per booking
+                        {offering.availability ?? 0} {t('offering.unitsSuffix')}
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Status:</span>
+                      <span className="text-muted-foreground">{t('offering.maxQuantityLabel')}</span>
+                      <p className="font-medium">
+                        {offering.maxQuantityPerBooking ?? 0} {t('offering.perBookingSuffix')}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{t('offering.statusLabel')}</span>
                       <p className="font-medium">
                         {(offering.availability ?? 0) > 0 ? (
-                          <span className="text-success">In Stock</span>
+                          <span className="text-success">{t('offering.inStock')}</span>
                         ) : (
-                          <span className="text-destructive">Out of Stock</span>
+                          <span className="text-destructive">{t('offering.outOfStock')}</span>
                         )}
                       </p>
                     </div>
@@ -178,12 +198,12 @@ export default function OfferingsPage() {
                   <div className="flex gap-2 pt-2">
                     <Link href={`/offerings/${offeringId}`} className="flex-1">
                       <Button size="sm" className="w-full">
-                        View Details
+                        {t('common.viewDetails')}
                       </Button>
                     </Link>
                     <Link href={`/offerings/${offeringId}/edit`} className="flex-1">
                       <Button size="sm" variant="outline" className="w-full">
-                        Edit
+                        {t('common.edit')}
                       </Button>
                     </Link>
                   </div>
@@ -201,17 +221,17 @@ export default function OfferingsPage() {
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
               >
-                Previous
+                {t('common.previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page + 1} of {totalPages}
+                {t('common.page')} {page + 1} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
                 onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                 disabled={page >= totalPages - 1}
               >
-                Next
+                {t('common.next')}
               </Button>
             </div>
           )}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,6 +27,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function VehicleDetailPage() {
+  const { t } = useLocale();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -101,15 +103,15 @@ export default function VehicleDetailPage() {
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Vehicle deleted successfully',
+        title: t('common.success'),
+        description: t('vehicle.deleteSuccess'),
       });
       router.push('/vehicles');
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
-        description: error.message,
+        title: t('common.error'),
+        description: error.message || t('vehicle.deleteError'),
         variant: 'destructive',
       });
     },
@@ -164,8 +166,8 @@ export default function VehicleDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
       toast({
-        title: 'Success',
-        description: 'Image deleted successfully',
+        title: t('common.success'),
+        description: t('vehicle.deleteImageSuccess'),
       });
     },
     onError: (error: Error) => {
@@ -173,17 +175,17 @@ export default function VehicleDetailPage() {
       
       // Handle common error scenarios
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-        errorMessage = 'Network error. Please check your connection and try again.';
+        errorMessage = t('vehicle.networkError');
       } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-        errorMessage = 'Session expired. Please log in again.';
+        errorMessage = t('vehicle.sessionExpired');
       } else if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
-        errorMessage = 'You do not have permission to delete images.';
+        errorMessage = t('vehicle.permissionError');
       } else if (errorMessage.includes('404')) {
-        errorMessage = 'Image not found.';
+        errorMessage = t('vehicle.imageNotFound');
       }
       
       toast({
-        title: 'Delete Failed',
+        title: t('vehicle.deleteImageErrorTitle'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -202,8 +204,8 @@ export default function VehicleDetailPage() {
     const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!validImageTypes.includes(file.type)) {
       toast({
-        title: 'Invalid File Type',
-        description: 'Please upload a valid image file (JPEG, PNG, GIF, or WebP).',
+        title: t('vehicle.invalidImageTypeTitle'),
+        description: t('vehicle.invalidImageTypeDescription'),
         variant: 'destructive',
       });
       event.target.value = '';
@@ -213,9 +215,10 @@ export default function VehicleDetailPage() {
     // Validate file size (max 10MB)
     const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSizeInBytes) {
+      const fileSizeMb = (file.size / 1024 / 1024).toFixed(2);
       toast({
-        title: 'File Too Large',
-        description: `Image size must be less than 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`,
+        title: t('vehicle.fileTooLargeTitle'),
+        description: `${t('vehicle.fileTooLargeDescription')} ${fileSizeMb}MB.`,
         variant: 'destructive',
       });
       event.target.value = '';
@@ -301,8 +304,8 @@ export default function VehicleDetailPage() {
       await queryClient.refetchQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
       
       toast({
-        title: 'Success',
-        description: result.message || 'Image uploaded successfully',
+        title: t('common.success'),
+        description: result.message || t('vehicle.uploadSuccess'),
       });
 
       // Close dialog and reset state
@@ -311,7 +314,7 @@ export default function VehicleDetailPage() {
       setImageDescription('');
       setIsPrimaryImage(false);
     } catch (error) {
-      let errorMessage = 'Failed to upload image';
+      let errorMessage = t('vehicle.uploadError');
       
       if (error instanceof Error) {
         errorMessage = error.message;
@@ -321,21 +324,21 @@ export default function VehicleDetailPage() {
       
       // Handle common error scenarios
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-        errorMessage = 'Network error. Please check your connection and try again.';
+        errorMessage = t('vehicle.networkError');
       } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-        errorMessage = 'Session expired. Please log in again.';
+        errorMessage = t('vehicle.sessionExpired');
       } else if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
-        errorMessage = 'You do not have permission to upload images.';
+        errorMessage = t('vehicle.permissionError');
       } else if (errorMessage.includes('404')) {
-        errorMessage = 'Vehicle not found.';
+        errorMessage = t('vehicle.vehicleNotFound');
       } else if (errorMessage.includes('413') || errorMessage.includes('too large')) {
-        errorMessage = 'Image file is too large. Please choose a smaller file.';
+        errorMessage = t('vehicle.imageTooLarge');
       } else if (errorMessage.includes('415') || errorMessage.includes('Unsupported Media Type')) {
-        errorMessage = 'Invalid file type. Please upload a valid image file.';
+        errorMessage = t('vehicle.invalidImageTypeDescription');
       }
       
       toast({
-        title: 'Upload Failed',
+        title: t('vehicle.uploadFailedTitle'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -351,11 +354,11 @@ export default function VehicleDetailPage() {
   if (vehicleError || !vehicle) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <p className="text-destructive">Error loading vehicle details</p>
+        <p className="text-destructive">{t('vehicle.errorLoadingDetails')}</p>
         <Link href="/vehicles">
           <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Vehicles
+            {t('vehicle.backToVehicles')}
           </Button>
         </Link>
       </div>
@@ -364,6 +367,10 @@ export default function VehicleDetailPage() {
 
   const primaryImage = images.find(img => img.isPrimary);
   const displayImageUrl = selectedImage || primaryImage?.imageUrl || images[0]?.imageUrl;
+  const normalizedStatus = vehicle.status?.toLowerCase();
+  const detailStatusLabel = normalizedStatus && ['available', 'rented', 'maintenance', 'retired'].includes(normalizedStatus)
+    ? t(`vehicle.${normalizedStatus}`)
+    : vehicle.status || t('vehicle.unknownStatus');
 
   return (
     <div className="space-y-8">
@@ -373,7 +380,7 @@ export default function VehicleDetailPage() {
           <Link href="/vehicles">
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {t('common.back')}
             </Button>
           </Link>
           <div>
@@ -387,19 +394,19 @@ export default function VehicleDetailPage() {
           <Link href={`/vehicles/${vehicleId}/edit`}>
             <Button>
               <Edit className="mr-2 h-4 w-4" />
-              Edit
+              {t('common.edit')}
             </Button>
           </Link>
           <Button 
             variant="destructive"
             onClick={() => {
-              if (confirm('Are you sure you want to delete this vehicle?')) {
+              if (confirm(t('vehicle.deleteConfirm'))) {
                 deleteMutation.mutate();
               }
             }}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            {t('common.delete')}
           </Button>
         </div>
       </div>
@@ -410,7 +417,7 @@ export default function VehicleDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Vehicle Images</CardTitle>
+                <CardTitle>{t('vehicle.images')}</CardTitle>
                 <label htmlFor="image-upload">
                   <Button 
                     size="sm" 
@@ -419,7 +426,7 @@ export default function VehicleDetailPage() {
                     onClick={() => document.getElementById('image-upload')?.click()}
                   >
                     <Upload className="mr-2 h-4 w-4" />
-                    {isUploading ? 'Uploading...' : 'Upload'}
+                    {isUploading ? t('common.uploading') : t('common.upload')}
                   </Button>
                 </label>
                 <input
@@ -449,7 +456,7 @@ export default function VehicleDetailPage() {
                 <div className="flex items-center justify-center w-full bg-muted rounded-lg" style={{ height: '300px' }}>
                   <div className="text-center text-muted-foreground">
                     <ImageIcon className="h-12 w-12 mx-auto mb-2" />
-                    <p>No images available</p>
+                    <p>{t('vehicle.noImages')}</p>
                   </div>
                 </div>
               )}
@@ -473,7 +480,7 @@ export default function VehicleDetailPage() {
                         >
                           <Image
                             src={image.imageUrl}
-                            alt={image.description || image.caption || 'Vehicle image'}
+                            alt={image.description || image.caption || t('vehicle.imageAltFallback')}
                             fill
                             className="object-cover"
                             sizes="(max-width: 768px) 25vw, 12vw"
@@ -482,14 +489,14 @@ export default function VehicleDetailPage() {
                         </div>
                         {image.isPrimary && (
                           <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded">
-                            Primary
+                            {t('vehicle.primaryImage')}
                           </div>
                         )}
                         <button
                           className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm('Delete this image?')) {
+                            if (confirm(t('vehicle.deleteImageConfirm'))) {
                               deleteImageMutation.mutate(image.id!);
                             }
                           }}
@@ -512,12 +519,12 @@ export default function VehicleDetailPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>{t('vehicle.basicInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-sm text-muted-foreground">Status</span>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.status')}</span>
                   <div className="mt-1">
                     <span
                       className={`px-2 py-1 rounded-md text-xs font-medium ${
@@ -530,22 +537,22 @@ export default function VehicleDetailPage() {
                           : 'bg-muted text-muted-foreground'
                       }`}
                     >
-                      {vehicle.status}
+                      {detailStatusLabel}
                     </span>
                   </div>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">License Plate</span>
-                  <p className="font-medium">{vehicle.licensePlate || 'N/A'}</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.licensePlate')}</span>
+                  <p className="font-medium">{vehicle.licensePlate || t('common.notAvailable')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">VIN</span>
-                  <p className="font-mono text-sm">{vehicle.vin || 'N/A'}</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.vinNumber')}</span>
+                  <p className="font-mono text-sm">{vehicle.vin || t('common.notAvailable')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Odometer</span>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.odometer')}</span>
                   <p className="font-medium">
-                    {vehicle.odometer != null ? vehicle.odometer.toLocaleString() : 'N/A'} km
+                    {vehicle.odometer != null ? vehicle.odometer.toLocaleString() : t('common.notAvailable')} {t('vehicle.kilometersShort')}
                   </p>
                 </div>
               </div>
@@ -554,29 +561,29 @@ export default function VehicleDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Specifications</CardTitle>
+              <CardTitle>{t('vehicle.specifications')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-sm text-muted-foreground">Make</span>
-                  <p className="font-medium">{vehicle.make || 'N/A'}</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.make')}</span>
+                  <p className="font-medium">{vehicle.make || t('common.notAvailable')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Model</span>
-                  <p className="font-medium">{vehicle.model || 'N/A'}</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.model')}</span>
+                  <p className="font-medium">{vehicle.model || t('common.notAvailable')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Year</span>
-                  <p className="font-medium">{vehicle.year || 'N/A'}</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.year')}</span>
+                  <p className="font-medium">{vehicle.year || t('common.notAvailable')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Fuel Type</span>
-                  <p className="font-medium">{vehicle.fuelType || 'N/A'}</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.fuelType')}</span>
+                  <p className="font-medium">{vehicle.fuelType || t('common.notAvailable')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Transmission</span>
-                  <p className="font-medium">{vehicle.transmissionType || 'N/A'}</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.transmissionType')}</span>
+                  <p className="font-medium">{vehicle.transmissionType || t('common.notAvailable')}</p>
                 </div>
               </div>
             </CardContent>
@@ -584,25 +591,25 @@ export default function VehicleDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Rental Settings</CardTitle>
+              <CardTitle>{t('vehicle.rentalSettings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-sm text-muted-foreground">Buffer Minutes</span>
-                  <p className="font-medium">{vehicle.bufferMinutes ?? 0} min</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.bufferMinutes')}</span>
+                  <p className="font-medium">{vehicle.bufferMinutes ?? 0} {t('vehicle.minutesShort')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Min Rental Hours</span>
-                  <p className="font-medium">{vehicle.minRentalHours ?? 0} hrs</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.minRentalHours')}</span>
+                  <p className="font-medium">{vehicle.minRentalHours ?? 0} {t('vehicle.hoursShort')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Max Rental Days</span>
-                  <p className="font-medium">{vehicle.maxRentalDays ?? 0} days</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.maxRentalDays')}</span>
+                  <p className="font-medium">{vehicle.maxRentalDays ?? 0} {t('vehicle.daysShort')}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Max Future Booking</span>
-                  <p className="font-medium">{vehicle.maxFutureBookingDays ?? 0} days</p>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.maxFutureBookingDays')}</span>
+                  <p className="font-medium">{vehicle.maxFutureBookingDays ?? 0} {t('vehicle.daysShort')}</p>
                 </div>
               </div>
             </CardContent>
@@ -611,7 +618,7 @@ export default function VehicleDetailPage() {
           {vehicle.details && (
             <Card>
               <CardHeader>
-                <CardTitle>Additional Details</CardTitle>
+                <CardTitle>{t('vehicle.additionalDetails')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -627,18 +634,18 @@ export default function VehicleDetailPage() {
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Upload Vehicle Image</DialogTitle>
+            <DialogTitle>{t('vehicle.uploadImageTitle')}</DialogTitle>
             <DialogDescription>
-              Add a description and set whether this image should be the primary image.
+              {t('vehicle.imageDialogDescription')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
+              <Label htmlFor="description">{t('vehicle.imageDescriptionLabel')}</Label>
               <Textarea
                 id="description"
-                placeholder="e.g., Front view of the vehicle"
+                placeholder={t('vehicle.captionPlaceholder')}
                 value={imageDescription}
                 onChange={(e) => setImageDescription(e.target.value)}
                 rows={3}
@@ -655,13 +662,13 @@ export default function VehicleDetailPage() {
                 htmlFor="isPrimary"
                 className="text-sm font-normal cursor-pointer"
               >
-                Set as primary image
+                {t('vehicle.setPrimaryImage')}
               </Label>
             </div>
 
             {pendingFile && (
               <div className="text-sm text-muted-foreground">
-                File: {pendingFile.name} ({(pendingFile.size / 1024).toFixed(2)} KB)
+                {t('vehicle.selectedFileLabel')} {pendingFile.name} ({(pendingFile.size / 1024).toFixed(2)} KB)
               </div>
             )}
           </div>
@@ -677,13 +684,13 @@ export default function VehicleDetailPage() {
               }}
               disabled={isUploading}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleImageUpload}
               disabled={isUploading || !pendingFile}
             >
-              {isUploading ? 'Uploading...' : 'Upload'}
+              {isUploading ? t('common.uploading') : t('common.upload')}
             </Button>
           </DialogFooter>
         </DialogContent>

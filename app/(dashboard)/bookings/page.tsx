@@ -1,18 +1,20 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { TablePageSkeleton } from '@/components/skeletons/page-skeletons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { useCollection } from '@/lib/api/hooks';
-import { formatCurrency, formatDate, parseHalResource } from '@/lib/utils';
+import { formatDate, parseHalResource } from '@/lib/utils';
 import type { Booking } from '@/types';
 import { Calendar, Download, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function BookingsPage() {
+  const { t, formatCurrency, locale } = useLocale();
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -25,6 +27,16 @@ export default function BookingsPage() {
 
   const bookings = data ? parseHalResource<Booking>(data, 'bookings') : [];
   const totalPages = data?.page?.totalPages || 0;
+
+  const statusLabels = useMemo(
+    () => ({
+      PENDING: t('booking.status.pending'),
+      CONFIRMED: t('booking.status.confirmed'),
+      COMPLETED: t('booking.status.completed'),
+      CANCELLED: t('booking.status.cancelled'),
+    }),
+    [t]
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -46,15 +58,15 @@ export default function BookingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Bookings</h1>
+          <h1 className="text-3xl font-bold">{t('booking.title')}</h1>
           <p className="text-muted-foreground">
-            Manage customer reservations and bookings
+            {t('booking.manage')}
           </p>
         </div>
         <Link href="/bookings/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Create Booking
+            {t('booking.newBooking')}
           </Button>
         </Link>
       </div>
@@ -62,14 +74,14 @@ export default function BookingsPage() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>{t('booking.filters')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by customer or booking ID..."
+                placeholder={t('booking.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -80,15 +92,15 @@ export default function BookingsPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
+              <option value="">{t('common.allStatuses')}</option>
+              <option value="PENDING">{statusLabels.PENDING}</option>
+              <option value="CONFIRMED">{statusLabels.CONFIRMED}</option>
+              <option value="COMPLETED">{statusLabels.COMPLETED}</option>
+              <option value="CANCELLED">{statusLabels.CANCELLED}</option>
             </select>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
-              Export CSV
+              {t('common.exportCSV')}
             </Button>
           </div>
         </CardContent>
@@ -100,18 +112,18 @@ export default function BookingsPage() {
       ) : error ? (
         <Card>
           <ErrorDisplay
-            title="Oops! Something Went Wrong"
-            message={`Error loading bookings: ${error.message}`}
+            title={t('booking.errorTitle')}
+            message={`${t('booking.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
             onRetry={() => refetch()}
           />
         </Card>
       ) : bookings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No bookings found</p>
+          <p className="text-muted-foreground">{t('booking.noBookingsFound')}</p>
           <Link href="/bookings/new">
             <Button className="mt-4">
               <Plus className="mr-2 h-4 w-4" />
-              Create Your First Booking
+              {t('booking.createFirstBooking')}
             </Button>
           </Link>
         </div>
@@ -129,41 +141,41 @@ export default function BookingsPage() {
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
                         <h3 className="text-lg font-semibold">
-                          Booking #{booking.id || 'Unknown'}
+                          {t('booking.bookingLabel')} #{booking.id || t('common.notAvailable')}
                         </h3>
                         <span
                           className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
                             booking.status || 'UNKNOWN'
                           )}`}
                         >
-                          {booking.status || 'UNKNOWN'}
+                          {statusLabels[booking.status as keyof typeof statusLabels] || t('booking.status.unknown')}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Booking ID:</span>
-                          <p className="font-medium">#{booking.id || 'N/A'}</p>
+                          <span className="text-muted-foreground">{t('booking.bookingIdLabel')}</span>
+                          <p className="font-medium">#{booking.id || t('common.notAvailable')}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Vehicle ID:</span>
-                          <p className="font-medium">#{booking.vehicleId || 'N/A'}</p>
+                          <span className="text-muted-foreground">{t('booking.vehicleIdLabel')}</span>
+                          <p className="font-medium">#{booking.vehicleId || t('common.notAvailable')}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <span className="text-muted-foreground">Start:</span>
+                            <span className="text-muted-foreground">{t('booking.startLabel')}</span>
                             <p className="font-medium">
-                              {booking.startDate ? formatDate(booking.startDate) : 'N/A'}
+                              {booking.startDate ? formatDate(booking.startDate, locale) : t('common.notAvailable')}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <span className="text-muted-foreground">End:</span>
+                            <span className="text-muted-foreground">{t('booking.endLabel')}</span>
                             <p className="font-medium">
-                              {booking.endDate ? formatDate(booking.endDate) : 'N/A'}
+                              {booking.endDate ? formatDate(booking.endDate, locale) : t('common.notAvailable')}
                             </p>
                           </div>
                         </div>
@@ -171,27 +183,27 @@ export default function BookingsPage() {
 
                       <div className="flex items-center gap-4 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Pickup:</span>
-                          <p className="font-medium">{booking.pickupLocation || 'N/A'}</p>
+                          <span className="text-muted-foreground">{t('booking.pickupLabel')}</span>
+                          <p className="font-medium">{booking.pickupLocation || t('common.notAvailable')}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Dropoff:</span>
-                          <p className="font-medium">{booking.dropoffLocation || 'N/A'}</p>
+                          <span className="text-muted-foreground">{t('booking.dropoffLabel')}</span>
+                          <p className="font-medium">{booking.dropoffLocation || t('common.notAvailable')}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Duration:</span>
-                          <p className="font-medium">{booking.totalDays || 0} days</p>
+                          <span className="text-muted-foreground">{t('booking.durationLabel')}</span>
+                          <p className="font-medium">{booking.totalDays || 0} {t('booking.daysSuffix')}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Final Price:</span>
+                          <span className="text-muted-foreground">{t('booking.finalPriceLabel')}</span>
                           <p className="font-bold text-lg">
-                            {booking.finalPrice != null ? formatCurrency(booking.finalPrice) : 'N/A'}
+                            {booking.finalPrice != null ? formatCurrency(booking.finalPrice) : t('common.notAvailable')}
                           </p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Balance Due:</span>
+                          <span className="text-muted-foreground">{t('booking.balanceDueLabel')}</span>
                           <p className="font-medium text-warning">
-                            {booking.balancePayment != null ? formatCurrency(booking.balancePayment) : 'N/A'}
+                            {booking.balancePayment != null ? formatCurrency(booking.balancePayment) : t('common.notAvailable')}
                           </p>
                         </div>
                       </div>
@@ -201,23 +213,23 @@ export default function BookingsPage() {
                       {bookingId ? (
                         <Button size="sm" asChild>
                           <Link href={`/bookings/${bookingId}`}>
-                            View Details
+                            {t('common.viewDetails')}
                           </Link>
                         </Button>
                       ) : (
                         <Button size="sm" disabled>
-                          View Details
+                          {t('common.viewDetails')}
                         </Button>
                       )}
                       {bookingId ? (
                         <Button size="sm" variant="outline" asChild>
                           <Link href={`/bookings/${bookingId}/edit`}>
-                            Edit
+                            {t('common.edit')}
                           </Link>
                         </Button>
                       ) : (
                         <Button size="sm" variant="outline" disabled>
-                          Edit
+                          {t('common.edit')}
                         </Button>
                       )}
                     </div>
@@ -236,17 +248,17 @@ export default function BookingsPage() {
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
               >
-                Previous
+                {t('common.previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page + 1} of {totalPages}
+                {t('common.page')} {page + 1} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
                 onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                 disabled={page >= totalPages - 1}
               >
-                Next
+                {t('common.next')}
               </Button>
             </div>
           )}

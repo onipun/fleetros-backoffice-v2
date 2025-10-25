@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,12 +13,8 @@ import { Box, Download, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-interface PackageWithOfferings extends Package {
-  offeringsData?: Offering[];
-  offeringsLoading?: boolean;
-}
-
 export default function PackagesPage() {
+  const { t, locale } = useLocale();
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -62,14 +59,14 @@ export default function PackagesPage() {
 
     return (
       <div className="space-y-2 text-sm">
-        <span className="text-muted-foreground">Included Offerings</span>
+        <span className="text-muted-foreground">{t('package.includedOfferings')}</span>
         <div className="flex flex-wrap gap-2">
           {displayOfferings.map((offering) => (
             <span
               key={offering.id ?? offering.name}
               className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
             >
-              {offering?.name || `Offering #${offering?.id ?? 'N/A'}`}
+              {offering?.name || `${t('package.offeringFallback')} #${offering?.id ?? t('common.notAvailable')}`}
             </span>
           ))}
         </div>
@@ -82,15 +79,13 @@ export default function PackagesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Packages</h1>
-          <p className="text-muted-foreground">
-            Manage rental packages and bundles
-          </p>
+          <h1 className="text-3xl font-bold">{t('package.title')}</h1>
+          <p className="text-muted-foreground">{t('package.manage')}</p>
         </div>
         <Link href="/packages/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Create Package
+            {t('package.createPackage')}
           </Button>
         </Link>
       </div>
@@ -98,14 +93,14 @@ export default function PackagesPage() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>{t('package.filters')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search packages..."
+                placeholder={t('package.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -113,7 +108,7 @@ export default function PackagesPage() {
             </div>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
-              Export CSV
+              {t('common.exportCSV')}
             </Button>
           </div>
         </CardContent>
@@ -122,19 +117,21 @@ export default function PackagesPage() {
       {/* Packages Grid */}
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Loading packages...</p>
+          <p className="text-muted-foreground">{t('package.loading')}</p>
         </div>
       ) : error ? (
         <div className="text-center py-12">
-          <p className="text-destructive">Error loading packages: {error.message}</p>
+          <p className="text-destructive">
+            {`${t('package.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
+          </p>
         </div>
       ) : packages.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No packages found</p>
+          <p className="text-muted-foreground">{t('package.noResults')}</p>
           <Link href="/packages/new">
             <Button className="mt-4">
               <Plus className="mr-2 h-4 w-4" />
-              Create Your First Package
+              {t('package.createFirstPackage')}
             </Button>
           </Link>
         </div>
@@ -152,9 +149,11 @@ export default function PackagesPage() {
                     <div className="flex items-center gap-2">
                       <Box className="h-5 w-5 text-primary" />
                       <div>
-                        <CardTitle className="text-lg">{pkg.name || 'Unnamed Package'}</CardTitle>
+                        <CardTitle className="text-lg">
+                          {pkg.name || t('package.unnamedPackage')}
+                        </CardTitle>
                         <p className="text-xs text-muted-foreground">
-                          {pkg.minRentalDays ?? 0} days minimum
+                          {pkg.minRentalDays ?? 0} {t('package.minimumDaysSuffix')}
                         </p>
                       </div>
                     </div>
@@ -165,7 +164,7 @@ export default function PackagesPage() {
                           : 'bg-muted text-muted-foreground'
                       }`}
                     >
-                      {isPackageActive(pkg) ? 'Active' : 'Inactive'}
+                      {isPackageActive(pkg) ? t('package.active') : t('package.inactive')}
                     </span>
                   </div>
                 </CardHeader>
@@ -182,22 +181,28 @@ export default function PackagesPage() {
                         {(pkg.priceModifier ?? 0) > 0 ? '+' : ''}
                         {pkg.priceModifier ?? 0}%
                       </p>
-                      <p className="text-xs text-muted-foreground">Price Modifier</p>
+                      <p className="text-xs text-muted-foreground">{t('package.priceModifierLabel')}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Valid From:</span>
-                      <p className="font-medium">{pkg.validFrom ? formatDate(pkg.validFrom) : 'N/A'}</p>
+                      <span className="text-muted-foreground">{t('package.validFromLabel')}</span>
+                      <p className="font-medium">
+                        {pkg.validFrom ? formatDate(pkg.validFrom, locale) : t('common.notAvailable')}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Valid To:</span>
-                      <p className="font-medium">{pkg.validTo ? formatDate(pkg.validTo) : 'N/A'}</p>
+                      <span className="text-muted-foreground">{t('package.validToLabel')}</span>
+                      <p className="font-medium">
+                        {pkg.validTo ? formatDate(pkg.validTo, locale) : t('common.notAvailable')}
+                      </p>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-muted-foreground">Min. Rental:</span>
-                      <p className="font-medium">{pkg.minRentalDays ?? 0} days</p>
+                      <span className="text-muted-foreground">{t('package.minRentalLabel')}</span>
+                      <p className="font-medium">
+                        {pkg.minRentalDays ?? 0} {t('package.daysSuffix')}
+                      </p>
                     </div>
                   </div>
 
@@ -206,12 +211,12 @@ export default function PackagesPage() {
                   <div className="flex gap-2 pt-2">
                     <Link href={`/packages/${packageId}`} className="flex-1">
                       <Button size="sm" className="w-full">
-                        View Details
+                        {t('common.viewDetails')}
                       </Button>
                     </Link>
                     <Link href={`/packages/${packageId}/edit`} className="flex-1">
                       <Button size="sm" variant="outline" className="w-full">
-                        Edit
+                        {t('common.edit')}
                       </Button>
                     </Link>
                   </div>
@@ -229,17 +234,17 @@ export default function PackagesPage() {
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
               >
-                Previous
+                {t('common.previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page + 1} of {totalPages}
+                {t('common.page')} {page + 1} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
                 onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                 disabled={page >= totalPages - 1}
               >
-                Next
+                {t('common.next')}
               </Button>
             </div>
           )}
