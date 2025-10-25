@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -33,6 +34,7 @@ export function PricingPanel({
   existingTags = [],
   entityInfo,
 }: PricingPanelProps) {
+  const { t, formatCurrency } = useLocale();
   const [formData, setFormData] = useState<PricingFormData>(
     initialData || {
       baseRate: 0,
@@ -51,20 +53,28 @@ export function PricingPanel({
     onDataChange?.(newData);
   };
 
+  const rateTypeOptions = [
+    { value: 'Hourly', label: t('pricing.rateTypes.hourly') },
+    { value: 'Daily', label: t('pricing.rateTypes.daily') },
+    { value: 'Weekly', label: t('pricing.rateTypes.weekly') },
+    { value: 'Monthly', label: t('pricing.rateTypes.monthly') },
+    { value: 'Flat', label: t('pricing.rateTypes.flat') },
+  ];
+
+  const selectedRateTypeLabel = rateTypeOptions.find((option) => option.value === formData.rateType)?.label;
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-primary" />
-          <CardTitle>Pricing Configuration</CardTitle>
+          <CardTitle>{t('pricing.form.configurationTitle')}</CardTitle>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Set the pricing details for this {entityInfo ? entityInfo.type.toLowerCase() : 'entity'}
-        </p>
+        <p className="text-sm text-muted-foreground">{t('pricing.form.configurationDescription')}</p>
         {entityInfo && (
           <div className="mt-3 p-3 rounded-lg bg-muted/50 border">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium text-muted-foreground">Connected to:</span>
+              <span className="font-medium text-muted-foreground">{t('pricing.form.connectedTo')}</span>
               <span className="font-semibold">{entityInfo.type}</span>
               <span className="text-muted-foreground">•</span>
               <span className="font-medium">
@@ -77,7 +87,7 @@ export function PricingPanel({
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="rateType">Rate Type *</Label>
+            <Label htmlFor="rateType">{`${t('pricing.rateType')} ${t('common.required')}`}</Label>
             <select
               id="rateType"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -86,19 +96,17 @@ export function PricingPanel({
               disabled={readOnly}
               required
             >
-              <option value="Hourly">Hourly</option>
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Flat">Flat Rate</option>
+              {rateTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
-            <p className="text-xs text-muted-foreground">
-              How the base rate is calculated
-            </p>
+            <p className="text-xs text-muted-foreground">{t('pricing.form.rateTypeHint')}</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="baseRate">Base Rate (MYR) *</Label>
+            <Label htmlFor="baseRate">{`${t('pricing.baseRate')} ${t('common.required')}`}</Label>
             <CurrencyInput
               id="baseRate"
               value={formData.baseRate}
@@ -106,13 +114,11 @@ export function PricingPanel({
               disabled={readOnly}
               required
             />
-            <p className="text-xs text-muted-foreground">
-              Base rental rate per {formData.rateType.toLowerCase()} period
-            </p>
+            <p className="text-xs text-muted-foreground">{t('pricing.form.baseRateHint')}</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="depositAmount">Deposit Amount (MYR) *</Label>
+            <Label htmlFor="depositAmount">{`${t('pricing.depositAmount')} ${t('common.required')}`}</Label>
             <CurrencyInput
               id="depositAmount"
               value={formData.depositAmount}
@@ -120,13 +126,11 @@ export function PricingPanel({
               disabled={readOnly}
               required
             />
-            <p className="text-xs text-muted-foreground">
-              Security deposit required
-            </p>
+            <p className="text-xs text-muted-foreground">{t('pricing.form.depositHint')}</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="minimumRentalDays">Minimum Rental Period *</Label>
+            <Label htmlFor="minimumRentalDays">{`${t('pricing.minimumRentalDays')} ${t('common.required')}`}</Label>
             <Input
               id="minimumRentalDays"
               type="number"
@@ -136,91 +140,84 @@ export function PricingPanel({
               disabled={readOnly}
               required
             />
-            <p className="text-xs text-muted-foreground">
-              Minimum rental period
-            </p>
+            <p className="text-xs text-muted-foreground">{t('pricing.form.minimumRentalHint')}</p>
           </div>
 
           {showValidity && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="validFrom">Valid From *</Label>
+                <Label htmlFor="validFrom">{`${t('pricing.validFrom')} ${t('common.required')}`}</Label>
                 <DateTimePicker
                   id="validFrom"
                   value={formData.validFrom}
                   onChange={(value) => handleChange({ validFrom: value })}
                   disabled={readOnly}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Start date and time for this pricing
-                </p>
+                <p className="text-xs text-muted-foreground">{t('pricing.form.validFromHint')}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="validTo">Valid To *</Label>
+                <Label htmlFor="validTo">{`${t('pricing.validTo')} ${t('common.required')}`}</Label>
                 <DateTimePicker
                   id="validTo"
                   value={formData.validTo}
                   onChange={(value) => handleChange({ validTo: value })}
                   disabled={readOnly}
                 />
-                <p className="text-xs text-muted-foreground">
-                  End date and time for this pricing
-                </p>
+                <p className="text-xs text-muted-foreground">{t('pricing.form.validToHint')}</p>
               </div>
             </>
           )}
 
           {/* Tags Input */}
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="tags">Tags (Optional)</Label>
+            <Label htmlFor="tags">{`${t('pricing.tags')} (${t('common.optional')})`}</Label>
             <TagInput
               value={formData.tags || []}
               onChange={(tags) => handleChange({ tags })}
-              placeholder="Add tags to categorize this pricing..."
+              placeholder={t('pricing.addTagsPlaceholder')}
               suggestions={existingTags}
               disabled={readOnly}
             />
-            <p className="text-xs text-muted-foreground">
-              Use tags like "seasonal", "weekend", "holiday", "early-bird", etc.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('pricing.form.tagsSuggestion')}</p>
           </div>
         </div>
 
         <div className="rounded-lg border bg-muted/50 p-4">
-          <h4 className="text-sm font-medium mb-2">Pricing Summary</h4>
+          <h4 className="text-sm font-medium mb-2">{t('pricing.form.summaryTitle')}</h4>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Rate Type:</span>
-              <span className="font-medium">{formData.rateType}</span>
+              <span className="text-muted-foreground">{t('pricing.rateType')}:</span>
+              <span className="font-medium">{selectedRateTypeLabel ?? formData.rateType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Base Rate:</span>
-              <span className="font-medium">MYR {formData.baseRate.toFixed(2)}</span>
+              <span className="text-muted-foreground">{t('pricing.baseRate')}:</span>
+              <span className="font-medium">{formatCurrency(formData.baseRate)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Deposit:</span>
-              <span className="font-medium">MYR {formData.depositAmount.toFixed(2)}</span>
+              <span className="text-muted-foreground">{t('pricing.depositAmount')}:</span>
+              <span className="font-medium">{formatCurrency(formData.depositAmount)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Min Period:</span>
+              <span className="text-muted-foreground">{t('pricing.minimumRentalDays')}:</span>
               <span className="font-medium">{formData.minimumRentalDays}</span>
             </div>
-            {formData.tags && formData.tags.length > 0 && (
-              <div className="flex flex-col gap-1 pt-2 border-t">
-                <span className="text-muted-foreground">Tags:</span>
-                <div className="flex flex-wrap gap-1">
-                  {formData.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+            {showValidity && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('pricing.form.validity')}:</span>
+                <span className="font-medium">
+                  {formData.validFrom && formData.validTo
+                    ? `${new Date(formData.validFrom).toLocaleDateString()} - ${new Date(formData.validTo).toLocaleDateString()}`
+                    : t('pricing.form.validityNotSet')}
+                </span>
               </div>
             )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('pricing.tags')}:</span>
+              <span className="font-medium">
+                {formData.tags?.length ? formData.tags.join(', ') : t('pricing.form.noTags')}
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>

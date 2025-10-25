@@ -1,6 +1,7 @@
 'use client';
 
 import { BookingForm, type BookingFormSubmission } from '@/components/booking/booking-form';
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
@@ -11,6 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function NewBookingPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -26,8 +28,8 @@ export default function NewBookingPage() {
     },
     onSuccess: (booking: Booking) => {
       toast({
-        title: 'Booking Created',
-        description: 'The booking has been created successfully.',
+        title: t('booking.form.notifications.createSuccessTitle'),
+        description: t('booking.form.notifications.createSuccessDescription'),
       });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       if (booking.id) {
@@ -38,7 +40,7 @@ export default function NewBookingPage() {
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to create booking',
+        title: t('booking.form.notifications.createErrorTitle'),
         description: error.message,
         variant: 'destructive',
       });
@@ -55,17 +57,17 @@ export default function NewBookingPage() {
         <Button asChild variant="outline" size="sm">
           <Link href="/bookings">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Create Booking</h1>
-          <p className="text-muted-foreground">Capture a new rental booking</p>
+          <h1 className="text-3xl font-bold">{t('booking.form.pageTitle.create')}</h1>
+          <p className="text-muted-foreground">{t('booking.form.pageSubtitle.create')}</p>
         </div>
       </div>
 
       <BookingForm
-        submitLabel="Create Booking"
+        submitLabel={t('booking.form.submit.create')}
         onSubmit={handleSubmit}
         isSubmitting={createMutation.isPending}
         onCancel={() => router.push('/bookings')}

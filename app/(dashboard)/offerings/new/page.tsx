@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,11 +15,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function NewOfferingPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useLocale();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -30,21 +32,33 @@ export default function NewOfferingPage() {
     description: '',
   });
 
+  const offeringTypeOptions = useMemo(
+    () => [
+      { value: 'GPS' as OfferingType, label: t('offering.types.gps') },
+      { value: 'INSURANCE' as OfferingType, label: t('offering.types.insurance') },
+      { value: 'CHILD_SEAT' as OfferingType, label: t('offering.types.childSeat') },
+      { value: 'WIFI' as OfferingType, label: t('offering.types.wifi') },
+      { value: 'ADDITIONAL_DRIVER' as OfferingType, label: t('offering.types.additionalDriver') },
+      { value: 'OTHER' as OfferingType, label: t('offering.types.other') },
+    ],
+    [t],
+  );
+
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       return hateoasClient.create<Offering>('offerings', data);
     },
     onSuccess: async (offering: Offering) => {
       toast({
-        title: 'Success',
-        description: 'Offering created successfully',
+        title: t('common.success'),
+        description: t('toast.createSuccess'),
       });
       queryClient.invalidateQueries({ queryKey: ['offerings'] });
       router.push('/offerings');
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -80,12 +94,12 @@ export default function NewOfferingPage() {
         <Link href="/offerings">
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Create New Offering</h1>
-          <p className="text-muted-foreground">Add a new service or add-on</p>
+          <h1 className="text-3xl font-bold">{t('offering.newOffering')}</h1>
+          <p className="text-muted-foreground">{t('offering.createDescription')}</p>
         </div>
       </div>
 
@@ -95,23 +109,27 @@ export default function NewOfferingPage() {
             {/* Basic Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
+                <CardTitle>{t('offering.basicInfo')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">
+                    {t('offering.name')} {t('common.required')}
+                  </Label>
                   <Input
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    placeholder="e.g., GPS Navigation"
+                    placeholder={t('offering.namePlaceholder')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="offeringType">Offering Type *</Label>
+                  <Label htmlFor="offeringType">
+                    {t('offering.typeLabel')} {t('common.required')}
+                  </Label>
                   <select
                     id="offeringType"
                     name="offeringType"
@@ -120,23 +138,22 @@ export default function NewOfferingPage() {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     required
                   >
-                    <option value="GPS">GPS</option>
-                    <option value="INSURANCE">Insurance</option>
-                    <option value="CHILD_SEAT">Child Seat</option>
-                    <option value="WIFI">WiFi</option>
-                    <option value="ADDITIONAL_DRIVER">Additional Driver</option>
-                    <option value="OTHER">Other</option>
+                    {offeringTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t('offering.description')}</Label>
                   <Textarea
                     id="description"
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    placeholder="Describe the offering..."
+                    placeholder={t('offering.descriptionPlaceholder')}
                     rows={4}
                   />
                 </div>
@@ -146,11 +163,13 @@ export default function NewOfferingPage() {
             {/* Pricing & Availability */}
             <Card>
               <CardHeader>
-                <CardTitle>Pricing & Availability</CardTitle>
+                <CardTitle>{t('offering.pricingAvailability')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price (per unit) *</Label>
+                  <Label htmlFor="price">
+                    {t('offering.unitPriceLabel')} {t('common.required')}
+                  </Label>
                   <CurrencyInput
                     id="price"
                     value={formData.price}
@@ -160,7 +179,9 @@ export default function NewOfferingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="availability">Available Units *</Label>
+                  <Label htmlFor="availability">
+                    {t('offering.availableUnits')} {t('common.required')}
+                  </Label>
                   <Input
                     id="availability"
                     name="availability"
@@ -168,13 +189,15 @@ export default function NewOfferingPage() {
                     min="0"
                     value={formData.availability}
                     onChange={handleInputChange}
-                    placeholder="100"
+                    placeholder={t('offering.availabilityPlaceholder')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="maxQuantityPerBooking">Max Quantity per Booking *</Label>
+                  <Label htmlFor="maxQuantityPerBooking">
+                    {t('offering.maxQuantityPerBooking')} {t('common.required')}
+                  </Label>
                   <Input
                     id="maxQuantityPerBooking"
                     name="maxQuantityPerBooking"
@@ -182,7 +205,7 @@ export default function NewOfferingPage() {
                     min="1"
                     value={formData.maxQuantityPerBooking}
                     onChange={handleInputChange}
-                    placeholder="1"
+                    placeholder={t('offering.quantityPlaceholder')}
                     required
                   />
                 </div>
@@ -196,7 +219,7 @@ export default function NewOfferingPage() {
                     }
                   />
                   <Label htmlFor="isMandatory" className="cursor-pointer">
-                    Mandatory offering (automatically included in all bookings)
+                    {t('offering.mandatoryToggleLabel')}
                   </Label>
                 </div>
               </CardContent>
@@ -207,12 +230,12 @@ export default function NewOfferingPage() {
           <div className="flex justify-end gap-4">
             <Link href="/offerings">
               <Button variant="outline" type="button">
-                Cancel
+                {t('common.cancel')}
               </Button>
             </Link>
             <Button type="submit" disabled={createMutation.isPending}>
               <Save className="mr-2 h-4 w-4" />
-              {createMutation.isPending ? 'Creating...' : 'Create Offering'}
+              {createMutation.isPending ? t('common.creating') : t('offering.newOffering')}
             </Button>
           </div>
         </div>

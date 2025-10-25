@@ -18,7 +18,7 @@
     "name": "名称",
     "description": "描述",
     "status": "状态",
-  "allStatuses": "所有状态",
+    "allStatuses": "所有状态",
     "createdAt": "创建时间",
     "updatedAt": "更新时间",
     "noResults": "未找到结果",
@@ -32,6 +32,7 @@
     "uploading": "上传中...",
     "creating": "创建中...",
     "updating": "更新中...",
+  "saving": "保存中...",
     "deleting": "删除中...",
     "clear": "清除",
     "clearFilters": "清除筛选",
@@ -47,8 +48,10 @@
     "viewDetails": "查看详情",
   "exportCSV": "导出 CSV",
     "retry": "重试",
-    "refresh": "刷新",
+  "refresh": "刷新",
+  "saveChanges": "保存更改",
     "required": "*",
+    "optional": "可选",
     "notAvailable": "暂无"
   },
   "nav": {
@@ -220,7 +223,30 @@
     "selectEntity": "选择实体类型",
     "selectVehicle": "选择车辆",
     "selectOffering": "选择服务",
-    "selectPackage": "选择套餐"
+    "selectPackage": "选择套餐",
+    "rateTypes": {
+      "hourly": "按小时",
+      "daily": "按天",
+      "weekly": "按周",
+      "monthly": "按月",
+      "flat": "固定费率"
+    },
+    "form": {
+      "configurationTitle": "定价配置",
+      "configurationDescription": "设置此定价方案的计算方式。",
+      "connectedTo": "关联对象",
+      "rateTypeHint": "选择此定价的计费周期。",
+      "baseRateHint": "客户在调整前需支付的基础金额。",
+      "depositHint": "预订时需要收取的押金。",
+      "minimumRentalHint": "应用此定价所需的最少租期。",
+      "validFromHint": "设置此定价何时开始生效。",
+      "validToHint": "设置此定价何时结束。",
+      "tagsSuggestion": "使用如“季节”、“周末”或“节日”等标签来整理定价。",
+      "summaryTitle": "定价摘要",
+      "validity": "有效期",
+      "validityNotSet": "尚未设置",
+      "noTags": "暂无标签"
+    }
   },
   "booking": {
     "title": "预订",
@@ -250,7 +276,88 @@
       "cancelled": "已取消",
       "unknown": "未知"
     },
-    "cancelBooking": "取消预订"
+    "cancelBooking": "取消预订",
+    "form": {
+      "daySingular": "天",
+      "dayPlural": "天",
+      "pageTitle": {
+        "create": "创建预订",
+        "edit": "编辑预订"
+      },
+      "pageSubtitle": {
+        "create": "记录新的租赁预订",
+        "edit": "更新预订详情与价格"
+      },
+      "submit": {
+        "create": "创建预订",
+        "update": "更新预订"
+      },
+      "sections": {
+        "reservation": "预订详情",
+        "logistics": "物流与保障",
+        "pricing": "价格总览",
+        "offerings": "可选服务"
+      },
+      "fields": {
+        "vehicle": "车辆",
+        "packageOptional": "套餐（可选）",
+        "discountOptional": "折扣（可选）",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "pickupLocation": "取车地点",
+        "dropoffLocation": "还车地点",
+        "insurancePolicy": "保险条款",
+        "status": "状态"
+      },
+      "placeholders": {
+        "pickupLocation": "例如：机场航站楼",
+        "dropoffLocation": "例如：市区办公室",
+        "insurancePolicy": "描述保障范围或保单详情"
+      },
+      "summary": {
+        "totalDays": "总天数",
+        "durationHint": "根据开始与结束日期自动计算。",
+        "billDetails": "账单详情",
+        "billPlaceholder": "选择车辆、日期与可选服务来预览账单。",
+        "includedPrefix": "套餐已包含",
+        "subtotal": "小计",
+        "discount": "折扣",
+        "total": "总计",
+        "packageModifierSuffix": "占基础费率",
+        "vehicleRateFallback": "车辆费率"
+      },
+      "errors": {
+        "vehicleRequired": "请选择此预订的车辆。",
+        "datesRequired": "需要填写开始和结束日期。",
+        "startBeforeEnd": "开始日期必须早于结束日期。",
+        "minimumDuration": "预订时长至少为一天。"
+      },
+      "offerings": {
+        "searchPlaceholder": "搜索服务...",
+        "helper": "为此预订添加可选服务和附加项目，选择后可调整数量。",
+        "loading": "正在加载服务...",
+        "empty": "暂无可用服务。",
+        "noResults": "没有符合搜索条件的服务。",
+        "packageBadge": "套餐已包含",
+        "unitPriceLabel": "单价",
+        "quantity": "数量",
+        "packageHint": "首个单位由套餐覆盖，额外单位按标准价计费。",
+        "billableLabel": "计费",
+        "noCharge": "无需额外费用",
+        "addAction": "添加服务"
+      },
+      "notifications": {
+        "createSuccessTitle": "预订已创建",
+        "createSuccessDescription": "预订已成功创建。",
+        "createErrorTitle": "创建预订失败",
+        "updateSuccessTitle": "预订已更新",
+        "updateSuccessDescription": "预订已成功更新。",
+        "updateErrorTitle": "更新预订失败"
+      },
+      "loading": "正在加载预订...",
+      "notFound": "未找到预订。",
+      "backToList": "返回预订列表"
+    }
   },
   "offering": {
     "title": "服务",
@@ -292,7 +399,17 @@
     "unitPricePlaceholder": "100",
     "quantity": "可用数量",
     "quantityPlaceholder": "1",
-    "isActive": "是否激活？"
+    "isActive": "是否激活？",
+    "selector": {
+      "description": "选择要包含在此项目中的附加服务。",
+      "searchPlaceholder": "搜索服务...",
+      "loading": "正在加载服务...",
+      "empty": "暂无可用服务。",
+      "noResults": "没有符合搜索条件的服务。",
+      "untitled": "未命名服务",
+      "selectedSingular": "已选择 {count} 项服务",
+      "selectedPlural": "已选择 {count} 项服务"
+    }
   },
   "package": {
     "title": "套餐",
@@ -376,6 +493,12 @@
     "noResults": "未找到折扣",
     "createFirstDiscount": "创建您的第一个折扣",
     "percentageSuffix": "%",
+    "loading": "正在加载折扣...",
+    "notFoundTitle": "未找到折扣",
+    "notFoundDescription": "无法加载此折扣。可能已被删除。",
+    "editDiscount": "编辑折扣",
+    "editDescription": "更新折扣详情与适用范围。",
+    "createDescription": "设置折扣详情与适用条件。",
     "status": {
       "active": "启用",
       "inactive": "停用",
@@ -392,6 +515,51 @@
       "offering": "服务",
       "booking": "预订",
       "all": "全部实体"
+    },
+    "toast": {
+      "createTitle": "折扣已创建",
+      "createDescription": "折扣已成功创建。",
+      "createErrorTitle": "创建折扣失败",
+      "updateTitle": "折扣已更新",
+      "updateDescription": "更改已成功保存。",
+      "updateErrorTitle": "更新折扣失败"
+    },
+    "form": {
+      "validationErrorTitle": "验证错误",
+      "percentageLabel": "折扣百分比",
+      "percentageHelper": "请输入 0 到 100 之间的折扣百分比。",
+      "amountLabel": "折扣金额",
+      "amountHelper": "请输入固定折扣金额。",
+      "selectPackageLabel": "选择套餐",
+      "selectOfferingLabel": "选择服务",
+      "bookingScopeHint": "折扣将适用于所有预订。",
+      "detailsTitle": "折扣详情",
+      "codeLabel": "折扣代码",
+      "codePlaceholder": "例如：SAVE10",
+      "statusLabel": "折扣状态",
+      "typeLabel": "折扣类型",
+      "applicabilityTitle": "适用范围",
+      "scopeLabel": "适用对象",
+      "minBookingAmountLabel": "最低订单金额",
+      "usageTitle": "使用限制",
+      "maxUsesLabel": "最大使用次数",
+      "usesCountLabel": "已使用次数",
+      "validityTitle": "有效期",
+      "validFromLabel": "生效开始",
+      "validToLabel": "生效结束",
+      "descriptionTitle": "描述",
+      "descriptionPlaceholder": "说明该折扣的使用场景与条件...",
+      "errors": {
+        "codeRequired": "请输入折扣代码。",
+        "validRangeRequired": "请填写生效开始和结束时间。",
+        "validRangeOrder": "结束时间必须晚于开始时间。",
+        "percentageRange": "百分比折扣必须在 0 到 100 之间。",
+        "amountNegative": "固定金额折扣不能为负数。",
+        "minBookingNegative": "最低订单金额不能为负数。",
+        "maxUsesMinimum": "最大使用次数至少为 1。",
+        "packageRequired": "请选择一个套餐。",
+        "offeringRequired": "请选择一个服务。"
+      }
     },
     "table": {
       "code": "代码",

@@ -32,6 +32,7 @@
     "uploading": "Uploading...",
     "creating": "Creating...",
     "updating": "Updating...",
+  "saving": "Saving...",
     "deleting": "Deleting...",
     "clear": "Clear",
     "clearFilters": "Clear Filters",
@@ -48,7 +49,9 @@
     "exportCSV": "Export CSV",
     "retry": "Retry",
     "refresh": "Refresh",
+  "saveChanges": "Save Changes",
     "required": "*",
+    "optional": "Optional",
     "notAvailable": "Not available"
   },
   "nav": {
@@ -138,7 +141,7 @@
     "addCaption": "Add Caption",
     "captionPlaceholder": "e.g., Front view of the vehicle",
     "cancel": "Cancel",
-    "saveChanges": "Save Changes",
+  "saveChanges": "Save Changes",
     "bufferMinutes": "Buffer Minutes",
     "minRentalHours": "Min Rental Hours",
     "maxRentalDays": "Max Rental Days",
@@ -220,7 +223,30 @@
     "selectEntity": "Select Entity Type",
     "selectVehicle": "Select Vehicle",
     "selectOffering": "Select Offering",
-    "selectPackage": "Select Package"
+    "selectPackage": "Select Package",
+    "rateTypes": {
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "flat": "Flat Rate"
+    },
+    "form": {
+      "configurationTitle": "Pricing Configuration",
+      "configurationDescription": "Define how this pricing option should behave.",
+      "connectedTo": "Connected to",
+      "rateTypeHint": "Select the billing interval for this pricing.",
+      "baseRateHint": "The primary amount customers will be charged before adjustments.",
+      "depositHint": "Deposit required at the time of booking.",
+      "minimumRentalHint": "Minimum number of rental days required for this pricing to apply.",
+      "validFromHint": "Set when this pricing becomes active.",
+      "validToHint": "Set when this pricing expires.",
+      "tagsSuggestion": "Use tags like \"seasonal\", \"weekend\", or \"holiday\" to organize this pricing.",
+      "summaryTitle": "Pricing Summary",
+      "validity": "Validity",
+      "validityNotSet": "Not specified",
+      "noTags": "No tags added"
+    }
   },
   "booking": {
     "title": "Bookings",
@@ -250,7 +276,88 @@
       "cancelled": "Cancelled",
       "unknown": "Unknown"
     },
-    "cancelBooking": "Cancel Booking"
+    "cancelBooking": "Cancel Booking",
+    "form": {
+      "daySingular": "day",
+      "dayPlural": "days",
+      "pageTitle": {
+        "create": "Create Booking",
+        "edit": "Edit Booking"
+      },
+      "pageSubtitle": {
+        "create": "Capture a new rental booking",
+        "edit": "Update booking details and pricing"
+      },
+      "submit": {
+        "create": "Create Booking",
+        "update": "Update Booking"
+      },
+      "sections": {
+        "reservation": "Reservation Details",
+        "logistics": "Logistics & Coverage",
+        "pricing": "Pricing Overview",
+        "offerings": "Optional Offerings"
+      },
+      "fields": {
+        "vehicle": "Vehicle",
+        "packageOptional": "Package (Optional)",
+        "discountOptional": "Discount (Optional)",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "pickupLocation": "Pickup Location",
+        "dropoffLocation": "Drop-off Location",
+        "insurancePolicy": "Insurance Policy",
+        "status": "Status"
+      },
+      "placeholders": {
+        "pickupLocation": "e.g., Airport Terminal",
+        "dropoffLocation": "e.g., Downtown Office",
+        "insurancePolicy": "Describe coverage or policy details"
+      },
+      "summary": {
+        "totalDays": "Total Days",
+        "durationHint": "Calculated automatically from the start and end dates.",
+        "billDetails": "Bill Details",
+        "billPlaceholder": "Select a vehicle, dates, and optional add-ons to preview the bill.",
+        "includedPrefix": "Included in package",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "total": "Total",
+        "packageModifierSuffix": "of base rate",
+        "vehicleRateFallback": "Vehicle Rate"
+      },
+      "errors": {
+        "vehicleRequired": "Please select a vehicle for this booking.",
+        "datesRequired": "Start and end dates are required.",
+        "startBeforeEnd": "Start date must be earlier than end date.",
+        "minimumDuration": "The booking duration must be at least one day."
+      },
+      "offerings": {
+        "searchPlaceholder": "Search offerings...",
+        "helper": "Add optional services and extras to this booking. Quantities can be adjusted after selecting an offering.",
+        "loading": "Loading offerings...",
+        "empty": "No offerings available yet.",
+        "noResults": "No offerings match your search.",
+        "packageBadge": "Included in package",
+        "unitPriceLabel": "Unit price",
+        "quantity": "Quantity",
+        "packageHint": "First unit covered by package. Extra units billed at standard rate.",
+        "billableLabel": "billable",
+        "noCharge": "No additional charge",
+        "addAction": "Add offering"
+      },
+      "notifications": {
+        "createSuccessTitle": "Booking Created",
+        "createSuccessDescription": "The booking has been created successfully.",
+        "createErrorTitle": "Failed to create booking",
+        "updateSuccessTitle": "Booking Updated",
+        "updateSuccessDescription": "The booking has been updated successfully.",
+        "updateErrorTitle": "Failed to update booking"
+      },
+      "loading": "Loading booking...",
+      "notFound": "Booking not found.",
+      "backToList": "Back to Bookings"
+    }
   },
   "offering": {
     "title": "Offerings",
@@ -292,7 +399,17 @@
     "unitPricePlaceholder": "100",
     "quantity": "Available Quantity",
     "quantityPlaceholder": "1",
-    "isActive": "Is Active?"
+    "isActive": "Is Active?",
+    "selector": {
+      "description": "Select the optional offerings to bundle with this item.",
+      "searchPlaceholder": "Search offerings...",
+      "loading": "Loading offerings...",
+      "empty": "No offerings available yet.",
+      "noResults": "No offerings match your search.",
+      "untitled": "Untitled Offering",
+      "selectedSingular": "{count} offering selected",
+      "selectedPlural": "{count} offerings selected"
+    }
   },
   "package": {
     "title": "Packages",
@@ -376,6 +493,12 @@
     "noResults": "No discounts found",
     "createFirstDiscount": "Create Your First Discount",
     "percentageSuffix": "%",
+    "loading": "Loading discount...",
+    "notFoundTitle": "Discount Not Found",
+    "notFoundDescription": "We could not load this discount. It may have been removed.",
+    "editDiscount": "Edit Discount",
+    "editDescription": "Update the discount details and scope.",
+    "createDescription": "Set up discount details and eligibility.",
     "status": {
       "active": "Active",
       "inactive": "Inactive",
@@ -392,6 +515,51 @@
       "offering": "Offering",
       "booking": "Booking",
       "all": "All entities"
+    },
+    "toast": {
+      "createTitle": "Discount Created",
+      "createDescription": "The discount has been created successfully.",
+      "createErrorTitle": "Failed to create discount",
+      "updateTitle": "Discount Updated",
+      "updateDescription": "Changes have been saved successfully.",
+      "updateErrorTitle": "Failed to update discount"
+    },
+    "form": {
+      "validationErrorTitle": "Validation Error",
+      "percentageLabel": "Percentage Value",
+      "percentageHelper": "Enter the discount percentage between 0 and 100.",
+      "amountLabel": "Amount Value",
+      "amountHelper": "Enter the fixed discount amount.",
+      "selectPackageLabel": "Target Package",
+      "selectOfferingLabel": "Target Offering",
+      "bookingScopeHint": "Discount will be applied to all bookings.",
+      "detailsTitle": "Discount Details",
+      "codeLabel": "Discount Code",
+      "codePlaceholder": "e.g., SAVE10",
+      "statusLabel": "Discount Status",
+      "typeLabel": "Discount Type",
+      "applicabilityTitle": "Applicability",
+      "scopeLabel": "Scope",
+      "minBookingAmountLabel": "Minimum Booking Amount",
+      "usageTitle": "Usage Limits",
+      "maxUsesLabel": "Maximum Uses",
+      "usesCountLabel": "Current Uses",
+      "validityTitle": "Validity Period",
+      "validFromLabel": "Valid From",
+      "validToLabel": "Valid To",
+      "descriptionTitle": "Description",
+      "descriptionPlaceholder": "Describe how and when this discount should be used...",
+      "errors": {
+        "codeRequired": "Please enter a discount code.",
+        "validRangeRequired": "Valid from and valid to dates are required.",
+        "validRangeOrder": "Valid to date must be after valid from date.",
+        "percentageRange": "Percentage discounts must be between 0 and 100.",
+        "amountNegative": "Fixed amount discount cannot be negative.",
+        "minBookingNegative": "Minimum booking amount cannot be negative.",
+        "maxUsesMinimum": "Maximum uses must be at least 1.",
+        "packageRequired": "Select a package for this scope.",
+        "offeringRequired": "Select an offering for this scope."
+      }
     },
     "table": {
       "code": "Code",

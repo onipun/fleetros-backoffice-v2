@@ -1,6 +1,7 @@
 'use client';
 
 import { BookingForm, type BookingFormSubmission } from '@/components/booking/booking-form';
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
@@ -15,6 +16,7 @@ export default function EditBookingPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const bookingId = params.id as string;
+  const { t } = useLocale();
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ['booking', bookingId],
@@ -33,8 +35,8 @@ export default function EditBookingPage() {
     },
     onSuccess: (updated: Booking) => {
       toast({
-        title: 'Booking Updated',
-        description: 'The booking has been updated successfully.',
+        title: t('booking.form.notifications.updateSuccessTitle'),
+        description: t('booking.form.notifications.updateSuccessDescription'),
       });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
@@ -42,7 +44,7 @@ export default function EditBookingPage() {
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to update booking',
+        title: t('booking.form.notifications.updateErrorTitle'),
         description: error.message,
         variant: 'destructive',
       });
@@ -56,7 +58,7 @@ export default function EditBookingPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-muted-foreground">
-        Loading booking...
+        {t('booking.form.loading')}
       </div>
     );
   }
@@ -64,11 +66,11 @@ export default function EditBookingPage() {
   if (!booking) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
-        <p className="text-destructive">Booking not found.</p>
+        <p className="text-destructive">{t('booking.form.notFound')}</p>
         <Button asChild variant="outline">
           <Link href="/bookings">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Bookings
+            {t('booking.form.backToList')}
           </Link>
         </Button>
       </div>
@@ -81,18 +83,18 @@ export default function EditBookingPage() {
         <Button asChild variant="outline" size="sm">
           <Link href={`/bookings/${bookingId}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Edit Booking</h1>
-          <p className="text-muted-foreground">Update booking details and pricing</p>
+          <h1 className="text-3xl font-bold">{t('booking.form.pageTitle.edit')}</h1>
+          <p className="text-muted-foreground">{t('booking.form.pageSubtitle.edit')}</p>
         </div>
       </div>
 
       <BookingForm
         initialValues={booking}
-        submitLabel="Update Booking"
+        submitLabel={t('booking.form.submit.update')}
         onSubmit={handleSubmit}
         isSubmitting={updateMutation.isPending}
         onCancel={() => router.push(`/bookings/${bookingId}`)}

@@ -1,6 +1,7 @@
 'use client';
 
 import { BookingOfferingSelector, type BookingOfferingSelection } from '@/components/booking/booking-offering-selector';
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import { formatCurrency, parseHalResource } from '@/lib/utils';
+import { parseHalResource } from '@/lib/utils';
 import {
   BookingStatus,
   DiscountType,
@@ -25,8 +26,6 @@ import { AlertTriangle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const roundToTwo = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
-
-const formatDays = (days: number) => `${days} day${days === 1 ? '' : 's'}`;
 
 export interface BookingPricingSummary {
   vehicleCharge: number;
@@ -104,10 +103,17 @@ export function BookingForm({
   submitLabel,
   onCancel,
 }: BookingFormProps) {
+  const { t, formatCurrency } = useLocale();
   const [formState, setFormState] = useState<BookingFormState>(defaultState);
   const [offeringSelections, setOfferingSelections] = useState<Record<number, BookingOfferingSelection>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const hasInitializedRef = useRef(false);
+
+  const formatDaysLabel = useCallback(
+    (days: number) =>
+      `${days} ${days === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}`,
+    [t]
+  );
 
   const { data: offeringsData, isLoading: offeringsLoading, error: offeringsError } = useQuery({
     queryKey: ['offerings', 'all'],
@@ -474,9 +480,10 @@ export function BookingForm({
       const unitPrice = selection.offering.price ?? pricing?.baseRate ?? 0;
       const includedUnits = selection.included ? 1 : 0;
       const billableQuantity = Math.max(0, selection.quantity - includedUnits);
+      const fallbackName = selection.offering.name || `${t('offering.unnamedOffering')} #${id}`;
 
       if (selection.included) {
-        includedNames.push(selection.offering.name || `Offering #${id}`);
+        includedNames.push(fallbackName);
       }
 
       if (billableQuantity > 0) {
@@ -484,7 +491,7 @@ export function BookingForm({
         total += amount;
         billableLines.push({
           id,
-          label: selection.offering.name || `Offering #${id}`,
+          label: fallbackName,
           quantity: billableQuantity,
           unitPrice,
           amount,
@@ -497,7 +504,7 @@ export function BookingForm({
       billableLines,
       includedNames,
     };
-  }, [offeringSelections, offeringPricingMap]);
+  }, [offeringSelections, offeringPricingMap, t]);
 
   const offeringCharge = offeringChargeResult.total;
   const subtotal = roundToTwo(packageCharge + offeringCharge);
@@ -540,18 +547,18 @@ export function BookingForm({
             ? packagePricing.rateType
             : vehiclePricing?.rateType;
         if (rateLabel) {
-          helperParts.push(`${rateLabel} × ${formatDays(computedTotalDays)}`);
+          helperParts.push(`${rateLabel} × ${formatDaysLabel(computedTotalDays)}`);
         } else {
-          helperParts.push(formatDays(computedTotalDays));
+          helperParts.push(formatDaysLabel(computedTotalDays));
         }
       }
       if (formState.packageId && !packagePricing && packageModifier !== 1) {
-        helperParts.push(`${Math.round(packageModifier * 100)}% of base rate`);
+        helperParts.push(`${Math.round(packageModifier * 100)}% ${t('booking.form.summary.packageModifierSuffix')}`);
       }
 
       items.push({
         id: 'package-charge',
-        label: selectedPackage?.name || 'Vehicle Rate',
+        label: selectedPackage?.name || t('booking.form.summary.vehicleRateFallback'),
         amount: packageCharge,
         helper: helperParts.join(' • '),
       });
@@ -576,36 +583,41 @@ export function BookingForm({
     offeringChargeResult.billableLines,
     selectedPackage?.name,
     vehiclePricing,
+    t,
   ]);
 
   const includedOfferingNames = offeringChargeResult.includedNames;
-  const discountDescriptor =
+  const discountDisplay =
     selectedDiscount && selectedDiscount.type === DiscountType.PERCENTAGE
       ? `${selectedDiscount.value}%`
       : selectedDiscount
         ? formatCurrency(selectedDiscount.value)
         : null;
+  const discountLabel = t('booking.form.summary.discount');
+  const discountLabelWithDescriptor = discountDisplay
+    ? `${discountLabel} (${discountDisplay})`
+    : discountLabel;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!formState.vehicleId) {
-      setFormError('Please select a vehicle for this booking.');
+      setFormError(t('booking.form.errors.vehicleRequired'));
       return;
     }
 
     if (!formState.startDate || !formState.endDate) {
-      setFormError('Start and end dates are required.');
+      setFormError(t('booking.form.errors.datesRequired'));
       return;
     }
 
     if (new Date(formState.startDate) >= new Date(formState.endDate)) {
-      setFormError('Start date must be earlier than end date.');
+      setFormError(t('booking.form.errors.startBeforeEnd'));
       return;
     }
 
     if (computedTotalDays === 0) {
-      setFormError('The booking duration must be at least one day.');
+      setFormError(t('booking.form.errors.minimumDuration'));
       return;
     }
 
@@ -668,11 +680,11 @@ export function BookingForm({
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Reservation Details</CardTitle>
+            <CardTitle>{t('booking.form.sections.reservation')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Vehicle *</Label>
+              <Label>{`${t('booking.form.fields.vehicle')} ${t('common.required')}`}</Label>
               <EntitySelect
                 entityType="vehicle"
                 value={formState.vehicleId ?? undefined}
@@ -682,7 +694,7 @@ export function BookingForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Package (Optional)</Label>
+              <Label>{t('booking.form.fields.packageOptional')}</Label>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <EntitySelect
                   entityType="package"
@@ -698,14 +710,14 @@ export function BookingForm({
                     className="shrink-0"
                     onClick={() => clearSelection('packageId')}
                   >
-                    Clear
+                    {t('common.clear')}
                   </Button>
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Discount (Optional)</Label>
+              <Label>{t('booking.form.fields.discountOptional')}</Label>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <EntitySelect
                   entityType="discount"
@@ -721,7 +733,7 @@ export function BookingForm({
                     className="shrink-0"
                     onClick={() => clearSelection('discountId')}
                   >
-                    Clear
+                    {t('common.clear')}
                   </Button>
                 )}
               </div>
@@ -729,11 +741,11 @@ export function BookingForm({
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Start Date *</Label>
+                <Label>{`${t('booking.form.fields.startDate')} ${t('common.required')}`}</Label>
                 <DateTimePicker value={formState.startDate} onChange={handleDateChange('startDate')} />
               </div>
               <div className="space-y-2">
-                <Label>End Date *</Label>
+                <Label>{`${t('booking.form.fields.endDate')} ${t('common.required')}`}</Label>
                 <DateTimePicker value={formState.endDate} onChange={handleDateChange('endDate')} />
               </div>
             </div>
@@ -742,44 +754,44 @@ export function BookingForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>Logistics & Coverage</CardTitle>
+            <CardTitle>{t('booking.form.sections.logistics')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pickupLocation">Pickup Location *</Label>
+              <Label htmlFor="pickupLocation">{`${t('booking.form.fields.pickupLocation')} ${t('common.required')}`}</Label>
               <Input
                 id="pickupLocation"
                 value={formState.pickupLocation}
                 onChange={handleFieldChange('pickupLocation')}
-                placeholder="e.g., Airport Terminal"
+                placeholder={t('booking.form.placeholders.pickupLocation')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dropoffLocation">Dropoff Location *</Label>
+              <Label htmlFor="dropoffLocation">{`${t('booking.form.fields.dropoffLocation')} ${t('common.required')}`}</Label>
               <Input
                 id="dropoffLocation"
                 value={formState.dropoffLocation}
                 onChange={handleFieldChange('dropoffLocation')}
-                placeholder="e.g., Downtown Office"
+                placeholder={t('booking.form.placeholders.dropoffLocation')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="insurancePolicy">Insurance Policy</Label>
+              <Label htmlFor="insurancePolicy">{t('booking.form.fields.insurancePolicy')}</Label>
               <Textarea
                 id="insurancePolicy"
                 value={formState.insurancePolicy}
                 onChange={handleFieldChange('insurancePolicy')}
-                placeholder="Describe coverage or policy details"
+                placeholder={t('booking.form.placeholders.insurancePolicy')}
                 rows={3}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{t('booking.form.fields.status')}</Label>
               <select
                 id="status"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -792,11 +804,15 @@ export function BookingForm({
                   }));
                 }}
               >
-                {Object.values(BookingStatus).map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
+                {Object.values(BookingStatus).map((status) => {
+                  const labelKey = `booking.status.${status.toLowerCase()}`;
+                  const statusLabel = t(labelKey);
+                  return (
+                    <option key={status} value={status}>
+                      {statusLabel}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </CardContent>
@@ -804,25 +820,25 @@ export function BookingForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>Pricing Overview</CardTitle>
+            <CardTitle>{t('booking.form.sections.pricing')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total Days</span>
+                <span className="text-muted-foreground">{t('booking.form.summary.totalDays')}</span>
                 <span className="font-medium">{computedTotalDays > 0 ? computedTotalDays : '-'}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Calculated automatically from the start and end dates.
+                {t('booking.form.summary.durationHint')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Bill Details</h4>
+              <h4 className="text-sm font-semibold">{t('booking.form.summary.billDetails')}</h4>
               <div className="space-y-3 rounded-md border bg-muted/30 p-3">
                 {pricingLineItems.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Select a vehicle, dates, and optional add-ons to preview the bill.
+                    {t('booking.form.summary.billPlaceholder')}
                   </p>
                 ) : (
                   pricingLineItems.map((item) => (
@@ -840,22 +856,22 @@ export function BookingForm({
               </div>
               {includedOfferingNames.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Included in package: {includedOfferingNames.join(', ')}
+                  {`${t('booking.form.summary.includedPrefix')}: ${includedOfferingNames.join(', ')}`}
                 </p>
               )}
             </div>
 
             <div className="space-y-1 rounded-md bg-muted/20 p-3">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Subtotal</span>
+                <span>{t('booking.form.summary.subtotal')}</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Discount{discountDescriptor ? ` (${discountDescriptor})` : ''}</span>
+                <span>{discountLabelWithDescriptor}</span>
                 <span>-{formatCurrency(discountAmount)}</span>
               </div>
               <div className="flex items-center justify-between text-base font-semibold">
-                <span>Total</span>
+                <span>{t('booking.form.summary.total')}</span>
                 <span>{formatCurrency(total)}</span>
               </div>
             </div>
@@ -876,11 +892,11 @@ export function BookingForm({
       <div className="flex justify-end gap-3">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         )}
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : submitLabel}
+          {isSubmitting ? t('common.saving') : submitLabel}
         </Button>
       </div>
     </form>

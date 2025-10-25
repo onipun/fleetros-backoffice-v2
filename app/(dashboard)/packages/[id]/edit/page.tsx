@@ -1,6 +1,7 @@
 'use client';
 
 import { OfferingMultiSelect } from '@/components/offering/offering-multi-select';
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -22,6 +23,7 @@ export default function EditPackagePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const packageId = params.id as string;
+  const { t } = useLocale();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -194,14 +196,14 @@ export default function EditPackagePage() {
       queryClient.invalidateQueries({ queryKey: ['package', packageId] });
       queryClient.invalidateQueries({ queryKey: ['package', packageId, 'offerings'] });
       toast({
-        title: 'Success',
-        description: 'Package updated successfully',
+        title: t('common.success'),
+        description: t('package.updateSuccess'),
       });
       router.push('/packages');
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -213,8 +215,8 @@ export default function EditPackagePage() {
 
     if (!formData.validFrom || !formData.validTo) {
       toast({
-        title: 'Validation Error',
-        description: 'Please select both valid from and valid to dates.',
+        title: t('package.validation.title'),
+        description: t('package.validation.requiredDates'),
         variant: 'destructive',
       });
       return;
@@ -222,8 +224,8 @@ export default function EditPackagePage() {
 
     if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
       toast({
-        title: 'Validation Error',
-        description: 'Valid from date must be before valid to date.',
+        title: t('package.validation.title'),
+        description: t('package.validation.dateOrder'),
         variant: 'destructive',
       });
       return;
@@ -261,7 +263,7 @@ export default function EditPackagePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading package...</p>
+        <p className="text-muted-foreground">{t('package.loading')}</p>
       </div>
     );
   }
@@ -273,12 +275,12 @@ export default function EditPackagePage() {
         <Link href="/packages">
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Edit Package</h1>
-          <p className="text-muted-foreground">Update package details</p>
+          <h1 className="text-3xl font-bold">{t('package.editPackage')}</h1>
+          <p className="text-muted-foreground">{t('package.editDescription')}</p>
         </div>
       </div>
 
@@ -287,29 +289,31 @@ export default function EditPackagePage() {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>{t('package.basicInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Package Name *</Label>
+                <Label htmlFor="name">
+                  {t('package.name')} {t('common.required')}
+                </Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="e.g., Weekend Special"
+                  placeholder={t('package.namePlaceholder')}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{t('package.description')}</Label>
                 <Textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Describe the package benefits..."
+                  placeholder={t('package.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -319,11 +323,13 @@ export default function EditPackagePage() {
           {/* Pricing & Requirements */}
           <Card>
             <CardHeader>
-              <CardTitle>Pricing & Requirements</CardTitle>
+              <CardTitle>{t('package.pricingRequirements')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="priceModifier">Price Modifier *</Label>
+                <Label htmlFor="priceModifier">
+                  {t('package.priceModifierLabel')} {t('common.required')}
+                </Label>
                 <Input
                   id="priceModifier"
                   name="priceModifier"
@@ -333,16 +339,18 @@ export default function EditPackagePage() {
                   max="2"
                   value={formData.priceModifier}
                   onChange={handleInputChange}
-                  placeholder="0.90"
+                  placeholder={t('package.discountRatePlaceholder')}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  0.90 = 10% discount, 1.00 = no change, 1.10 = 10% increase
+                  {t('package.priceModifierHelper')}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="minRentalDays">Minimum Rental Days *</Label>
+                <Label htmlFor="minRentalDays">
+                  {t('package.minRentalDays')} {t('common.required')}
+                </Label>
                 <Input
                   id="minRentalDays"
                   name="minRentalDays"
@@ -350,7 +358,7 @@ export default function EditPackagePage() {
                   min="1"
                   value={formData.minRentalDays}
                   onChange={handleInputChange}
-                  placeholder="2"
+                  placeholder={t('package.minRentalDaysPlaceholder')}
                   required
                 />
               </div>
@@ -360,11 +368,13 @@ export default function EditPackagePage() {
           {/* Validity Period */}
           <Card className="md:col-span-2">
             <CardHeader>
-              <CardTitle>Validity Period</CardTitle>
+              <CardTitle>{t('package.validityPeriod')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="validFrom">Valid From *</Label>
+                <Label htmlFor="validFrom">
+                  {t('package.validFromLabel')} {t('common.required')}
+                </Label>
                 <DateTimePicker
                   id="validFrom"
                   value={formData.validFrom}
@@ -373,7 +383,9 @@ export default function EditPackagePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="validTo">Valid To *</Label>
+                <Label htmlFor="validTo">
+                  {t('package.validToLabel')} {t('common.required')}
+                </Label>
                 <DateTimePicker
                   id="validTo"
                   value={formData.validTo}
@@ -397,12 +409,12 @@ export default function EditPackagePage() {
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/packages">
             <Button variant="outline" type="button">
-              Cancel
+              {t('common.cancel')}
             </Button>
           </Link>
           <Button type="submit" disabled={updateMutation.isPending}>
             <Save className="mr-2 h-4 w-4" />
-            {updateMutation.isPending ? 'Updating...' : 'Update Package'}
+            {updateMutation.isPending ? t('common.updating') : t('package.updateAction')}
           </Button>
         </div>
       </form>

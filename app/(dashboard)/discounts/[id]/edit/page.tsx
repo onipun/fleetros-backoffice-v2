@@ -1,6 +1,7 @@
 'use client';
 
 import { DiscountForm, type DiscountFormState } from '@/components/discount/discount-form';
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
@@ -93,6 +94,7 @@ export default function EditDiscountPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const discountId = params.id as string;
+  const { t } = useLocale();
 
   const {
     data: discount,
@@ -114,15 +116,15 @@ export default function EditDiscountPage() {
       queryClient.invalidateQueries({ queryKey: ['discounts'] });
       queryClient.invalidateQueries({ queryKey: ['discount', discountId] });
       toast({
-        title: 'Discount Updated',
-        description: 'Changes have been saved successfully.',
+        title: t('discount.toast.updateTitle'),
+        description: t('discount.toast.updateDescription'),
       });
       router.push('/discounts');
       router.refresh();
     },
     onError: (updateError: Error) => {
       toast({
-        title: 'Failed to update discount',
+        title: t('discount.toast.updateErrorTitle'),
         description: updateError.message,
         variant: 'destructive',
       });
@@ -136,7 +138,7 @@ export default function EditDiscountPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading discount...</p>
+        <p className="text-muted-foreground">{t('discount.loading')}</p>
       </div>
     );
   }
@@ -148,12 +150,12 @@ export default function EditDiscountPage() {
           <Link href="/discounts">
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {t('common.back')}
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">Discount Not Found</h1>
-            <p className="text-muted-foreground">We could not load this discount. It may have been removed.</p>
+            <h1 className="text-3xl font-bold">{t('discount.notFoundTitle')}</h1>
+            <p className="text-muted-foreground">{t('discount.notFoundDescription')}</p>
           </div>
         </div>
       </div>
@@ -166,17 +168,17 @@ export default function EditDiscountPage() {
         <Link href="/discounts">
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Edit Discount</h1>
-          <p className="text-muted-foreground">Update the discount details and scope.</p>
+          <h1 className="text-3xl font-bold">{t('discount.editDiscount')}</h1>
+          <p className="text-muted-foreground">{t('discount.editDescription')}</p>
         </div>
       </div>
 
       <DiscountForm
-        submitLabel="Save Changes"
+        submitLabel={t('common.saveChanges')}
         submitting={updateDiscount.isPending}
         onCancelHref="/discounts"
         onSubmit={handleSubmit}

@@ -1,6 +1,7 @@
 'use client';
 
 import { DiscountForm, type DiscountFormState } from '@/components/discount/discount-form';
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
@@ -40,6 +41,7 @@ function buildDiscountPayload(values: DiscountFormState) {
 
 export default function NewDiscountPage() {
   const router = useRouter();
+  const { t } = useLocale();
 
   const createDiscount = useMutation({
     mutationFn: async (values: DiscountFormState) => {
@@ -48,15 +50,15 @@ export default function NewDiscountPage() {
     },
     onSuccess: () => {
       toast({
-        title: 'Discount Created',
-        description: 'The new discount is now available.',
+        title: t('discount.toast.createTitle'),
+        description: t('discount.toast.createDescription'),
       });
       router.push('/discounts');
       router.refresh();
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to create discount',
+        title: t('discount.toast.createErrorTitle'),
         description: error.message,
         variant: 'destructive',
       });
@@ -73,17 +75,17 @@ export default function NewDiscountPage() {
         <Link href="/discounts">
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Create Discount</h1>
-          <p className="text-muted-foreground">Configure a new discount and choose where it applies.</p>
+          <h1 className="text-3xl font-bold">{t('discount.newDiscount')}</h1>
+          <p className="text-muted-foreground">{t('discount.createDescription')}</p>
         </div>
       </div>
 
       <DiscountForm
-        submitLabel="Create Discount"
+        submitLabel={t('discount.createDiscount')}
         submitting={createDiscount.isPending}
         onCancelHref="/discounts"
         onSubmit={handleSubmit}

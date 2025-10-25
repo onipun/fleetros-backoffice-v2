@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CurrencyInput } from '@/components/ui/currency-input';
@@ -61,8 +62,44 @@ export function DiscountForm({
   onCancelHref,
   onSubmit,
 }: DiscountFormProps) {
+  const { t } = useLocale();
   const mergedInitial = useMemo(() => ({ ...defaultValues, ...initialData }), [initialData]);
   const [formState, setFormState] = useState<DiscountFormState>(mergedInitial);
+
+  const statusOptions = useMemo(
+    () =>
+      Object.values(DiscountStatusEnum).map((status) => ({
+        value: status,
+        label: t(`discount.status.${status.toLowerCase()}`),
+      })),
+    [t],
+  );
+
+  const typeOptions = useMemo(
+    () =>
+      Object.values(DiscountTypeEnum).map((type) => ({
+        value: type,
+        label: t(`discount.type.${type.toLowerCase()}`),
+      })),
+    [t],
+  );
+
+  const scopeOptionEntries = useMemo(
+    () =>
+      scopeOptions.map((scope) => ({
+        value: scope,
+        label: t(`discount.scope.${scope.toLowerCase()}`),
+      })),
+    [t],
+  );
+
+  const showValidationError = (messageKey: string) => {
+    toast({
+      title: t('discount.form.validationErrorTitle'),
+      description: t(messageKey),
+      variant: 'destructive',
+    });
+  };
 
   useEffect(() => {
     setFormState(mergedInitial);
@@ -87,74 +124,46 @@ export function DiscountForm({
     event.preventDefault();
 
     if (!formState.code.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Discount code is required.',
-        variant: 'destructive',
-      });
+      showValidationError('discount.form.errors.codeRequired');
       return;
     }
 
     if (!formState.validFrom || !formState.validTo) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please select both valid from and valid to dates.',
-        variant: 'destructive',
-      });
+      showValidationError('discount.form.errors.validRangeRequired');
       return;
     }
 
     if (new Date(formState.validFrom) >= new Date(formState.validTo)) {
-      toast({
-        title: 'Validation Error',
-        description: 'Valid from date must be earlier than valid to date.',
-        variant: 'destructive',
-      });
+      showValidationError('discount.form.errors.validRangeOrder');
       return;
     }
 
     if (formState.type === DiscountTypeEnum.PERCENTAGE) {
       if (formState.value <= 0 || formState.value > 100) {
-        toast({
-          title: 'Validation Error',
-          description: 'Percentage discounts must be between 0 and 100.',
-          variant: 'destructive',
-        });
+        showValidationError('discount.form.errors.percentageRange');
         return;
       }
     } else if (formState.value < 0) {
-      toast({
-        title: 'Validation Error',
-        description: 'Discount value cannot be negative.',
-        variant: 'destructive',
-      });
+      showValidationError('discount.form.errors.amountNegative');
       return;
     }
 
     if (formState.minBookingAmount < 0) {
-      toast({
-        title: 'Validation Error',
-        description: 'Minimum booking amount cannot be negative.',
-        variant: 'destructive',
-      });
+      showValidationError('discount.form.errors.minBookingNegative');
       return;
     }
 
     if (formState.maxUses < 1) {
-      toast({
-        title: 'Validation Error',
-        description: 'Maximum uses must be at least 1.',
-        variant: 'destructive',
-      });
+      showValidationError('discount.form.errors.maxUsesMinimum');
       return;
     }
 
     if ((formState.applicableScope === 'PACKAGE' || formState.applicableScope === 'OFFERING') && !formState.targetEntityId) {
-      toast({
-        title: 'Validation Error',
-        description: `Please select a ${formState.applicableScope.toLowerCase()} to bind this discount to.`,
-        variant: 'destructive',
-      });
+      showValidationError(
+        formState.applicableScope === 'PACKAGE'
+          ? 'discount.form.errors.packageRequired'
+          : 'discount.form.errors.offeringRequired',
+      );
       return;
     }
 
@@ -171,7 +180,9 @@ export function DiscountForm({
     if (formState.type === DiscountTypeEnum.PERCENTAGE) {
       return (
         <div className="space-y-2">
-          <Label htmlFor="value">Discount Percentage *</Label>
+          <Label htmlFor="value">
+            {t('discount.form.percentageLabel')} {t('common.required')}
+          </Label>
           <Input
             id="value"
             type="number"
@@ -182,16 +193,18 @@ export function DiscountForm({
             onChange={(event) => handleChange({ value: Number(event.target.value) || 0 })}
             required
           />
-          <p className="text-xs text-muted-foreground">Enter the percentage discount (0-100%).</p>
+          <p className="text-xs text-muted-foreground">{t('discount.form.percentageHelper')}</p>
         </div>
       );
     }
 
     return (
       <div className="space-y-2">
-        <Label htmlFor="value">Discount Amount (MYR) *</Label>
+        <Label htmlFor="value">
+          {t('discount.form.amountLabel')} {t('common.required')}
+        </Label>
         <CurrencyInput id="value" value={formState.value} onChange={(value) => handleChange({ value })} required />
-        <p className="text-xs text-muted-foreground">Fixed amount that will be deducted from the total.</p>
+        <p className="text-xs text-muted-foreground">{t('discount.form.amountHelper')}</p>
       </div>
     );
   };
@@ -200,7 +213,9 @@ export function DiscountForm({
     if (formState.applicableScope === 'PACKAGE') {
       return (
         <div className="space-y-2">
-          <Label>Select Package *</Label>
+          <Label>
+            {t('discount.form.selectPackageLabel')} {t('common.required')}
+          </Label>
           <EntitySelect
             entityType="package"
             value={formState.targetEntityId}
@@ -213,7 +228,9 @@ export function DiscountForm({
     if (formState.applicableScope === 'OFFERING') {
       return (
         <div className="space-y-2">
-          <Label>Select Offering *</Label>
+          <Label>
+            {t('discount.form.selectOfferingLabel')} {t('common.required')}
+          </Label>
           <EntitySelect
             entityType="offering"
             value={formState.targetEntityId}
@@ -224,11 +241,7 @@ export function DiscountForm({
     }
 
     if (formState.applicableScope === 'BOOKING') {
-      return (
-        <p className="text-xs text-muted-foreground">
-          This discount will be made available during booking without linking to a specific booking record.
-        </p>
-      );
+      return <p className="text-xs text-muted-foreground">{t('discount.form.bookingScopeHint')}</p>;
     }
 
     return null;
@@ -238,22 +251,26 @@ export function DiscountForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Discount Details</CardTitle>
+          <CardTitle>{t('discount.form.detailsTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="code">Discount Code *</Label>
+            <Label htmlFor="code">
+              {t('discount.form.codeLabel')} {t('common.required')}
+            </Label>
             <Input
               id="code"
               value={formState.code}
               onChange={(event) => handleChange({ code: event.target.value })}
-              placeholder="e.g., SUMMER2025"
+              placeholder={t('discount.form.codePlaceholder')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Status *</Label>
+            <Label htmlFor="status">
+              {t('discount.form.statusLabel')} {t('common.required')}
+            </Label>
             <select
               id="status"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -261,16 +278,18 @@ export function DiscountForm({
               onChange={(event) => handleChange({ status: event.target.value as DiscountStatus })}
               required
             >
-              {Object.values(DiscountStatusEnum).map((status) => (
-                <option key={status} value={status}>
-                  {status.charAt(0) + status.slice(1).toLowerCase()}
+              {statusOptions.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="type">Discount Type *</Label>
+            <Label htmlFor="type">
+              {t('discount.form.typeLabel')} {t('common.required')}
+            </Label>
             <select
               id="type"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -278,9 +297,9 @@ export function DiscountForm({
               onChange={handleTypeChange}
               required
             >
-              {Object.values(DiscountTypeEnum).map((type) => (
-                <option key={type} value={type}>
-                  {type.charAt(0) + type.slice(1).toLowerCase()}
+              {typeOptions.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
                 </option>
               ))}
             </select>
@@ -292,12 +311,14 @@ export function DiscountForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Applicability</CardTitle>
+          <CardTitle>{t('discount.form.applicabilityTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="scope">Scope *</Label>
+              <Label htmlFor="scope">
+                {t('discount.form.scopeLabel')} {t('common.required')}
+              </Label>
               <select
                 id="scope"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -305,16 +326,16 @@ export function DiscountForm({
                 onChange={handleScopeChange}
                 required
               >
-                {scopeOptions.map((scope) => (
-                  <option key={scope} value={scope}>
-                    {scope.charAt(0) + scope.slice(1).toLowerCase()}
+                {scopeOptionEntries.map((scope) => (
+                  <option key={scope.value} value={scope.value}>
+                    {scope.label}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="minBookingAmount">Minimum Booking Amount (MYR)</Label>
+              <Label htmlFor="minBookingAmount">{t('discount.form.minBookingAmountLabel')}</Label>
               <CurrencyInput
                 id="minBookingAmount"
                 value={formState.minBookingAmount}
@@ -329,11 +350,13 @@ export function DiscountForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Usage Controls</CardTitle>
+          <CardTitle>{t('discount.form.usageTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="maxUses">Maximum Uses *</Label>
+            <Label htmlFor="maxUses">
+              {t('discount.form.maxUsesLabel')} {t('common.required')}
+            </Label>
             <Input
               id="maxUses"
               type="number"
@@ -345,7 +368,7 @@ export function DiscountForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="usesCount">Current Usage</Label>
+            <Label htmlFor="usesCount">{t('discount.form.usesCountLabel')}</Label>
             <Input id="usesCount" type="number" value={formState.usesCount} readOnly disabled />
           </div>
         </CardContent>
@@ -353,11 +376,13 @@ export function DiscountForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Validity Window</CardTitle>
+          <CardTitle>{t('discount.form.validityTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="validFrom">Valid From *</Label>
+            <Label htmlFor="validFrom">
+              {t('discount.form.validFromLabel')} {t('common.required')}
+            </Label>
             <DateTimePicker
               id="validFrom"
               value={formState.validFrom}
@@ -366,7 +391,9 @@ export function DiscountForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="validTo">Valid To *</Label>
+            <Label htmlFor="validTo">
+              {t('discount.form.validToLabel')} {t('common.required')}
+            </Label>
             <DateTimePicker id="validTo" value={formState.validTo} onChange={(value) => handleChange({ validTo: value })} />
           </div>
         </CardContent>
@@ -374,14 +401,14 @@ export function DiscountForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Description</CardTitle>
+          <CardTitle>{t('discount.form.descriptionTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
             id="description"
             value={formState.description}
             onChange={(event) => handleChange({ description: event.target.value })}
-            placeholder="Describe this discount..."
+            placeholder={t('discount.form.descriptionPlaceholder')}
             rows={4}
           />
         </CardContent>
@@ -390,11 +417,11 @@ export function DiscountForm({
       <div className="flex justify-end gap-4">
         <Link href={onCancelHref}>
           <Button type="button" variant="outline">
-            Cancel
+            {t('common.cancel')}
           </Button>
         </Link>
         <Button type="submit" disabled={submitting}>
-          {submitting ? 'Saving...' : submitLabel}
+          {submitting ? t('common.saving') : submitLabel}
         </Button>
       </div>
     </form>

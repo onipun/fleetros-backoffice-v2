@@ -1,6 +1,7 @@
 'use client';
 
 import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,13 +16,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function EditVehiclePage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const vehicleId = params.id as string;
+  const { t } = useLocale();
   
   // Fetch existing tags for autocomplete
   const { data: existingTags = [] } = usePricingTags();
@@ -52,6 +54,36 @@ export default function EditVehiclePage() {
     validFrom: '',
     validTo: '',
   });
+
+  const statusOptions = useMemo(
+    () => [
+      { value: 'AVAILABLE' as VehicleStatus, label: t('vehicle.available') },
+      { value: 'RENTED' as VehicleStatus, label: t('vehicle.rented') },
+      { value: 'MAINTENANCE' as VehicleStatus, label: t('vehicle.maintenance') },
+      { value: 'RETIRED' as VehicleStatus, label: t('vehicle.retired') },
+    ],
+    [t],
+  );
+
+  const fuelTypeOptions = useMemo(
+    () => [
+      { value: 'Gasoline', label: t('vehicle.fuelTypes.gasoline') },
+      { value: 'Diesel', label: t('vehicle.fuelTypes.diesel') },
+      { value: 'Electric', label: t('vehicle.fuelTypes.electric') },
+      { value: 'Hybrid', label: t('vehicle.fuelTypes.hybrid') },
+      { value: 'Plug-in Hybrid', label: t('vehicle.fuelTypes.plugInHybrid') },
+    ],
+    [t],
+  );
+
+  const transmissionOptions = useMemo(
+    () => [
+      { value: 'Automatic', label: t('vehicle.transmissions.automatic') },
+      { value: 'Manual', label: t('vehicle.transmissions.manual') },
+      { value: 'CVT', label: t('vehicle.transmissions.cvt') },
+    ],
+    [t],
+  );
 
   // Fetch vehicle details
   const { data: vehicle, isLoading } = useQuery({
@@ -132,19 +164,19 @@ export default function EditVehiclePage() {
       // Show appropriate toast message
       if (pricingSuccess) {
         toast({
-          title: 'Success',
-          description: 'Vehicle and pricing updated successfully',
+          title: t('common.success'),
+          description: t('vehicle.updateWithPricingSuccess'),
         });
       } else if (pricingError) {
         toast({
-          title: 'Partial Success',
-          description: `Vehicle updated but pricing failed: ${pricingError}`,
+          title: t('vehicle.pricingPartialSuccessTitle'),
+          description: `${t('vehicle.pricingPartialSuccess')} ${pricingError}`,
           variant: 'destructive',
         });
       } else {
         toast({
-          title: 'Success',
-          description: 'Vehicle updated successfully',
+          title: t('common.success'),
+          description: t('toast.updateSuccess'),
         });
       }
       
@@ -158,7 +190,7 @@ export default function EditVehiclePage() {
     onError: (error: Error) => {
       console.error('Vehicle update failed:', error);
       toast({
-        title: 'Error',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -184,7 +216,7 @@ export default function EditVehiclePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading vehicle details...</p>
+        <p className="text-muted-foreground">{t('vehicle.loadingDetails')}</p>
       </div>
     );
   }
@@ -192,11 +224,11 @@ export default function EditVehiclePage() {
   if (!vehicle) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <p className="text-destructive">Vehicle not found</p>
+        <p className="text-destructive">{t('vehicle.vehicleNotFound')}</p>
         <Link href="/vehicles">
           <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Vehicles
+            {t('vehicle.backToVehicles')}
           </Button>
         </Link>
       </div>
@@ -209,12 +241,12 @@ export default function EditVehiclePage() {
         <Link href={`/vehicles/${vehicleId}`}>
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Edit Vehicle</h1>
-          <p className="text-muted-foreground">Update vehicle information</p>
+          <h1 className="text-3xl font-bold">{t('vehicle.editVehicle')}</h1>
+          <p className="text-muted-foreground">{t('vehicle.editDescription')}</p>
         </div>
       </div>
 
@@ -225,24 +257,28 @@ export default function EditVehiclePage() {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>{t('vehicle.basicInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Vehicle Name *</Label>
+                  <Label htmlFor="name">
+                    {t('vehicle.vehicleName')} {t('common.required')}
+                  </Label>
                   <Input
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="e.g., Tesla Model 3 Premium"
+                    placeholder={t('vehicle.namePlaceholder')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status *</Label>
+                  <Label htmlFor="status">
+                    {t('vehicle.status')} {t('common.required')}
+                  </Label>
                   <select
                     id="status"
                     name="status"
@@ -251,39 +287,46 @@ export default function EditVehiclePage() {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
                   >
-                    <option value="AVAILABLE">Available</option>
-                    <option value="RENTED">Rented</option>
-                    <option value="MAINTENANCE">Maintenance</option>
-                    <option value="RETIRED">Retired</option>
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="licensePlate">License Plate *</Label>
+                  <Label htmlFor="licensePlate">
+                    {t('vehicle.licensePlate')} {t('common.required')}
+                  </Label>
                   <Input
                     id="licensePlate"
                     name="licensePlate"
                     value={formData.licensePlate}
                     onChange={handleChange}
-                    placeholder="ABC123"
+                    placeholder={t('vehicle.platePlaceholder')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="vin">VIN *</Label>
+                  <Label htmlFor="vin">
+                    {t('vehicle.vin')} {t('common.required')}
+                  </Label>
                   <Input
                     id="vin"
                     name="vin"
                     value={formData.vin}
                     onChange={handleChange}
-                    placeholder="1HGBH41JXMN109186"
+                    placeholder={t('vehicle.vinPlaceholder')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="odometer">Odometer (km) *</Label>
+                  <Label htmlFor="odometer">
+                    {t('vehicle.odometer')} ({t('vehicle.kilometersShort')}) {t('common.required')}
+                  </Label>
                   <Input
                     id="odometer"
                     name="odometer"
@@ -301,36 +344,42 @@ export default function EditVehiclePage() {
           {/* Specifications */}
           <Card>
             <CardHeader>
-              <CardTitle>Specifications</CardTitle>
+              <CardTitle>{t('vehicle.specifications')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="make">Make *</Label>
+                  <Label htmlFor="make">
+                    {t('vehicle.make')} {t('common.required')}
+                  </Label>
                   <Input
                     id="make"
                     name="make"
                     value={formData.make}
                     onChange={handleChange}
-                    placeholder="Tesla"
+                    placeholder={t('vehicle.makePlaceholder')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="model">Model *</Label>
+                  <Label htmlFor="model">
+                    {t('vehicle.model')} {t('common.required')}
+                  </Label>
                   <Input
                     id="model"
                     name="model"
                     value={formData.model}
                     onChange={handleChange}
-                    placeholder="Model 3"
+                    placeholder={t('vehicle.modelPlaceholder')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="year">Year *</Label>
+                  <Label htmlFor="year">
+                    {t('vehicle.year')} {t('common.required')}
+                  </Label>
                   <Input
                     id="year"
                     name="year"
@@ -344,7 +393,9 @@ export default function EditVehiclePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fuelType">Fuel Type *</Label>
+                  <Label htmlFor="fuelType">
+                    {t('vehicle.fuelType')} {t('common.required')}
+                  </Label>
                   <select
                     id="fuelType"
                     name="fuelType"
@@ -353,16 +404,18 @@ export default function EditVehiclePage() {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
                   >
-                    <option value="Gasoline">Gasoline</option>
-                    <option value="Diesel">Diesel</option>
-                    <option value="Electric">Electric</option>
-                    <option value="Hybrid">Hybrid</option>
-                    <option value="Plug-in Hybrid">Plug-in Hybrid</option>
+                    {fuelTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="transmissionType">Transmission *</Label>
+                  <Label htmlFor="transmissionType">
+                    {t('vehicle.transmissionType')} {t('common.required')}
+                  </Label>
                   <select
                     id="transmissionType"
                     name="transmissionType"
@@ -371,9 +424,11 @@ export default function EditVehiclePage() {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
                   >
-                    <option value="Automatic">Automatic</option>
-                    <option value="Manual">Manual</option>
-                    <option value="CVT">CVT</option>
+                    {transmissionOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -383,12 +438,12 @@ export default function EditVehiclePage() {
           {/* Rental Settings */}
           <Card>
             <CardHeader>
-              <CardTitle>Rental Settings</CardTitle>
+              <CardTitle>{t('vehicle.rentalSettings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="bufferMinutes">Buffer Minutes</Label>
+                  <Label htmlFor="bufferMinutes">{t('vehicle.bufferMinutes')}</Label>
                   <Input
                     id="bufferMinutes"
                     name="bufferMinutes"
@@ -398,12 +453,12 @@ export default function EditVehiclePage() {
                     min="0"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Time buffer between rentals
+                    {t('vehicle.bufferMinutesHelp')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="minRentalHours">Minimum Rental Hours</Label>
+                  <Label htmlFor="minRentalHours">{t('vehicle.minRentalHours')}</Label>
                   <Input
                     id="minRentalHours"
                     name="minRentalHours"
@@ -415,7 +470,7 @@ export default function EditVehiclePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="maxRentalDays">Maximum Rental Days</Label>
+                  <Label htmlFor="maxRentalDays">{t('vehicle.maxRentalDays')}</Label>
                   <Input
                     id="maxRentalDays"
                     name="maxRentalDays"
@@ -427,7 +482,7 @@ export default function EditVehiclePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="maxFutureBookingDays">Max Future Booking Days</Label>
+                  <Label htmlFor="maxFutureBookingDays">{t('vehicle.maxFutureBookingDays')}</Label>
                   <Input
                     id="maxFutureBookingDays"
                     name="maxFutureBookingDays"
@@ -437,7 +492,7 @@ export default function EditVehiclePage() {
                     min="1"
                   />
                   <p className="text-xs text-muted-foreground">
-                    How far ahead customers can book
+                    {t('vehicle.maxFutureBookingDaysHelp')}
                   </p>
                 </div>
               </div>
@@ -447,17 +502,17 @@ export default function EditVehiclePage() {
           {/* Additional Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Additional Details</CardTitle>
+              <CardTitle>{t('vehicle.additionalDetails')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="details">Description</Label>
+                <Label htmlFor="details">{t('vehicle.details')}</Label>
                 <Textarea
                   id="details"
                   name="details"
                   value={formData.details}
                   onChange={handleChange}
-                  placeholder="Additional information about the vehicle..."
+                  placeholder={t('vehicle.detailsPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -483,11 +538,11 @@ export default function EditVehiclePage() {
             
             <Card className="bg-muted/50">
               <CardHeader>
-                <CardTitle>💡 Add New Pricing</CardTitle>
+                <CardTitle>{t('vehicle.addNewPricingTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Fill in the pricing form above to add a new pricing configuration. Existing pricings are shown below and can be managed separately.
+                  {t('vehicle.addNewPricingDescription')}
                 </p>
               </CardContent>
             </Card>
@@ -498,11 +553,11 @@ export default function EditVehiclePage() {
         <div className="flex gap-4 justify-end mt-8">
           <Link href={`/vehicles/${vehicleId}`}>
             <Button type="button" variant="outline" size="lg">
-              Cancel
+              {t('common.cancel')}
             </Button>
           </Link>
           <Button type="submit" disabled={updateMutation.isPending} size="lg">
-            {updateMutation.isPending ? 'Updating...' : 'Update Vehicle'}
+            {updateMutation.isPending ? t('common.updating') : t('vehicle.updateAction')}
           </Button>
         </div>
       </form>

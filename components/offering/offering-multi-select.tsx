@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -19,9 +20,18 @@ export interface OfferingMultiSelectProps {
   className?: string;
 }
 
+const offeringTypeKeyMap: Record<string, string> = {
+  GPS: 'gps',
+  INSURANCE: 'insurance',
+  CHILD_SEAT: 'childSeat',
+  WIFI: 'wifi',
+  ADDITIONAL_DRIVER: 'additionalDriver',
+  OTHER: 'other',
+};
+
 export function OfferingMultiSelect({
-  title = 'Included Offerings',
-  description = 'Select the optional offerings to bundle with this item.',
+  title,
+  description,
   offerings,
   selectedIds,
   onChange,
@@ -29,6 +39,17 @@ export function OfferingMultiSelect({
   errorMessage,
   className,
 }: OfferingMultiSelectProps) {
+  const { t } = useLocale();
+  const resolvedTitle = title ?? t('package.includedOfferings');
+  const resolvedDescription = description ?? t('offering.selector.description');
+  const searchPlaceholder = t('offering.selector.searchPlaceholder');
+  const loadingLabel = t('offering.selector.loading');
+  const emptyLabel = t('offering.selector.empty');
+  const noResultsLabel = t('offering.selector.noResults');
+  const untitledLabel = t('offering.selector.untitled');
+  const selectedSingular = t('offering.selector.selectedSingular');
+  const selectedPlural = t('offering.selector.selectedPlural');
+
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredOfferings = useMemo(() => {
@@ -50,15 +71,28 @@ export function OfferingMultiSelect({
     }
   };
 
+  const resolveOfferingType = (type?: Offering['offeringType']) => {
+    if (!type) {
+      return undefined;
+    }
+    const key = offeringTypeKeyMap[type];
+    return key ? t(`offering.types.${key}`) : type.replace(/_/g, ' ');
+  };
+
+  const resolveSelectedLabel = (count: number) => {
+    const template = count === 1 ? selectedSingular : selectedPlural;
+    return template.replace('{count}', String(count));
+  };
+
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <CardTitle>{resolvedTitle}</CardTitle>
+        <p className="text-sm text-muted-foreground">{resolvedDescription}</p>
       </CardHeader>
       <CardContent className="space-y-4">
         <Input
-          placeholder="Search offerings..."
+          placeholder={searchPlaceholder}
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
         />
@@ -66,7 +100,7 @@ export function OfferingMultiSelect({
         {isLoading ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading offerings...
+            {loadingLabel}
           </div>
         ) : errorMessage ? (
           <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
@@ -74,7 +108,7 @@ export function OfferingMultiSelect({
           </div>
         ) : filteredOfferings.length === 0 ? (
           <p className="py-2 text-sm text-muted-foreground">
-            {offerings.length === 0 ? 'No offerings available yet.' : 'No offerings match your search.'}
+            {offerings.length === 0 ? emptyLabel : noResultsLabel}
           </p>
         ) : (
           <div className="grid gap-3">
@@ -93,10 +127,10 @@ export function OfferingMultiSelect({
                 />
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{offering.name || 'Untitled Offering'}</span>
+                    <span className="font-medium">{offering.name || untitledLabel}</span>
                     {offering.offeringType && (
                       <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {offering.offeringType.replace(/_/g, ' ')}
+                        {resolveOfferingType(offering.offeringType)}
                       </span>
                     )}
                   </div>
@@ -104,10 +138,10 @@ export function OfferingMultiSelect({
                     <p className="text-sm text-muted-foreground">{offering.description}</p>
                   )}
                   <div className="text-xs text-muted-foreground">
-                    Price: {formatCurrency(offering.price ?? 0)}
+                    {t('offering.priceLabel')} {formatCurrency(offering.price ?? 0)}
                     {offering.maxQuantityPerBooking != null && (
                       <span className="ml-2">
-                        Max qty per booking: {offering.maxQuantityPerBooking}
+                        {t('offering.maxQuantityLabel')} {offering.maxQuantityPerBooking} {t('offering.perBookingSuffix')}
                       </span>
                     )}
                   </div>
@@ -119,7 +153,7 @@ export function OfferingMultiSelect({
 
         {selectedIds.length > 0 && !isLoading && (
           <div className="text-xs text-muted-foreground">
-            {selectedIds.length} offering{selectedIds.length === 1 ? '' : 's'} selected
+            {resolveSelectedLabel(selectedIds.length)}
           </div>
         )}
       </CardContent>

@@ -18,7 +18,7 @@
     "name": "Nama",
     "description": "Penerangan",
     "status": "Status",
-  "allStatuses": "Semua Status",
+    "allStatuses": "Semua Status",
     "createdAt": "Dicipta Pada",
     "updatedAt": "Dikemaskini Pada",
     "noResults": "Tiada hasil ditemui",
@@ -32,6 +32,7 @@
     "uploading": "Memuat naik...",
     "creating": "Mencipta...",
     "updating": "Mengemas kini...",
+  "saving": "Menyimpan...",
     "deleting": "Memadam...",
     "clear": "Kosongkan",
     "clearFilters": "Kosongkan Tapisan",
@@ -41,6 +42,8 @@
     "show": "Tunjuk",
     "apply": "Guna",
     "exportCSV": "Eksport CSV",
+  "saveChanges": "Simpan Perubahan",
+    "optional": "Pilihan",
     "notAvailable": "Tidak tersedia"
   },
   "nav": {
@@ -84,7 +87,7 @@
   },
   "vehicle": {
     "title": "Kenderaan",
-    "newVehicle": "Kenderaan Baharu",
+  "newVehicle": "Kenderaan Baharu",
     "addVehicle": "Tambah Kenderaan",
     "addNewVehicle": "Tambah Kenderaan Baharu",
     "editVehicle": "Edit Kenderaan",
@@ -184,6 +187,8 @@
   "pricing": {
     "title": "Harga",
     "titlePlural": "Harga",
+    "newPricing": "Tambah Harga Baharu",
+    "editPricing": "Edit Harga",
     "baseRate": "Kadar Asas",
     "rateType": "Jenis Kadar",
     "depositAmount": "Jumlah Deposit",
@@ -199,7 +204,40 @@
     "perDay": "setiap hari",
     "minRental": "Sewa Minimum",
     "days": "hari",
-    "deposit": "Deposit"
+    "deposit": "Deposit",
+    "linkedEntity": "Entiti Berkaitan",
+    "rateConfiguration": "Konfigurasi Kadar",
+    "pricingDetails": "Butiran Harga",
+    "validityPeriod": "Tempoh Sah",
+    "entityInformation": "Maklumat Entiti",
+    "addTagsPlaceholder": "Tambah tag untuk kategorikan harga ini...",
+    "selectEntity": "Pilih Jenis Entiti",
+    "selectVehicle": "Pilih Kenderaan",
+    "selectOffering": "Pilih Perkhidmatan",
+    "selectPackage": "Pilih Pakej",
+    "rateTypes": {
+      "hourly": "Setiap Jam",
+      "daily": "Harian",
+      "weekly": "Mingguan",
+      "monthly": "Bulanan",
+      "flat": "Kadar Tetap"
+    },
+    "form": {
+      "configurationTitle": "Konfigurasi Harga",
+      "configurationDescription": "Tetapkan cara pilihan harga ini berfungsi.",
+      "connectedTo": "Disambungkan kepada",
+      "rateTypeHint": "Pilih selang pengebilan untuk harga ini.",
+      "baseRateHint": "Jumlah utama yang akan dicaj kepada pelanggan sebelum pelarasan.",
+      "depositHint": "Deposit yang diperlukan semasa tempahan.",
+      "minimumRentalHint": "Bilangan hari sewaan minimum diperlukan untuk harga ini terpakai.",
+      "validFromHint": "Tetapkan bila harga ini mula berkuat kuasa.",
+      "validToHint": "Tetapkan bila harga ini tamat.",
+      "tagsSuggestion": "Gunakan tag seperti \"musiman\", \"hujung minggu\" atau \"cuti\" untuk mengatur harga ini.",
+      "summaryTitle": "Ringkasan Harga",
+      "validity": "Kesahan",
+      "validityNotSet": "Belum ditetapkan",
+      "noTags": "Tiada tag ditambah"
+    }
   },
   "booking": {
     "title": "Tempahan",
@@ -229,7 +267,88 @@
       "cancelled": "Dibatalkan",
       "unknown": "Tidak diketahui"
     },
-    "cancelBooking": "Batalkan Tempahan"
+    "cancelBooking": "Batalkan Tempahan",
+    "form": {
+      "daySingular": "hari",
+      "dayPlural": "hari",
+      "pageTitle": {
+        "create": "Cipta Tempahan",
+        "edit": "Edit Tempahan"
+      },
+      "pageSubtitle": {
+        "create": "Rekod tempahan sewaan baharu",
+        "edit": "Kemaskini butiran tempahan dan harga"
+      },
+      "submit": {
+        "create": "Cipta Tempahan",
+        "update": "Kemaskini Tempahan"
+      },
+      "sections": {
+        "reservation": "Butiran Tempahan",
+        "logistics": "Logistik & Perlindungan",
+        "pricing": "Ringkasan Harga",
+        "offerings": "Perkhidmatan Pilihan"
+      },
+      "fields": {
+        "vehicle": "Kenderaan",
+        "packageOptional": "Pakej (Pilihan)",
+        "discountOptional": "Diskaun (Pilihan)",
+        "startDate": "Tarikh Mula",
+        "endDate": "Tarikh Tamat",
+        "pickupLocation": "Lokasi Pengambilan",
+        "dropoffLocation": "Lokasi Pemulangan",
+        "insurancePolicy": "Polisi Insurans",
+        "status": "Status"
+      },
+      "placeholders": {
+        "pickupLocation": "cth., Terminal Lapangan Terbang",
+        "dropoffLocation": "cth., Pejabat Bandar",
+        "insurancePolicy": "Terangkan perlindungan atau butiran polisi"
+      },
+      "summary": {
+        "totalDays": "Jumlah Hari",
+        "durationHint": "Dikira secara automatik daripada tarikh mula dan tamat.",
+        "billDetails": "Butiran Bil",
+        "billPlaceholder": "Pilih kenderaan, tarikh dan tambahan pilihan untuk pratonton bil.",
+        "includedPrefix": "Termasuk dalam pakej",
+        "subtotal": "Jumlah Kecil",
+        "discount": "Diskaun",
+        "total": "Jumlah",
+        "packageModifierSuffix": "daripada kadar asas",
+        "vehicleRateFallback": "Kadar Kenderaan"
+      },
+      "errors": {
+        "vehicleRequired": "Sila pilih kenderaan untuk tempahan ini.",
+        "datesRequired": "Tarikh mula dan tamat diperlukan.",
+        "startBeforeEnd": "Tarikh mula mesti lebih awal daripada tarikh tamat.",
+        "minimumDuration": "Tempoh tempahan mesti sekurang-kurangnya satu hari."
+      },
+      "offerings": {
+        "searchPlaceholder": "Cari perkhidmatan...",
+        "helper": "Tambah perkhidmatan dan tambahan pilihan. Kuantiti boleh dilaras selepas dipilih.",
+        "loading": "Memuatkan perkhidmatan...",
+        "empty": "Tiada perkhidmatan tersedia lagi.",
+        "noResults": "Tiada perkhidmatan sepadan dengan carian anda.",
+        "packageBadge": "Termasuk dalam pakej",
+        "unitPriceLabel": "Harga seunit",
+        "quantity": "Kuantiti",
+        "packageHint": "Unit pertama ditanggung oleh pakej. Unit tambahan dikenakan kadar biasa.",
+        "billableLabel": "dikenakan caj",
+        "noCharge": "Tiada caj tambahan",
+        "addAction": "Tambah perkhidmatan"
+      },
+      "notifications": {
+        "createSuccessTitle": "Tempahan Dicipta",
+        "createSuccessDescription": "Tempahan berjaya dicipta.",
+        "createErrorTitle": "Gagal mencipta tempahan",
+        "updateSuccessTitle": "Tempahan Dikemaskini",
+        "updateSuccessDescription": "Tempahan berjaya dikemaskini.",
+        "updateErrorTitle": "Gagal mengemaskini tempahan"
+      },
+      "loading": "Memuatkan tempahan...",
+      "notFound": "Tempahan tidak ditemui.",
+      "backToList": "Kembali ke Tempahan"
+    }
   },
   "offering": {
     "title": "Perkhidmatan",
@@ -271,7 +390,17 @@
     "unitPricePlaceholder": "100",
     "quantity": "Kuantiti Tersedia",
     "quantityPlaceholder": "1",
-    "isActive": "Aktif?"
+    "isActive": "Aktif?",
+    "selector": {
+      "description": "Pilih perkhidmatan pilihan untuk digabungkan dengan item ini.",
+      "searchPlaceholder": "Cari perkhidmatan...",
+      "loading": "Memuatkan perkhidmatan...",
+      "empty": "Belum ada perkhidmatan tersedia.",
+      "noResults": "Tiada perkhidmatan sepadan dengan carian anda.",
+      "untitled": "Perkhidmatan tanpa nama",
+      "selectedSingular": "{count} perkhidmatan dipilih",
+      "selectedPlural": "{count} perkhidmatan dipilih"
+    }
   },
   "package": {
     "title": "Pakej",
@@ -355,6 +484,12 @@
     "noResults": "Tiada diskaun ditemui",
     "createFirstDiscount": "Cipta Diskaun Pertama Anda",
     "percentageSuffix": "%",
+    "loading": "Memuatkan diskaun...",
+    "notFoundTitle": "Diskaun Tidak Ditemui",
+    "notFoundDescription": "Kami tidak dapat memuatkan diskaun ini. Ia mungkin telah dipadam.",
+    "editDiscount": "Edit Diskaun",
+    "editDescription": "Kemaskini butiran dan skop diskaun.",
+    "createDescription": "Tetapkan butiran diskaun dan kelayakan.",
     "status": {
       "active": "Aktif",
       "inactive": "Tidak Aktif",
@@ -371,6 +506,51 @@
       "offering": "Perkhidmatan",
       "booking": "Tempahan",
       "all": "Semua entiti"
+    },
+    "toast": {
+      "createTitle": "Diskaun Dicipta",
+      "createDescription": "Diskaun berjaya dicipta.",
+      "createErrorTitle": "Gagal mencipta diskaun",
+      "updateTitle": "Diskaun Dikemaskini",
+      "updateDescription": "Perubahan berjaya disimpan.",
+      "updateErrorTitle": "Gagal mengemaskini diskaun"
+    },
+    "form": {
+      "validationErrorTitle": "Ralat Pengesahan",
+      "percentageLabel": "Nilai Peratus",
+      "percentageHelper": "Masukkan peratus diskaun antara 0 hingga 100.",
+      "amountLabel": "Nilai Amaun",
+      "amountHelper": "Masukkan amaun diskaun tetap.",
+      "selectPackageLabel": "Pakej Sasaran",
+      "selectOfferingLabel": "Perkhidmatan Sasaran",
+      "bookingScopeHint": "Diskaun akan digunakan pada semua tempahan.",
+      "detailsTitle": "Butiran Diskaun",
+      "codeLabel": "Kod Diskaun",
+      "codePlaceholder": "cth., JIMAT10",
+      "statusLabel": "Status Diskaun",
+      "typeLabel": "Jenis Diskaun",
+      "applicabilityTitle": "Kelayakan",
+      "scopeLabel": "Skop",
+      "minBookingAmountLabel": "Jumlah Tempahan Minimum",
+      "usageTitle": "Had Penggunaan",
+      "maxUsesLabel": "Penggunaan Maksimum",
+      "usesCountLabel": "Jumlah Penggunaan",
+      "validityTitle": "Tempoh Sah",
+      "validFromLabel": "Sah Dari",
+      "validToLabel": "Sah Hingga",
+      "descriptionTitle": "Penerangan",
+      "descriptionPlaceholder": "Terangkan cara dan bila diskaun ini perlu digunakan...",
+      "errors": {
+        "codeRequired": "Sila masukkan kod diskaun.",
+        "validRangeRequired": "Tarikh sah mula dan tamat diperlukan.",
+        "validRangeOrder": "Tarikh tamat mesti selepas tarikh mula.",
+        "percentageRange": "Peratus diskaun mesti antara 0 hingga 100.",
+        "amountNegative": "Amaun diskaun tetap tidak boleh negatif.",
+        "minBookingNegative": "Jumlah tempahan minimum tidak boleh negatif.",
+        "maxUsesMinimum": "Penggunaan maksimum mestilah sekurang-kurangnya 1.",
+        "packageRequired": "Sila pilih pakej untuk skop ini.",
+        "offeringRequired": "Sila pilih perkhidmatan untuk skop ini."
+      }
     },
     "table": {
       "code": "Kod",
