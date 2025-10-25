@@ -474,6 +474,10 @@
         "updateSuccessDescription": "The booking has been updated successfully.",
         "updateErrorTitle": "Failed to update booking"
       },
+      "navigation": {
+        "previous": "Previous",
+        "next": "Next"
+      },
       "loading": "Loading booking...",
       "notFound": "Booking not found.",
       "backToList": "Back to Bookings"

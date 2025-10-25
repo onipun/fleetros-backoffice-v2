@@ -465,6 +465,10 @@
         "updateSuccessDescription": "Tempahan berjaya dikemaskini.",
         "updateErrorTitle": "Gagal mengemaskini tempahan"
       },
+      "navigation": {
+        "previous": "Sebelum",
+        "next": "Seterusnya"
+      },
       "loading": "Memuatkan tempahan...",
       "notFound": "Tempahan tidak ditemui.",
       "backToList": "Kembali ke Tempahan"

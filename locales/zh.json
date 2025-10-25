@@ -473,6 +473,10 @@
         "updateSuccessDescription": "预订已成功更新。",
         "updateErrorTitle": "更新预订失败"
       },
+      "navigation": {
+        "previous": "上一步",
+        "next": "下一步"
+      },
       "loading": "正在加载预订...",
       "notFound": "未找到预订。",
       "backToList": "返回预订列表"
