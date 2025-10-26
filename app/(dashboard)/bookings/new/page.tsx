@@ -36,6 +36,21 @@ const STEPS = [
 
 const roundToTwo = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 
+// Helper function to generate date range
+const generateDateRange = (startDate: string, endDate: string): string[] => {
+  const dates: string[] = [];
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  const current = new Date(start);
+  while (current <= end) {
+    dates.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+  
+  return dates;
+};
+
 type BookingFormState = {
   vehicleId: number | null;
   packageId: number | null;
@@ -69,6 +84,7 @@ export default function NewBookingPage() {
   const [formState, setFormState] = useState<BookingFormState>(defaultState);
   const [offeringSelections, setOfferingSelections] = useState<Record<number, BookingOfferingSelection>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [shouldFetchPricing, setShouldFetchPricing] = useState(false);
   const hasInitializedRef = useRef(false);
 
   const formatDaysLabel = useCallback(
@@ -82,10 +98,28 @@ export default function NewBookingPage() {
     queryFn: async () => hateoasClient.getCollection<Offering>('offerings', { page: 0, size: 100 }),
   });
 
+  const { data: mandatoryOfferingsData } = useQuery({
+    queryKey: ['offerings', 'mandatory'],
+    queryFn: async () => hateoasClient.getCollection<Offering>('offerings/search/findByIsMandatory', { 
+      isMandatory: true,
+      page: 0, 
+      size: 100
+    }),
+  });
+
   const offerings = useMemo(() => {
     if (!offeringsData) return [] as Offering[];
     return parseHalResource<Offering>(offeringsData, 'offerings');
   }, [offeringsData]);
+
+  const mandatoryOfferings = useMemo(() => {
+    if (!mandatoryOfferingsData) return [] as Offering[];
+    return parseHalResource<Offering>(mandatoryOfferingsData, 'offerings');
+  }, [mandatoryOfferingsData]);
+
+  const mandatoryOfferingIds = useMemo(() => {
+    return new Set(mandatoryOfferings.map(o => o.id).filter((id): id is number => id != null));
+  }, [mandatoryOfferings]);
 
   const offeringById = useMemo(() => {
     const map = new Map<number, Offering>();
@@ -97,15 +131,21 @@ export default function NewBookingPage() {
     return map;
   }, [offerings]);
 
-  const { data: pricingsData } = useQuery({
-    queryKey: ['pricings', 'booking-form'],
-    queryFn: async () => hateoasClient.getCollection<Pricing>('pricings', { page: 0, size: 200 }),
-  });
+  // Generate date range for pricing query
+  const dateRange = useMemo(() => {
+    if (!formState.startDate || !formState.endDate) return [];
+    return generateDateRange(formState.startDate, formState.endDate);
+  }, [formState.startDate, formState.endDate]);
 
-  const pricingRecords = useMemo(() => {
-    if (!pricingsData) return [] as Pricing[];
-    return parseHalResource<Pricing>(pricingsData, 'pricings');
-  }, [pricingsData]);
+  // Fetch vehicle pricing for selected dates - only when explicitly triggered
+  const { data: vehiclePricingData, isLoading: isPricingLoading, error: pricingError } = useQuery({
+    queryKey: ['vehicle-pricing', formState.vehicleId, formState.startDate, formState.endDate],
+    queryFn: async () => {
+      if (!formState.vehicleId || !formState.startDate || !formState.endDate) return null;
+      return hateoasClient.getVehiclePricing(formState.vehicleId, [formState.startDate, formState.endDate]);
+    },
+    enabled: Boolean(formState.vehicleId) && Boolean(formState.startDate) && Boolean(formState.endDate) && shouldFetchPricing,
+  });
 
   const { data: selectedPackage } = useQuery({
     queryKey: ['package', formState.packageId],
@@ -128,6 +168,29 @@ export default function NewBookingPage() {
   useEffect(() => {
     hasInitializedRef.current = true;
   }, []);
+
+  // Auto-add mandatory offerings
+  useEffect(() => {
+    if (!hasInitializedRef.current || mandatoryOfferings.length === 0) return;
+
+    setOfferingSelections((prev) => {
+      let changed = false;
+      const next: Record<number, BookingOfferingSelection> = { ...prev };
+
+      mandatoryOfferings.forEach((offering) => {
+        const id = offering.id;
+        if (id == null) return;
+
+        const existing = next[id];
+        if (!existing) {
+          next[id] = { offering, quantity: 1, included: false };
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [mandatoryOfferings]);
 
   const packageIncludedIds = useMemo(() => {
     if (!selectedPackage?.offerings) return [] as number[];
@@ -211,13 +274,77 @@ export default function NewBookingPage() {
     return list;
   }, [offerings, offeringSelections, packageIncludedIdSet]);
 
+  // Calculate exact duration including hours
   const computedTotalDays = useMemo(() => {
     if (!formState.startDate || !formState.endDate) return 0;
     const start = new Date(formState.startDate);
     const end = new Date(formState.endDate);
-    const diff = end.getTime() - start.getTime();
-    if (Number.isNaN(diff) || diff <= 0) return 0;
-    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    const diffMs = end.getTime() - start.getTime();
+    if (Number.isNaN(diffMs) || diffMs <= 0) return 0;
+    
+    // Convert milliseconds to days
+    const exactDays = diffMs / (1000 * 60 * 60 * 24);
+    return Math.max(0.01, exactDays);
+  }, [formState.startDate, formState.endDate]);
+
+  // Calculate duration in hours
+  const computedTotalHours = useMemo(() => {
+    if (!formState.startDate || !formState.endDate) return 0;
+    const start = new Date(formState.startDate);
+    const end = new Date(formState.endDate);
+    const diffMs = end.getTime() - start.getTime();
+    if (Number.isNaN(diffMs) || diffMs <= 0) return 0;
+    
+    // Convert milliseconds to hours
+    const exactHours = diffMs / (1000 * 60 * 60);
+    return Math.max(0.01, exactHours);
+  }, [formState.startDate, formState.endDate]);
+
+  // Trigger pricing fetch when both dates are set (after OK button clicked in date picker)
+  useEffect(() => {
+    if (formState.startDate && formState.endDate && formState.vehicleId) {
+      // Enable pricing fetch when all required fields are present
+      setShouldFetchPricing(true);
+    } else {
+      // Reset flag when any required field is missing
+      setShouldFetchPricing(false);
+    }
+  }, [formState.startDate, formState.endDate, formState.vehicleId]);
+
+  // Format duration for display (days and hours)
+  const durationDisplay = useMemo(() => {
+    if (computedTotalDays === 0) return '-';
+    
+    const totalHours = Math.floor(computedTotalHours);
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    
+    if (days === 0) {
+      return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+    } else if (hours === 0) {
+      return `${days} ${days === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}`;
+    } else {
+      return `${days} ${days === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}, ${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+    }
+  }, [computedTotalDays, computedTotalHours, t]);
+
+  // Format date range for display
+  const dateRangeDisplay = useMemo(() => {
+    if (!formState.startDate || !formState.endDate) return '';
+    const start = new Date(formState.startDate);
+    const end = new Date(formState.endDate);
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString(undefined, { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+    
+    return `${formatDate(start)} → ${formatDate(end)}`;
   }, [formState.startDate, formState.endDate]);
 
   const pickLatestPricing = useCallback((records: Pricing[]) => {
@@ -229,51 +356,32 @@ export default function NewBookingPage() {
     })[0];
   }, []);
 
-  const vehiclePricing = useMemo(() => {
-    if (!formState.vehicleId) return undefined;
-    return pickLatestPricing(pricingRecords.filter((pricing) => pricing.vehicleId === formState.vehicleId));
-  }, [formState.vehicleId, pickLatestPricing, pricingRecords]);
+  // Calculate average base rate from the new pricing summary format
+  const vehicleBaseRate = useMemo(() => {
+    if (!vehiclePricingData) {
+      return 0;
+    }
+    
+    // Use the subtotal from backend and divide by total days/hours
+    const totalUnits = vehiclePricingData.totalFullDays + (vehiclePricingData.totalPartialHours / 24);
+    return totalUnits > 0 ? vehiclePricingData.subtotal / totalUnits : 0;
+  }, [vehiclePricingData]);
 
-  const packagePricing = useMemo(() => {
-    if (!formState.packageId) return undefined;
-    return pickLatestPricing(pricingRecords.filter((pricing) => pricing.packageId === formState.packageId));
-  }, [formState.packageId, pickLatestPricing, pricingRecords]);
-
-  const offeringPricingMap = useMemo(() => {
-    const map = new Map<number, Pricing>();
-    pricingRecords.forEach((pricing) => {
-      if (pricing.offeringId == null) return;
-      const current = map.get(pricing.offeringId);
-      if (!current) {
-        map.set(pricing.offeringId, pricing);
-        return;
-      }
-      const currentTime = current.validFrom ? new Date(current.validFrom).getTime() : 0;
-      const nextTime = pricing.validFrom ? new Date(pricing.validFrom).getTime() : 0;
-      if (nextTime > currentTime) {
-        map.set(pricing.offeringId, pricing);
-      }
-    });
-    return map;
-  }, [pricingRecords]);
-
-  const vehicleBaseCharge = roundToTwo((vehiclePricing?.baseRate ?? 0) * computedTotalDays);
+  const vehicleBaseCharge = roundToTwo(vehicleBaseRate * computedTotalDays);
   const packageModifier = selectedPackage?.priceModifier ?? 1;
 
   const packageCharge = useMemo(() => {
     if (computedTotalDays === 0) return 0;
 
-    const baseVehicle = (vehiclePricing?.baseRate ?? 0) * computedTotalDays;
+    const baseVehicle = vehicleBaseRate * computedTotalDays;
 
     if (formState.packageId) {
-      if (packagePricing?.baseRate) {
-        return roundToTwo(packagePricing.baseRate * computedTotalDays);
-      }
+      // Package pricing uses the modifier on vehicle base rate
       return roundToTwo(baseVehicle * packageModifier);
     }
 
     return roundToTwo(baseVehicle);
-  }, [computedTotalDays, formState.packageId, packageModifier, packagePricing, vehiclePricing]);
+  }, [computedTotalDays, formState.packageId, packageModifier, vehicleBaseRate]);
 
   const offeringChargeResult = useMemo(() => {
     let total = 0;
@@ -288,8 +396,7 @@ export default function NewBookingPage() {
 
     Object.entries(offeringSelections).forEach(([idStr, selection]) => {
       const id = Number(idStr);
-      const pricing = offeringPricingMap.get(id);
-      const unitPrice = selection.offering.price ?? pricing?.baseRate ?? 0;
+      const unitPrice = selection.offering.price ?? 0;
       const includedUnits = selection.included ? 1 : 0;
       const billableQuantity = Math.max(0, selection.quantity - includedUnits);
       const fallbackName = selection.offering.name || `${t('offering.unnamedOffering')} #${id}`;
@@ -316,10 +423,16 @@ export default function NewBookingPage() {
       billableLines,
       includedNames,
     };
-  }, [offeringSelections, offeringPricingMap, t]);
+  }, [offeringSelections, t]);
 
   const offeringCharge = offeringChargeResult.total;
-  const subtotal = roundToTwo(packageCharge + offeringCharge);
+  
+  // Calculate subtotal: use vehicle pricing data if available, otherwise use packageCharge
+  const vehicleSubtotal = vehiclePricingData && (vehiclePricingData as any).analysis 
+    ? (vehiclePricingData as any).analysis.subtotal 
+    : packageCharge;
+  
+  const subtotal = roundToTwo(vehicleSubtotal + offeringCharge);
 
   const discountAmount = useMemo(() => {
     if (!selectedDiscount || subtotal <= 0) return 0;
@@ -339,20 +452,75 @@ export default function NewBookingPage() {
   const pricingLineItems = useMemo(() => {
     const items: Array<{ id: string; label: string; amount: number; helper?: string }> = [];
 
-    if (packageCharge > 0) {
+    // Show pricing breakdown using the actual API response format (applicablePricings array)
+    if (vehiclePricingData && (vehiclePricingData as any).applicablePricings) {
+      const pricings = (vehiclePricingData as any).applicablePricings;
+      
+      pricings.forEach((pricing: any, index: number) => {
+        if (pricing.rateType && pricing.applicableUnits > 0) {
+          const isHourly = pricing.rateType === 'HOURLY';
+          const unitText = isHourly 
+            ? `${pricing.applicableUnits} ${pricing.applicableUnits === 1 ? 'hour' : 'hours'}`
+            : `${pricing.applicableUnits} ${pricing.applicableUnits === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}`;
+          
+          const rateLabel = pricing.category || pricing.rateType;
+          
+          items.push({
+            id: `vehicle-pricing-${index}`,
+            label: `Vehicle Rate [${rateLabel}]`,
+            amount: roundToTwo(pricing.lineTotal),
+            helper: `${unitText} × ${formatCurrency(pricing.rate)}${isHourly ? '/hr' : '/day'}`,
+          });
+        }
+      });
+    } else if (vehiclePricingData) {
+      // Try the new summary-based format
+      const summaries = [
+        { key: 'weekdayDailySummary', data: vehiclePricingData.weekdayDailySummary },
+        { key: 'weekendDailySummary', data: vehiclePricingData.weekendDailySummary },
+        { key: 'weekdayHourlySummary', data: vehiclePricingData.weekdayHourlySummary },
+        { key: 'weekendHourlySummary', data: vehiclePricingData.weekendHourlySummary },
+        { key: 'holidayDailySummary', data: vehiclePricingData.holidayDailySummary },
+        { key: 'holidayHourlySummary', data: vehiclePricingData.holidayHourlySummary },
+      ];
+
+      summaries.forEach(({ key, data }) => {
+        if (data && data.units > 0) {
+          const isHourly = data.category.toLowerCase().includes('hourly');
+          const unitText = isHourly 
+            ? `${data.units} ${data.units === 1 ? 'hour' : 'hours'}`
+            : `${data.units} ${data.units === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}`;
+          
+          items.push({
+            id: `vehicle-pricing-${key}`,
+            label: `Vehicle Rate [${data.category}]`,
+            amount: roundToTwo(data.subtotal),
+            helper: `${unitText} × ${formatCurrency(data.unitRate)}${isHourly ? '/hr' : '/day'}`,
+          });
+        }
+      });
+    }
+
+    // Apply package modifier if selected (works for both formats)
+    if (vehiclePricingData && formState.packageId && packageModifier !== 1) {
+      const modifierAmount = vehicleBaseCharge * (packageModifier - 1);
+      const percentLabel = `${Math.round(packageModifier * 100)}%`;
+      
+      items.push({
+        id: 'package-modifier',
+        label: selectedPackage?.name || 'Package Adjustment',
+        amount: roundToTwo(modifierAmount),
+        helper: `${percentLabel} ${t('booking.form.summary.packageModifierSuffix')}`,
+      });
+    }
+    
+    // Fallback when no pricing data available
+    if (!vehiclePricingData && packageCharge > 0) {
       const helperParts: string[] = [];
       if (computedTotalDays > 0) {
-        const rateLabel =
-          formState.packageId && packagePricing
-            ? packagePricing.rateType
-            : vehiclePricing?.rateType;
-        if (rateLabel) {
-          helperParts.push(`${rateLabel} × ${formatDaysLabel(computedTotalDays)}`);
-        } else {
-          helperParts.push(formatDaysLabel(computedTotalDays));
-        }
+        helperParts.push(durationDisplay);
       }
-      if (formState.packageId && !packagePricing && packageModifier !== 1) {
+      if (formState.packageId && packageModifier !== 1) {
         helperParts.push(`${Math.round(packageModifier * 100)}% ${t('booking.form.summary.packageModifierSuffix')}`);
       }
 
@@ -375,17 +543,17 @@ export default function NewBookingPage() {
 
     return items;
   }, [
+    vehiclePricingData,
     computedTotalDays,
     formState.packageId,
     packageCharge,
     packageModifier,
-    packagePricing,
+    vehicleBaseCharge,
     offeringChargeResult.billableLines,
     selectedPackage?.name,
-    vehiclePricing,
+    durationDisplay,
     t,
     formatCurrency,
-    formatDaysLabel,
   ]);
 
   const includedOfferingNames = offeringChargeResult.includedNames;
@@ -460,6 +628,11 @@ export default function NewBookingPage() {
 
   const handleOfferingToggle = useCallback(
     (offeringId: number, selected: boolean) => {
+      // Prevent removal of mandatory offerings
+      if (!selected && mandatoryOfferingIds.has(offeringId)) {
+        return;
+      }
+
       const offering = offeringById.get(offeringId);
       if (!offering && !selected) {
         setOfferingSelections((prev) => {
@@ -487,7 +660,7 @@ export default function NewBookingPage() {
         return next;
       });
     },
-    [offeringById, packageIncludedIdSet]
+    [offeringById, packageIncludedIdSet, mandatoryOfferingIds]
   );
 
   const handleOfferingQuantityChange = useCallback((offeringId: number, quantity: number) => {
@@ -578,8 +751,7 @@ export default function NewBookingPage() {
     const offeringPayload = Object.entries(offeringSelections)
       .map(([idStr, selection]) => {
         const id = Number(idStr);
-        const pricing = offeringPricingMap.get(id);
-        const unitPrice = roundToTwo(selection.offering.price ?? pricing?.baseRate ?? 0);
+        const unitPrice = roundToTwo(selection.offering.price ?? 0);
         const includedUnits = selection.included ? 1 : 0;
         const billableQuantity = Math.max(0, selection.quantity - includedUnits);
         const totalPrice = roundToTwo(unitPrice * billableQuantity);
@@ -617,6 +789,8 @@ export default function NewBookingPage() {
         subtotal,
         total,
       },
+      // Include complete vehicle pricing response from API
+      appliedPricing: vehiclePricingData || null,
     });
   };
 
@@ -759,6 +933,7 @@ export default function NewBookingPage() {
                 onToggle={handleOfferingToggle}
                 onQuantityChange={handleOfferingQuantityChange}
                 packageIncludedIds={packageIncludedIdSet}
+                mandatoryOfferingIds={mandatoryOfferingIds}
                 isLoading={offeringsLoading}
                 errorMessage={offeringsError instanceof Error ? offeringsError.message : undefined}
               />
@@ -815,10 +990,20 @@ export default function NewBookingPage() {
                 <CardTitle>{t('booking.form.sections.pricing')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Booking Date Range */}
+                {dateRangeDisplay && (
+                  <div className="rounded-md bg-primary/5 p-3 border border-primary/20">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground font-medium">Rental Period</span>
+                      <span className="font-medium text-primary">{dateRangeDisplay}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('booking.form.summary.totalDays')}</span>
-                    <span className="font-medium">{computedTotalDays > 0 ? computedTotalDays : '-'}</span>
+                    <span className="text-muted-foreground">Duration</span>
+                    <span className="font-medium">{durationDisplay}</span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {t('booking.form.summary.durationHint')}

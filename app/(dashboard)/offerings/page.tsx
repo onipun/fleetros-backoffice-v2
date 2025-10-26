@@ -3,6 +3,7 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { useCollection } from '@/lib/api/hooks';
 import { parseHalResource } from '@/lib/utils';
@@ -17,7 +18,7 @@ export default function OfferingsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
 
-  const { data, isLoading, error } = useCollection<Offering>('offerings', {
+  const { data, isLoading, error, refetch } = useCollection<Offering>('offerings', {
     page,
     size: 20,
     sort: 'name,asc',
@@ -109,11 +110,13 @@ export default function OfferingsPage() {
           <p className="text-muted-foreground">{t('offering.loading')}</p>
         </div>
       ) : error ? (
-        <div className="text-center py-12">
-          <p className="text-destructive">
-            {`${t('offering.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
-          </p>
-        </div>
+        <Card>
+          <ErrorDisplay
+            title={t('offering.errorTitle')}
+            message={`${t('offering.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
+            onRetry={() => refetch()}
+          />
+        </Card>
       ) : offerings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('offering.noResults')}</p>

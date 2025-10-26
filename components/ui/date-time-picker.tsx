@@ -19,6 +19,7 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
   ({ className, value = '', onChange, showTimeSelect = true, disabled, ..._rest }, ref) => {
   const { t } = useLocale();
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
+  const [tempDate, setTempDate] = React.useState<Date | null>(null);
     const [showQuickSelect, setShowQuickSelect] = React.useState(false);
     const [showDatePicker, setShowDatePicker] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -31,12 +32,15 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           const date = new Date(value);
           if (isValid(date)) {
             setSelectedDate(date);
+            setTempDate(date);
           }
         } catch {
           setSelectedDate(null);
+          setTempDate(null);
         }
       } else {
         setSelectedDate(null);
+        setTempDate(null);
       }
     }, [value]);
 
@@ -58,20 +62,29 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
     }, [showQuickSelect, showDatePicker]);
 
     const handleDateChange = (date: Date | null) => {
-      setSelectedDate(date);
-      if (date && isValid(date)) {
-        // Convert to ISO string format
-        const isoString = format(date, "yyyy-MM-dd'T'HH:mm:ss");
+      // Only update temp date, not the actual value
+      setTempDate(date);
+    };
+
+    const handleOkClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (tempDate && isValid(tempDate)) {
+        setSelectedDate(tempDate);
+        const isoString = format(tempDate, "yyyy-MM-dd'T'HH:mm:ss");
         onChange?.(isoString);
-      } else {
-        onChange?.('');
       }
+      
+      setShowDatePicker(false);
+      setShowQuickSelect(false);
     };
 
     const handleClear = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setSelectedDate(null);
+      setTempDate(null);
       onChange?.('');
       setShowQuickSelect(false);
       setShowDatePicker(false);
@@ -81,6 +94,7 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
       e.preventDefault();
       e.stopPropagation();
       setSelectedDate(date);
+      setTempDate(date);
       if (isValid(date)) {
         const isoString = format(date, "yyyy-MM-dd'T'HH:mm:ss");
         onChange?.(isoString);
@@ -199,28 +213,39 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
 
         {/* Hidden DatePicker for calendar functionality */}
         {showDatePicker && (
-          <DatePicker
-            ref={datePickerRef}
-            selected={selectedDate}
-            onChange={handleDateChange}
-            showTimeSelect={showTimeSelect}
-            timeFormat="HH:mm"
-            timeIntervals={15}
-            dateFormat={showTimeSelect ? "MMMM d, yyyy h:mm aa" : "MMMM d, yyyy"}
-            inline
-            onClickOutside={() => setShowDatePicker(false)}
-            onCalendarClose={() => {
-              setShowQuickSelect(false);
-              setShowDatePicker(false);
-            }}
-            calendarContainer={({ children }) => (
-              <div className="absolute top-full left-0 mt-1 z-50 bg-popover rounded-md border shadow-lg">
-                {children}
-              </div>
-            )}
-            popperClassName="react-datepicker-popper"
-            calendarClassName="react-datepicker-calendar"
-          />
+          <div className="absolute top-full left-0 mt-1 z-50 bg-popover rounded-md border shadow-lg">
+            <DatePicker
+              ref={datePickerRef}
+              selected={tempDate}
+              onChange={handleDateChange}
+              showTimeSelect={showTimeSelect}
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat={showTimeSelect ? "MMMM d, yyyy h:mm aa" : "MMMM d, yyyy"}
+              inline
+              calendarClassName="react-datepicker-calendar"
+            />
+            {/* OK Button */}
+            <div className="p-3 border-t flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDatePicker(false);
+                  setTempDate(selectedDate);
+                }}
+                className="px-4 py-2 text-sm rounded-md border hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleOkClick}
+                className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                OK
+              </button>
+            </div>
+          </div>
         )}
         <style jsx global>{`
           .react-datepicker-popper {
@@ -234,7 +259,25 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
             background-color: hsl(var(--popover));
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+          }
+          
+          .react-datepicker__time-container {
+            border-left: 1px solid hsl(var(--border));
+            width: auto;
+          }
+          
+          .react-datepicker__time {
+            background: hsl(var(--popover));
+          }
+          
+          .react-datepicker__time-box {
+            width: 100%;
+          }
+          
+          .react-datepicker__time-list {
+            height: 204px !important;
+            overflow-y: auto !important;
           }
           
           /* Mobile responsive layout */

@@ -4,6 +4,7 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { TablePageSkeleton } from '@/components/skeletons/page-skeletons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { useCollection } from '@/lib/api/hooks';
 import { formatDate, parseHalResource } from '@/lib/utils';
@@ -17,7 +18,7 @@ export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
 
-  const { data, isLoading, error } = useCollection<Payment>('payments', {
+  const { data, isLoading, error, refetch } = useCollection<Payment>('payments', {
     page,
     size: 20,
     sort: 'createdAt,desc',
@@ -124,11 +125,13 @@ export default function PaymentsPage() {
       {isLoading ? (
         <TablePageSkeleton rows={8} />
       ) : error ? (
-        <div className="text-center py-12">
-          <p className="text-destructive">
-            {`${t('payment.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
-          </p>
-        </div>
+        <Card>
+          <ErrorDisplay
+            title={t('payment.errorTitle')}
+            message={`${t('payment.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
+            onRetry={() => refetch()}
+          />
+        </Card>
       ) : payments.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('payment.noResults')}</p>

@@ -12,14 +12,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { parseHalResource } from '@/lib/utils';
 import {
-  BookingStatus,
-  DiscountType,
-  OfferingType,
-  type Booking,
-  type Discount,
-  type Offering,
-  type Package,
-  type Pricing,
+    BookingStatus,
+    DiscountType,
+    OfferingType,
+    type Booking,
+    type Discount,
+    type Offering,
+    type Package,
+    type Pricing,
 } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
@@ -120,10 +120,32 @@ export function BookingForm({
     queryFn: async () => hateoasClient.getCollection<Offering>('offerings', { page: 0, size: 100 }),
   });
 
+  const { data: mandatoryOfferingsData } = useQuery({
+    queryKey: ['offerings', 'mandatory'],
+    queryFn: async () => hateoasClient.getCollection<Offering>('offerings/search/findByIsMandatory', { 
+      isMandatory: true,
+      page: 0, 
+      size: 100
+    }),
+  });
+
   const offerings = useMemo(() => {
     if (!offeringsData) return [] as Offering[];
     return parseHalResource<Offering>(offeringsData, 'offerings');
   }, [offeringsData]);
+
+  const mandatoryOfferings = useMemo(() => {
+    if (!mandatoryOfferingsData) return [] as Offering[];
+    return parseHalResource<Offering>(mandatoryOfferingsData, 'offerings');
+  }, [mandatoryOfferingsData]);
+
+  const mandatoryOfferingIds = useMemo(() => {
+    const idSet = new Set<number>();
+    mandatoryOfferings.forEach((offering) => {
+      if (offering.id != null) idSet.add(offering.id);
+    });
+    return idSet;
+  }, [mandatoryOfferings]);
 
   const offeringById = useMemo(() => {
     const map = new Map<number, Offering>();
@@ -355,6 +377,11 @@ export function BookingForm({
 
   const handleOfferingToggle = useCallback(
     (offeringId: number, selected: boolean) => {
+      // Prevent removal of mandatory offerings
+      if (!selected && mandatoryOfferingIds.has(offeringId)) {
+        return;
+      }
+
       const offering = offeringById.get(offeringId);
       if (!offering && !selected) {
         setOfferingSelections((prev) => {
@@ -382,7 +409,7 @@ export function BookingForm({
         return next;
       });
     },
-    [offeringById, packageIncludedIdSet]
+    [offeringById, packageIncludedIdSet, mandatoryOfferingIds]
   );
 
   const handleOfferingQuantityChange = useCallback((offeringId: number, quantity: number) => {
@@ -885,6 +912,7 @@ export function BookingForm({
         onToggle={handleOfferingToggle}
         onQuantityChange={handleOfferingQuantityChange}
         packageIncludedIds={packageIncludedIdSet}
+        mandatoryOfferingIds={mandatoryOfferingIds}
         isLoading={offeringsLoading}
         errorMessage={offeringsError instanceof Error ? offeringsError.message : undefined}
       />

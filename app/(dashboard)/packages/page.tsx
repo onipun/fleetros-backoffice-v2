@@ -3,6 +3,7 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { useCollection } from '@/lib/api/hooks';
@@ -18,7 +19,7 @@ export default function PackagesPage() {
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading, error } = useCollection<Package>('packages', {
+  const { data, isLoading, error, refetch } = useCollection<Package>('packages', {
     page,
     size: 20,
     sort: 'name,asc',
@@ -122,11 +123,13 @@ export default function PackagesPage() {
           <p className="text-muted-foreground">{t('package.loading')}</p>
         </div>
       ) : error ? (
-        <div className="text-center py-12">
-          <p className="text-destructive">
-            {`${t('package.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
-          </p>
-        </div>
+        <Card>
+          <ErrorDisplay
+            title={t('package.errorTitle')}
+            message={`${t('package.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
+            onRetry={() => refetch()}
+          />
+        </Card>
       ) : packages.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('package.noResults')}</p>

@@ -352,3 +352,43 @@ export interface ApiResponse<T> {
   error?: ApiError;
   success: boolean;
 }
+
+// Vehicle Pricing API Types
+export interface DailyBreakdown {
+  date: string;
+  dayOfWeek: string;
+  dayType: string;
+  rateType: string;
+  unitRate: number;
+  units: number;
+  subtotal: number;
+  applicableTags: string;
+  notes: string;
+}
+
+export interface PricingSummary {
+  category: string;
+  unitRate: number;
+  units: number;
+  subtotal: number;
+}
+
+export interface VehiclePricingResponse {
+  vehicleId: number;
+  vehicleName: string;
+  startDate: string;
+  endDate: string;
+  totalHours: number;
+  totalFullDays: number;
+  totalPartialHours: number;
+  dailyBreakdown: DailyBreakdown[];
+  weekdayDailySummary?: PricingSummary;
+  weekendDailySummary?: PricingSummary;
+  weekdayHourlySummary?: PricingSummary;
+  weekendHourlySummary?: PricingSummary;
+  holidayDailySummary?: PricingSummary;
+  holidayHourlySummary?: PricingSummary;
+  subtotal: number;
+  depositAmount: number;
+  totalAmount: number;
+}

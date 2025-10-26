@@ -6,6 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TagInput } from '@/components/ui/tag-input';
@@ -14,7 +22,7 @@ import { hateoasClient } from '@/lib/api/hateoas-client';
 import { usePricingTags } from '@/lib/api/hooks';
 import type { PricingFormData } from '@/lib/validations/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -60,6 +68,8 @@ export default function EditPricingPage() {
   });
 
   const [entityName, setEntityName] = useState<string>('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Fetch pricing details using v1 API
   const { data: pricing, isLoading } = useQuery({
@@ -187,6 +197,50 @@ export default function EditPricingPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      // Use soft delete (deactivate) endpoint
+      const token = await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/pricings/${pricingId}/deactivate`, {
+        method: 'PATCH',
+        headers,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to deactivate pricing');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pricings'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle', formData.entityId, 'pricings'] });
+      queryClient.invalidateQueries({ queryKey: ['package', formData.entityId, 'pricings'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', formData.entityId, 'pricings'] });
+      toast({
+        title: t('common.success'),
+        description: t('pricing.form.deleteSuccess'),
+      });
+      // Redirect back to the entity (vehicle/package/booking)
+      router.push(`/${formData.entityType}s/${formData.entityId}`);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('common.error'),
+        description: error.message || t('pricing.form.deleteError'),
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -227,6 +281,23 @@ export default function EditPricingPage() {
     }
 
     updateMutation.mutate(formData);
+  };
+
+  const handleDelete = () => {
+    if (deleteConfirmText.toUpperCase() !== 'DELETE') {
+      toast({
+        title: t('common.error'),
+        description: t('pricing.form.deleteConfirmError'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    deleteMutation.mutate();
+  };
+
+  const openDeleteDialog = () => {
+    setDeleteConfirmText('');
+    setShowDeleteDialog(true);
   };
 
   if (isLoading) {
@@ -463,18 +534,127 @@ export default function EditPricingPage() {
           </Card>
 
           {/* Form Actions */}
-          <div className="flex gap-4 justify-end">
-            <Link href={backUrl}>
-              <Button type="button" variant="outline">
-                {t('common.cancel')}
-              </Button>
-            </Link>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? t('pricing.form.updating') : t('pricing.form.updatePricing')}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={openDeleteDialog}
+              disabled={deleteMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t('pricing.form.deletePricing')}
             </Button>
+            
+            <div className="flex gap-3 w-full sm:w-auto">
+              <Link href={backUrl} className="flex-1 sm:flex-none">
+                <Button type="button" variant="outline" className="w-full">
+                  {t('common.cancel')}
+                </Button>
+              </Link>
+              <Button 
+                type="submit" 
+                disabled={updateMutation.isPending}
+                className="flex-1 sm:flex-none"
+              >
+                {updateMutation.isPending ? t('pricing.form.updating') : t('pricing.form.updatePricing')}
+              </Button>
+            </div>
           </div>
         </div>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">{t('pricing.form.deleteDialogTitle')}</DialogTitle>
+                <DialogDescription className="mt-1">
+                  {t('pricing.form.deleteDialogSubtitle')}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg bg-muted/50 border p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">{t('pricing.form.entity')}:</span>
+                <span className="font-semibold">{entityName}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">{t('pricing.baseRate')}:</span>
+                <span className="font-semibold">{formData.baseRate.toFixed(2)} MYR</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">{t('pricing.rateType')}:</span>
+                <span className="font-semibold">{formData.rateType}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-4">
+                <p className="text-sm text-destructive font-medium mb-2">
+                  ⚠️ {t('pricing.form.deleteWarningTitle')}
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+                  <li>{t('pricing.form.deleteWarning1')}</li>
+                  <li>{t('pricing.form.deleteWarning2')}</li>
+                  <li>{t('pricing.form.deleteWarning3')}</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deleteConfirm" className="text-sm font-medium">
+                  {t('pricing.form.deleteConfirmLabel')}
+                </Label>
+                <Input
+                  id="deleteConfirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="font-mono"
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('pricing.form.deleteConfirmHint')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleteMutation.isPending}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending || deleteConfirmText.toUpperCase() !== 'DELETE'}
+            >
+              {deleteMutation.isPending ? (
+                <>{t('pricing.form.deleting')}</>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t('pricing.form.confirmDelete')}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -301,7 +301,22 @@
       "baseRateRequired": "Base rate must be greater than 0",
       "depositNonNegative": "Deposit amount cannot be negative",
       "validityRequired": "Please select valid from and to dates",
-      "validityOrder": "Valid From date must be before Valid To date"
+      "validityOrder": "Valid From date must be before Valid To date",
+      "deletePricing": "Delete Pricing",
+      "deleteSuccess": "Pricing deactivated successfully",
+      "deleteError": "Failed to deactivate pricing",
+      "deleting": "Deactivating...",
+      "deleteDialogTitle": "Deactivate Pricing Configuration",
+      "deleteDialogSubtitle": "This pricing will be marked as inactive",
+      "entity": "Entity",
+      "deleteWarningTitle": "Warning: This pricing will be deactivated",
+      "deleteWarning1": "This pricing configuration will be marked as inactive",
+      "deleteWarning2": "Historical booking records will remain intact",
+      "deleteWarning3": "You can reactivate this pricing later if needed",
+      "deleteConfirmLabel": "Type DELETE to confirm",
+      "deleteConfirmHint": "Type the word DELETE in capital letters to enable deactivation",
+      "deleteConfirmError": "Please type DELETE to confirm",
+      "confirmDelete": "Deactivate Pricing"
     }
   },
   "booking": {
@@ -435,6 +450,9 @@
         "insurancePolicy": "Describe coverage or policy details"
       },
       "summary": {
+        "appliedPricing": "Applied Pricing (at time of booking)",
+        "duration": "Duration",
+        "deposit": "Deposit",
         "totalDays": "Total Days",
         "durationHint": "Calculated automatically from the start and end dates.",
         "billDetails": "Bill Details",

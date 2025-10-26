@@ -3,6 +3,7 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { VehicleImage } from '@/components/vehicle/vehicle-image';
 import { VehicleListSkeleton } from '@/components/vehicle/vehicle-skeletons';
@@ -84,6 +85,7 @@ export default function VehiclesPage() {
 
   // Use appropriate query based on filter state
   const { data, isLoading, error } = shouldUseSearch ? searchQuery : allVehiclesQuery;
+  const refetch = shouldUseSearch ? searchQuery.refetch : allVehiclesQuery.refetch;
 
   const vehicles = data ? parseHalResource<Vehicle>(data, 'vehicles') : [];
   const totalPages = data?.page?.totalPages || 0;
@@ -151,12 +153,13 @@ export default function VehiclesPage() {
       {isLoading ? (
         <VehicleListSkeleton />
       ) : error ? (
-        <div className="text-center py-12">
-          <p className="text-destructive">
-            {t('vehicle.errorLoading')}
-            {error?.message ? `: ${error.message}` : ''}
-          </p>
-        </div>
+        <Card>
+          <ErrorDisplay
+            title={t('vehicle.errorTitle')}
+            message={`${t('vehicle.errorLoading')}${error?.message ? `: ${error.message}` : ''}`.trim()}
+            onRetry={() => refetch()}
+          />
+        </Card>
       ) : vehicles.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('vehicle.noVehiclesFound')}</p>

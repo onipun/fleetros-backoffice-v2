@@ -1,4 +1,4 @@
-import type { HATEOASCollection, HATEOASResource } from '@/types';
+import type { HATEOASCollection, HATEOASResource, VehiclePricingResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
 
@@ -362,6 +362,18 @@ export class HATEOASClient {
     
     await this.request<void>(url, {
       method: 'DELETE',
+    });
+  }
+
+  /**
+   * Get vehicle pricing for specific dates
+   */
+  async getVehiclePricing(vehicleId: number, dates: string[]): Promise<VehiclePricingResponse> {
+    // New API expects startDate and endDate instead of dates array
+    const [startDate, endDate] = dates;
+    return this.request<VehiclePricingResponse>(`${this.baseUrl}/api/rental-pricing/calculate`, {
+      method: 'POST',
+      body: JSON.stringify({ vehicleId, startDate, endDate }),
     });
   }
 }
