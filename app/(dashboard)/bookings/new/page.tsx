@@ -14,13 +14,13 @@ import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { parseHalResource } from '@/lib/utils';
 import {
-  BookingStatus,
-  DiscountType,
-  type Booking,
-  type Discount,
-  type Offering,
-  type Package,
-  type Pricing
+    BookingStatus,
+    DiscountType,
+    type Booking,
+    type Discount,
+    type Offering,
+    type Package,
+    type Pricing
 } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, CheckCircle } from 'lucide-react';
@@ -725,6 +725,13 @@ export default function NewBookingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Extra safety: Don't submit if not on final step
+    if (currentStep !== STEPS.length - 1) {
+      console.warn('Form submission prevented - not on final step');
+      return;
+    }
 
     if (!formState.vehicleId) {
       setFormError(t('booking.form.errors.vehicleRequired'));
@@ -821,7 +828,16 @@ export default function NewBookingPage() {
         onStepClick={handleStepClick}
       />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onKeyDown={(e) => {
+        // Prevent Enter key from submitting form unless explicitly on submit button
+        if (e.key === 'Enter' && e.target !== e.currentTarget) {
+          const target = e.target as HTMLElement;
+          // Only allow Enter on submit button
+          if (target.tagName !== 'BUTTON' || currentStep < STEPS.length - 1) {
+            e.preventDefault();
+          }
+        }
+      }}>
         <div className="min-h-[400px]">
           {formError && (
             <div className="mb-6 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">

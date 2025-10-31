@@ -184,10 +184,63 @@ export interface BookingOffering {
 
 export interface BookingImage {
   id?: number;
+  bookingId?: number;
   imageUrl: string;
+  category?: BookingImageCategory;
+  customCategory?: CustomImageCategory | null;
+  notes?: string;
+  description?: string; // Keep for backward compatibility
+  uploadedByUserId?: number;
   uploadedAt: string;
-  description?: string;
+  effectiveCategoryName?: string;
+  categoryType?: 'PREDEFINED' | 'CUSTOM';
   _links?: Links;
+}
+
+export type BookingImageCategory = 
+  | 'DELIVERY_INSPECTION'
+  | 'PICKUP_INSPECTION'
+  | 'ACCIDENT_INSPECTION'
+  | 'PRE_RENTAL_INSPECTION'
+  | 'POST_RENTAL_INSPECTION'
+  | 'LICENSE_DOCUMENT'
+  | 'RENTAL_AGREEMENT'
+  | 'FUEL_RECEIPT'
+  | 'TOLL_RECEIPT'
+  | 'MAINTENANCE'
+  | 'OTHER';
+
+export interface PredefinedCategory {
+  code: BookingImageCategory;
+  name: string;
+  description: string;
+  type: 'PREDEFINED';
+}
+
+export interface CustomImageCategory {
+  id: number;
+  name: string;
+  description?: string;
+  displayColor?: string;
+  icon?: string;
+  type?: 'CUSTOM';
+  createdByUserId?: number;
+  createdAt?: string;
+  active?: boolean;
+}
+
+export interface BookingImageCategoriesResponse {
+  predefined: PredefinedCategory[];
+  custom: CustomImageCategory[];
+  totalPredefined: number;
+  totalCustom: number;
+  total: number;
+}
+
+export interface GroupedBookingImages {
+  grouped: Record<string, BookingImage[]>;
+  categories: string[];
+  totalCategories: number;
 }
 
 export interface Offering {
