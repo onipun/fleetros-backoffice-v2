@@ -40,6 +40,92 @@ interface PreviewFile extends File {
   preview?: string;
 }
 
+// Image compression helper function
+const compressImage = async (file: File, maxWidth = 1920, maxHeight = 1920, quality = 0.85): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const img = new window.Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions while maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const aspectRatio = width / height;
+          
+          if (width > height) {
+            width = maxWidth;
+            height = Math.round(width / aspectRatio);
+          } else {
+            height = maxHeight;
+            width = Math.round(height * aspectRatio);
+          }
+        }
+        
+        // Create canvas for compression
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        // Use better image smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Draw image on canvas
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to blob with compression
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'));
+              return;
+            }
+            
+            // Create new file from compressed blob
+            const compressedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            
+            // Only use compressed version if it's actually smaller
+            if (compressedFile.size < file.size) {
+              console.log(`Compressed ${file.name}: ${(file.size / 1024).toFixed(2)}KB → ${(compressedFile.size / 1024).toFixed(2)}KB (${((1 - compressedFile.size / file.size) * 100).toFixed(1)}% reduction)`);
+              resolve(compressedFile);
+            } else {
+              console.log(`Keeping original ${file.name}: compression would increase size`);
+              resolve(file);
+            }
+          },
+          file.type,
+          quality
+        );
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+      
+      img.src = e.target?.result as string;
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
+    
+    reader.readAsDataURL(file);
+  });
+};
+
 export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSuccess }: ImageUploadDialogProps) {
   const { t } = useLocale();
   const [selectedFiles, setSelectedFiles] = useState<PreviewFile[]>([]);
@@ -49,12 +135,13 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
 
   const { data: categoriesData, isLoading: categoriesLoading } = useBookingImageCategories();
   const uploadMutation = useUploadBookingImages(bookingId);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 50 * 1024 * 1024; // 50MB - allow larger files since we'll compress them
 
-      const validFiles = acceptedFiles.filter((file) => {
+    const validFiles = acceptedFiles.filter((file) => {
       if (!validTypes.includes(file.type)) {
         toast({
           title: t('booking.images.upload.invalidType'),
@@ -67,20 +154,58 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
       if (file.size > maxSize) {
         toast({
           title: t('booking.images.upload.fileTooLarge'),
-          description: `${file.name} ${t('booking.images.upload.fileTooLargeDescription')}`,
+          description: `${file.name} exceeds 50MB. Please select a smaller file.`,
           variant: 'destructive',
         });
         return false;
       }
 
       return true;
-    });    const filesWithPreview = validFiles.map((file) =>
-      Object.assign(file, {
-        preview: URL.createObjectURL(file),
-      })
-    );
+    });
 
-    setSelectedFiles((prev) => [...prev, ...filesWithPreview]);
+    if (validFiles.length === 0) return;
+
+    console.log('Starting compression for', validFiles.length, 'files...');
+    // Show compression indicator
+    setIsCompressing(true);
+
+    try {
+      // Compress images
+      const compressedFiles = await Promise.all(
+        validFiles.map(async (file) => {
+          try {
+            console.log(`Compressing ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)...`);
+            const compressed = await compressImage(file);
+            console.log(`Compressed ${file.name} to ${(compressed.size / 1024 / 1024).toFixed(2)}MB`);
+            return compressed;
+          } catch (error) {
+            console.error(`Failed to compress ${file.name}:`, error);
+            // Return original file if compression fails
+            return file;
+          }
+        })
+      );
+
+      console.log('Compression complete, creating previews...');
+      // Create previews
+      const filesWithPreview = compressedFiles.map((file) =>
+        Object.assign(file, {
+          preview: URL.createObjectURL(file),
+        })
+      );
+
+      setSelectedFiles((prev) => [...prev, ...filesWithPreview]);
+      console.log('Files ready for upload');
+    } catch (error) {
+      console.error('Error processing images:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to process some images',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCompressing(false);
+    }
   }, [t]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -89,7 +214,7 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
       'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
     },
     multiple: true,
-    maxSize: 10 * 1024 * 1024,
+    maxSize: 50 * 1024 * 1024, // 50MB - allow larger files since we'll compress them
   });
 
   const removeFile = (index: number) => {
@@ -202,6 +327,36 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
           <DialogDescription>{t('booking.images.upload.description')}</DialogDescription>
         </DialogHeader>
 
+        {/* Upload Loading Overlay */}
+        {uploadMutation.isPending && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+            <div className="text-center space-y-4">
+              <Upload className="mx-auto h-12 w-12 text-primary animate-bounce" />
+              <div className="space-y-2">
+                <p className="text-lg font-semibold">Uploading images...</p>
+                <p className="text-sm text-muted-foreground">
+                  Uploading {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} to server
+                </p>
+              </div>
+              <div className="relative w-64 h-3 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-gradient-to-r from-primary via-blue-500 to-primary"
+                  style={{
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s infinite'
+                  }}
+                />
+              </div>
+              <style jsx>{`
+                @keyframes shimmer {
+                  0% { background-position: -200% 0; }
+                  100% { background-position: 200% 0; }
+                }
+              `}</style>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-6">
           {/* Dropzone */}
           <div>
@@ -212,11 +367,31 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
                 isDragActive
                   ? 'border-primary bg-primary/5'
                   : 'border-muted-foreground/25 hover:border-primary/50'
-              }`}
+              } ${isCompressing ? 'pointer-events-none opacity-50' : ''}`}
             >
-              <input {...getInputProps()} />
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              {isDragActive ? (
+              <input {...getInputProps()} disabled={isCompressing} />
+              <Upload className={`mx-auto h-12 w-12 text-muted-foreground mb-4 ${isCompressing ? 'animate-pulse' : ''}`} />
+              {isCompressing ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-primary">Compressing images...</p>
+                  <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-primary animate-pulse"
+                      style={{
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 1.5s infinite'
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Please wait while we optimize your images</p>
+                  <style jsx>{`
+                    @keyframes shimmer {
+                      0% { background-position: -200% 0; }
+                      100% { background-position: 200% 0; }
+                    }
+                  `}</style>
+                </div>
+              ) : isDragActive ? (
                 <p className="text-sm text-muted-foreground">{t('booking.images.upload.dropHere')}</p>
               ) : (
                 <>
@@ -230,7 +405,12 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
           {/* File Previews */}
           {selectedFiles.length > 0 && (
             <div>
-              <Label>{t('booking.images.upload.selectedFiles')} ({selectedFiles.length})</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label>{t('booking.images.upload.selectedFiles')} ({selectedFiles.length})</Label>
+                <span className="text-xs text-muted-foreground">
+                  Total: {(selectedFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)}MB
+                </span>
+              </div>
               <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                 {selectedFiles.map((file, index) => (
                   <div key={`${file.name}-${index}`} className="group relative aspect-square">
@@ -248,6 +428,10 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
                           <FileImage className="h-8 w-8 text-muted-foreground" />
                         </div>
                       )}
+                      {/* File size badge */}
+                      <div className="absolute bottom-1 left-1 right-1 bg-black/60 text-white text-[10px] px-1 py-0.5 rounded text-center backdrop-blur-sm">
+                        {(file.size / 1024).toFixed(0)}KB
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -256,7 +440,7 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
                     >
                       <X className="h-3 w-3" />
                     </button>
-                    <p className="mt-1 text-xs text-muted-foreground truncate">{file.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground truncate" title={file.name}>{file.name}</p>
                   </div>
                 ))}
               </div>
@@ -347,6 +531,9 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
             {t('common.cancel')}
           </Button>
           <Button type="button" onClick={handleUpload} disabled={uploadMutation.isPending || selectedFiles.length === 0}>
+            {uploadMutation.isPending && (
+              <Upload className="mr-2 h-4 w-4 animate-pulse" />
+            )}
             {uploadMutation.isPending ? t('booking.images.upload.uploading') : t('booking.images.upload.uploadButton')}
           </Button>
         </DialogFooter>
