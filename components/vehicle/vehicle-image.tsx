@@ -36,13 +36,45 @@ export function VehicleImage({
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // No image or error state - show placeholder
-  if (!src || error) {
+  // Validate image URL - check if it matches allowed patterns
+  const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    
+    try {
+      const urlObj = new URL(url);
+      
+      // Allow localhost:8082 and localhost:8083
+      if (urlObj.hostname === 'localhost' && (urlObj.port === '8082' || urlObj.port === '8083')) {
+        return true;
+      }
+      
+      // Allow common cloud storage providers
+      const allowedPatterns = [
+        /\.amazonaws\.com$/,
+        /\.cloudfront\.net$/,
+        /\.blob\.core\.windows\.net$/,
+        /\.azure\.com$/,
+        /storage\.googleapis\.com$/,
+        /\.storage\.googleapis\.com$/,
+      ];
+      
+      return allowedPatterns.some(pattern => pattern.test(urlObj.hostname));
+    } catch {
+      return false;
+    }
+  };
+
+  const isValid = isValidImageUrl(src);
+
+  // No image, invalid URL, or error state - show placeholder
+  if (!src || !isValid || error) {
     return (
       <div className={`relative bg-muted flex items-center justify-center ${className}`}>
         <Car className="h-12 w-12 text-muted-foreground/50" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs text-muted-foreground/70">{t('vehicle.noImage')}</span>
+          <span className="text-xs text-muted-foreground/70">
+            {!src ? t('vehicle.noImage') : 'Invalid image URL'}
+          </span>
         </div>
       </div>
     );

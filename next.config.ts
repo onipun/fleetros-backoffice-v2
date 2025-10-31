@@ -23,11 +23,17 @@ const nextConfig: NextConfig = {
     qualities: [50, 75, 85, 90, 100], // Define allowed quality values
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
     remotePatterns: [
-      // Local backend API
+      // Local backend API (main backend on 8082, file server on 8083)
       {
         protocol: 'http',
         hostname: 'localhost',
         port: '8082',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8083',
         pathname: '/**',
       },
       // AWS S3 and CloudFront
