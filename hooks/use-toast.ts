@@ -145,7 +145,8 @@ function toast({ ...props }: Toast) {
   // Auto-set duration based on variant if not explicitly provided
   let duration = props.duration;
   if (duration === undefined) {
-    if (props.variant === 'destructive') {
+    if (props.variant === 'destructive' || props.variant === 'warning') {
+      // Error and warning toasts stay longer
       duration = TOAST_ERROR_DELAY;
     } else if (props.variant === 'success' || !props.variant || props.variant === 'default') {
       // Success and default toasts have shorter duration
@@ -172,6 +173,13 @@ function toast({ ...props }: Toast) {
       },
     },
   });
+
+  // Auto-dismiss after duration
+  if (duration && duration > 0) {
+    setTimeout(() => {
+      dismiss();
+    }, duration);
+  }
 
   return {
     id: id,
