@@ -1,10 +1,57 @@
 'use client';
 
 import { EventCalendar } from '@/components/dashboard/event-calendar';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, DollarSign, FileText, Package } from 'lucide-react';
+import { getMerchantStatus } from '@/lib/api/stripe-onboarding';
+import { AlertCircle, Car, CreditCard, DollarSign, FileText, Package } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [showPaymentBanner, setShowPaymentBanner] = useState(false);
+  const [isLoadingMerchantStatus, setIsLoadingMerchantStatus] = useState(true);
+
+  useEffect(() => {
+    const checkMerchantStatus = async () => {
+      try {
+        // Get user account ID from /api/auth/me
+        const authResponse = await fetch('/api/auth/me');
+        
+        if (!authResponse.ok) {
+          return; // User not authenticated, don't show banner
+        }
+
+        const userData = await authResponse.json();
+        
+        if (!userData.authenticated || !userData.accountId) {
+          return;
+        }
+
+        // Check merchant status
+        try {
+          const merchantStatus = await getMerchantStatus(userData.accountId);
+          
+          // Show banner if merchant doesn't exist or can't accept payments
+          if (!merchantStatus.success || !merchantStatus.canAcceptPayments) {
+            setShowPaymentBanner(true);
+          }
+        } catch (error: any) {
+          // If 404 (merchant not found), show banner
+          if (error.status === 404) {
+            setShowPaymentBanner(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking merchant status:', error);
+      } finally {
+        setIsLoadingMerchantStatus(false);
+      }
+    };
+
+    checkMerchantStatus();
+  }, []);
   const stats = [
     {
       title: 'Total Vehicles',
@@ -44,6 +91,37 @@ export default function DashboardPage() {
           Welcome back! Here's what's happening with your fleet.
         </p>
       </div>
+
+      {/* Payment Setup Banner */}
+      {showPaymentBanner && !isLoadingMerchantStatus && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-full bg-primary/10">
+                <CreditCard className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1">Enable Payment Processing</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Set up your payment account to start accepting payments from customers. 
+                  Process credit cards, manage payouts, and track earnings.
+                </p>
+                <Button onClick={() => router.push('/payments/onboarding')}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Enable Payments
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPaymentBanner(false)}
+              >
+                <AlertCircle className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (

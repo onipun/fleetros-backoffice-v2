@@ -2,21 +2,36 @@
 
 import { useLocale } from '@/components/providers/locale-provider';
 import { TablePageSkeleton } from '@/components/skeletons/page-skeletons';
+import { OnboardingStatusBadge } from '@/components/stripe-onboarding';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { useCollection } from '@/lib/api/hooks';
+import { canAcceptPayments, getMerchantStatus } from '@/lib/api/stripe-onboarding';
 import { formatDate, parseHalResource } from '@/lib/utils';
 import type { Payment } from '@/types';
-import { CreditCard, Download, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { AlertCircle, ArrowRight, CheckCircle2, CreditCard, Download, Search, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function PaymentsPage() {
   const { t, formatCurrency, locale } = useLocale();
+  const router = useRouter();
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [businessAccountId, setBusinessAccountId] = useState<string | null>(null);
+  const [paymentAccountStatus, setPaymentAccountStatus] = useState<{
+    hasAccount: boolean;
+    isReady: boolean;
+    status?: any;
+    isLoading: boolean;
+  }>({
+    hasAccount: false,
+    isReady: false,
+    isLoading: true,
+  });
 
   const { data, isLoading, error, refetch } = useCollection<Payment>('payments', {
     page,
@@ -26,6 +41,44 @@ export default function PaymentsPage() {
 
   const payments = data ? parseHalResource<Payment>(data, 'payments') : [];
   const totalPages = data?.page?.totalPages || 0;
+
+  // Check payment account status
+  useEffect(() => {
+    const checkPaymentAccountStatus = async () => {
+      const accountId = localStorage.getItem('businessAccountId');
+      setBusinessAccountId(accountId);
+      
+      if (!accountId) {
+        setPaymentAccountStatus({
+          hasAccount: false,
+          isReady: false,
+          isLoading: false,
+        });
+        return;
+      }
+
+      try {
+        const [canAccept, status] = await Promise.all([
+          canAcceptPayments(accountId),
+          getMerchantStatus(accountId),
+        ]);        setPaymentAccountStatus({
+          hasAccount: true,
+          isReady: canAccept,
+          status,
+          isLoading: false,
+        });
+      } catch (error) {
+        console.error('Error checking payment account:', error);
+        setPaymentAccountStatus({
+          hasAccount: true,
+          isReady: false,
+          isLoading: false,
+        });
+      }
+    };
+
+    checkPaymentAccountStatus();
+  }, []);
 
   const statusLabels = useMemo(
     () => ({
@@ -85,6 +138,120 @@ export default function PaymentsPage() {
           <p className="text-muted-foreground">{t('payment.manage')}</p>
         </div>
       </div>
+
+      {/* Payment Account Status Section */}
+      {!paymentAccountStatus.isLoading && (
+        <Card className={
+          paymentAccountStatus.isReady 
+            ? 'border-green-200 bg-green-50 dark:bg-green-950/20' 
+            : paymentAccountStatus.hasAccount 
+            ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20'
+            : 'border-primary/20 bg-primary/5'
+        }>
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className={`p-3 rounded-full ${
+                  paymentAccountStatus.isReady 
+                    ? 'bg-green-100 dark:bg-green-900' 
+                    : paymentAccountStatus.hasAccount
+                    ? 'bg-yellow-100 dark:bg-yellow-900'
+                    : 'bg-primary/10'
+                }`}>
+                  {paymentAccountStatus.isReady ? (
+                    <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  ) : paymentAccountStatus.hasAccount ? (
+                    <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                  ) : (
+                    <Settings className="h-6 w-6 text-primary" />
+                  )}
+                </div>
+                
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold">
+                      {paymentAccountStatus.isReady 
+                        ? 'Payment Account Active' 
+                        : paymentAccountStatus.hasAccount
+                        ? 'Payment Account Setup In Progress'
+                        : 'Setup Payment Account'}
+                    </h3>
+                    {paymentAccountStatus.status && (
+                      <OnboardingStatusBadge
+                        onboardingStatus={paymentAccountStatus.status.onboardingStatus}
+                        chargesEnabled={paymentAccountStatus.status.chargesEnabled}
+                      />
+                    )}
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {paymentAccountStatus.isReady 
+                      ? 'Your payment account is fully verified and ready to accept payments from customers.'
+                      : paymentAccountStatus.hasAccount
+                      ? 'Complete your payment account verification to start accepting payments.'
+                      : 'Enable payment processing by setting up your merchant account with Stripe.'}
+                  </p>
+
+                  {paymentAccountStatus.isReady && (
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Accept Payments
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Receive Payouts
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Process Refunds
+                      </span>
+                    </div>
+                  )}
+
+                  {paymentAccountStatus.hasAccount && !paymentAccountStatus.isReady && 
+                   paymentAccountStatus.status?.requirementsCurrentlyDue?.length > 0 && (
+                    <div className="mt-2 p-3 rounded-md bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                      <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100 mb-1">
+                        Action Required:
+                      </p>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                        {paymentAccountStatus.status.requirementsCurrentlyDue.length} item(s) need attention
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Button
+                onClick={() => router.push(
+                  paymentAccountStatus.hasAccount 
+                    ? '/settings/payment-account' 
+                    : '/payments/onboarding'
+                )}
+                variant={paymentAccountStatus.isReady ? 'outline' : 'default'}
+              >
+                {paymentAccountStatus.isReady ? (
+                  <>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Manage Account
+                  </>
+                ) : paymentAccountStatus.hasAccount ? (
+                  <>
+                    Continue Setup
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Setup Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>

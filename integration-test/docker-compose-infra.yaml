@@ -1,0 +1,146 @@
+version: '3.8'
+
+# Infrastructure-only Docker Compose for local development
+# This spins up PostgreSQL, Redis, and Keycloak without the application
+# Use this during development when running the application locally
+
+services:
+  # PostgreSQL Database
+  # Supports multiple databases: backoffice, keycloak, payment_platform
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_MULTIPLE_DATABASES: backoffice,keycloak,payment_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
+      - ./init-scripts/01-init.sql:/docker-entrypoint-initdb.d/02-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backoffice-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backoffice-network
+
+  # Keycloak Authentication Server
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak
+    command: start-dev
+    environment:
+      # Admin credentials
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      # Database configuration - use separate keycloak database
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: changeme
+      KC_DB_SCHEMA: public
+
+      # Hostname configuration - allow access from host machine
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+
+      # Features
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+
+      # Logging
+      KC_LOG_LEVEL: INFO
+      QUARKUS_LOG_LEVEL: INFO
+    ports:
+      - "8180:8080"
+      - "8787:8787" # Debug port
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
+    networks:
+      - backoffice-network
+
+  # Keycloak Initialization
+  keycloak-init:
+    image: alpine:latest
+    container_name: keycloak-init
+    volumes:
+      - ./init-scripts/init-keycloak.sh:/init-keycloak.sh:ro
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl jq bash && bash /init-keycloak.sh"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - backoffice-network
+    restart: "no"
+
+  # pgAdmin - PostgreSQL Web UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./init-scripts/pgadmin-servers.json:/pgadmin4/servers.json:ro
+      - ./init-scripts/pgpass:/pgadmin4/pgpass:ro
+    depends_on:
+      - postgres
+    networks:
+      - backoffice-network
+    restart: unless-stopped
+    entrypoint: >
+      /bin/sh -c "
+      cp /pgadmin4/pgpass /tmp/pgpass &&
+      chmod 600 /tmp/pgpass &&
+      /entrypoint.sh
+      "
+
+networks:
+  backoffice-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  keycloak-data:
+  pgadmin-data:
+
