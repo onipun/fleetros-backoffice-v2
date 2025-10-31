@@ -1,34 +1,34 @@
 'use client';
 
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import {
-  addCustomPermissions,
-  getAllUserPermissions,
-  getAvailablePermissions,
-  removeCustomPermission,
-  type AllPermissionsResponse,
-  type Permission,
+    addCustomPermissions,
+    getAllUserPermissions,
+    getAvailablePermissions,
+    removeCustomPermission,
+    type AllPermissionsResponse,
+    type Permission,
 } from '@/lib/api/custom-permissions';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { AlertCircle, Loader2, Plus, Shield, Trash2, X } from 'lucide-react';
+import { AlertCircle, Loader2, Plus, Shield, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface ManageCustomPermissionsDialogProps {
