@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { registerMerchant } from '@/lib/api/stripe-onboarding';
 import {
@@ -193,28 +193,31 @@ export function MerchantRegistrationForm({ onSuccess, returnUrl, refreshUrl }: R
           </div>
 
           {/* Business Name */}
-          <div className="space-y-2">
-            <Label htmlFor="businessName" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Business Name <span className="text-destructive">*</span>
-            </Label>
+          <FormField
+            label="Business Name"
+            htmlFor="businessName"
+            icon={<Building2 className="h-4 w-4" />}
+            required
+            error={errors.businessName?.message}
+          >
             <Input
               id="businessName"
               placeholder="Acme Corporation"
               {...register('businessName')}
               disabled={isSubmitting}
+              error={!!errors.businessName}
             />
-            {errors.businessName && (
-              <p className="text-sm text-destructive">{errors.businessName.message}</p>
-            )}
-          </div>
+          </FormField>
 
           {/* Country */}
-          <div className="space-y-2">
-            <Label htmlFor="country" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Country Code <span className="text-destructive">*</span>
-            </Label>
+          <FormField
+            label="Country Code"
+            htmlFor="country"
+            icon={<MapPin className="h-4 w-4" />}
+            required
+            error={errors.country?.message}
+            hint="2-letter ISO country code (e.g., US, MY, SG)"
+          >
             <Input
               id="country"
               placeholder="US, MY, SG, etc."
@@ -222,53 +225,43 @@ export function MerchantRegistrationForm({ onSuccess, returnUrl, refreshUrl }: R
               {...register('country')}
               disabled={isSubmitting}
               className="uppercase"
+              error={!!errors.country}
             />
-            <p className="text-xs text-muted-foreground">
-              2-letter ISO country code (e.g., US, MY, SG)
-            </p>
-            {errors.country && (
-              <p className="text-sm text-destructive">{errors.country.message}</p>
-            )}
-          </div>
+          </FormField>
 
           {/* Phone (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="phone" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Phone Number <span className="text-muted-foreground text-xs">(Optional)</span>
-            </Label>
+          <FormField
+            label="Phone Number"
+            htmlFor="phone"
+            icon={<Phone className="h-4 w-4" />}
+            error={errors.phone?.message}
+          >
             <Input
               id="phone"
               type="tel"
               placeholder="+60123456789"
               {...register('phone')}
               disabled={isSubmitting}
+              error={!!errors.phone}
             />
-            <p className="text-xs text-muted-foreground">
-              International format (e.g., +60123456789)
-            </p>
-            {errors.phone && (
-              <p className="text-sm text-destructive">{errors.phone.message}</p>
-            )}
-          </div>
+          </FormField>
 
           {/* Website (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="website" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Website <span className="text-muted-foreground text-xs">(Optional)</span>
-            </Label>
+          <FormField
+            label="Website"
+            htmlFor="website"
+            icon={<Globe className="h-4 w-4" />}
+            error={errors.website?.message}
+          >
             <Input
               id="website"
               type="url"
               placeholder="https://example.com"
               {...register('website')}
               disabled={isSubmitting}
+              error={!!errors.website}
             />
-            {errors.website && (
-              <p className="text-sm text-destructive">{errors.website.message}</p>
-            )}
-          </div>
+          </FormField>
         </CardContent>
       </Card>
 
