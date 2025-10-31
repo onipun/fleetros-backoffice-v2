@@ -89,11 +89,9 @@ export async function registerMerchant(
 
 /**
  * Get merchant onboarding status
- * GET /api/merchants/{businessAccountId}/status
+ * GET /api/merchants/status
  */
-export async function getMerchantStatus(
-  businessAccountId: string
-): Promise<MerchantStatus> {
+export async function getMerchantStatus(): Promise<MerchantStatus> {
   try {
     const token = await getAuthToken();
     if (!token) {
@@ -102,7 +100,7 @@ export async function getMerchantStatus(
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/merchants/${businessAccountId}/status`,
+      `${API_BASE_URL}/api/merchants/status`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -130,11 +128,9 @@ export async function getMerchantStatus(
 
 /**
  * Refresh onboarding link
- * POST /api/merchants/{businessAccountId}/refresh-onboarding
+ * POST /api/merchants/refresh-onboarding
  */
-export async function refreshOnboardingLink(
-  businessAccountId: string
-): Promise<RefreshOnboardingResponse> {
+export async function refreshOnboardingLink(): Promise<RefreshOnboardingResponse> {
   try {
     const token = await getAuthToken();
     if (!token) {
@@ -143,7 +139,7 @@ export async function refreshOnboardingLink(
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/merchants/${businessAccountId}/refresh-onboarding`,
+      `${API_BASE_URL}/api/merchants/refresh-onboarding`,
       {
         method: 'POST',
         headers: {
@@ -172,11 +168,9 @@ export async function refreshOnboardingLink(
 
 /**
  * Get Stripe dashboard link
- * GET /api/merchants/{businessAccountId}/dashboard
+ * GET /api/merchants/dashboard
  */
-export async function getDashboardLink(
-  businessAccountId: string
-): Promise<DashboardResponse> {
+export async function getDashboardLink(): Promise<DashboardResponse> {
   try {
     const token = await getAuthToken();
     if (!token) {
@@ -185,7 +179,7 @@ export async function getDashboardLink(
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/merchants/${businessAccountId}/dashboard`,
+      `${API_BASE_URL}/api/merchants/dashboard`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -214,11 +208,9 @@ export async function getDashboardLink(
 /**
  * Check if user has completed onboarding
  */
-export async function hasCompletedOnboarding(
-  businessAccountId: string
-): Promise<boolean> {
+export async function hasCompletedOnboarding(): Promise<boolean> {
   try {
-    const status = await getMerchantStatus(businessAccountId);
+    const status = await getMerchantStatus();
     return status.success && 
            (status.onboardingStatus === 'COMPLETED' || 
             status.onboardingStatus === 'VERIFIED');
@@ -231,11 +223,9 @@ export async function hasCompletedOnboarding(
 /**
  * Check if merchant can accept payments
  */
-export async function canAcceptPayments(
-  businessAccountId: string
-): Promise<boolean> {
+export async function canAcceptPayments(): Promise<boolean> {
   try {
-    const status = await getMerchantStatus(businessAccountId);
+    const status = await getMerchantStatus();
     return status.success && status.canAcceptPayments;
   } catch (error) {
     console.error('Failed to check payment capability:', error);

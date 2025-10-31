@@ -59,9 +59,11 @@ export default function PaymentsPage() {
 
       try {
         const [canAccept, status] = await Promise.all([
-          canAcceptPayments(accountId),
-          getMerchantStatus(accountId),
-        ]);        setPaymentAccountStatus({
+          canAcceptPayments(),
+          getMerchantStatus(),
+        ]);
+        
+        setPaymentAccountStatus({
           hasAccount: true,
           isReady: canAccept,
           status,

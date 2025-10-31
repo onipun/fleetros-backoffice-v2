@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { SessionData, isSessionExpired, sessionOptions } from './lib/auth/session';
 
 // Routes that don't require authentication
-const publicRoutes = ['/login', '/api/auth/login', '/api/auth/callback/keycloak', '/api/auth/test'];
+const publicRoutes = ['/login', '/register', '/accept-invitation', '/api/auth/login', '/api/auth/callback/keycloak', '/api/auth/test'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

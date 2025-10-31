@@ -41,7 +41,7 @@ export function OnboardingStatusDashboard({
   const fetchStatus = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const data = await getMerchantStatus(businessAccountId);
+      const data = await getMerchantStatus();
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch status');
       }
@@ -67,7 +67,7 @@ export function OnboardingStatusDashboard({
   const handleRefreshLink = async () => {
     setIsRefreshingLink(true);
     try {
-      const response = await refreshOnboardingLink(businessAccountId);
+      const response = await refreshOnboardingLink();
       if (!response.success) {
         throw new Error(response.error || 'Failed to refresh link');
       }
@@ -91,7 +91,7 @@ export function OnboardingStatusDashboard({
 
   const handleOpenDashboard = async () => {
     try {
-      const response = await getDashboardLink(businessAccountId);
+      const response = await getDashboardLink();
       if (!response.success) {
         throw new Error(response.error || 'Failed to get dashboard link');
       }

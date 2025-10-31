@@ -31,7 +31,7 @@ export default function DashboardPage() {
 
         // Check merchant status
         try {
-          const merchantStatus = await getMerchantStatus(userData.accountId);
+          const merchantStatus = await getMerchantStatus();
           
           // Show banner if merchant doesn't exist or can't accept payments
           if (!merchantStatus.success || !merchantStatus.canAcceptPayments) {

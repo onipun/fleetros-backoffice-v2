@@ -32,8 +32,8 @@ export default function PaymentAccountPage() {
     setIsChecking(true);
     try {
       const [completed, canPay] = await Promise.all([
-        hasCompletedOnboarding(accountId),
-        canAcceptPayments(accountId),
+        hasCompletedOnboarding(),
+        canAcceptPayments(),
       ]);
       setOnboardingComplete(completed);
       setCanAcceptPayment(canPay);

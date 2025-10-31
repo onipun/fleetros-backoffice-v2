@@ -27,6 +27,7 @@ import {
   Settings,
   Sun,
   User,
+  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -41,6 +42,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [authorities, setAuthorities] = useState<string[]>([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { theme, setTheme } = useTheme();
   const { t } = useLocale();
@@ -48,14 +50,60 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
 
   const navigation = [
-    { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
-    { name: t('nav.vehicles'), href: '/vehicles', icon: Car },
-    { name: t('nav.bookings'), href: '/bookings', icon: FileText },
-    { name: t('nav.offerings'), href: '/offerings', icon: Package },
-    { name: t('nav.discounts'), href: '/discounts', icon: Percent },
-    { name: t('nav.packages'), href: '/packages', icon: Package },
-    { name: t('nav.payments'), href: '/payments', icon: DollarSign },
-    { name: t('nav.settings'), href: '/settings', icon: Settings },
+    { 
+      name: t('nav.dashboard'), 
+      href: '/dashboard', 
+      icon: LayoutDashboard,
+      permission: null // Dashboard is always accessible
+    },
+    { 
+      name: t('nav.vehicles'), 
+      href: '/vehicles', 
+      icon: Car,
+      permission: 'CAR_READ'
+    },
+    { 
+      name: t('nav.bookings'), 
+      href: '/bookings', 
+      icon: FileText,
+      permission: 'BOOKING_READ'
+    },
+    { 
+      name: t('nav.offerings'), 
+      href: '/offerings', 
+      icon: Package,
+      permission: 'OFFERING_READ'
+    },
+    { 
+      name: t('nav.discounts'), 
+      href: '/discounts', 
+      icon: Percent,
+      permission: 'DISCOUNT_READ'
+    },
+    { 
+      name: t('nav.packages'), 
+      href: '/packages', 
+      icon: Package,
+      permission: 'PACKAGE_READ'
+    },
+    { 
+      name: t('nav.team'), 
+      href: '/team', 
+      icon: Users,
+      permission: 'USER_READ'
+    },
+    { 
+      name: t('nav.payments'), 
+      href: '/payments', 
+      icon: DollarSign,
+      permission: 'PAYMENT_READ'
+    },
+    { 
+      name: t('nav.settings'), 
+      href: '/settings', 
+      icon: Settings,
+      permission: null // Settings is always accessible
+    },
   ];
 
   useEffect(() => {
@@ -70,7 +118,45 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         }
       })
       .catch(console.error);
+
+    // Fetch user authorities
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authorities) {
+          console.log('[Dashboard Layout] User authorities:', data.authorities);
+          setAuthorities(data.authorities);
+        }
+      })
+      .catch(console.error);
   }, []);
+
+  const hasPermission = (permission: string | null): boolean => {
+    if (permission === null) return true; // Always show items without permission requirement
+    if (authorities.length === 0) return false; // No authorities loaded yet
+    
+    // Check if user has admin or manager roles (they have access to everything)
+    const hasAdminAccess = authorities.some(auth => 
+      auth === 'ROLE_MERCHANT_ADMIN' || 
+      auth === 'MERCHANT_ADMIN' ||
+      auth === 'ROLE_MERCHANT_MANAGER' ||
+      auth === 'MERCHANT_MANAGER'
+    );
+    
+    if (hasAdminAccess) return true;
+    
+    // Check if user has the exact permission or the ROLE_ prefixed version
+    const hasPermissionCheck = authorities.some(auth => 
+      auth === permission || 
+      auth === `ROLE_${permission}`
+    );
+    
+    console.log(`[Dashboard Layout] Checking permission "${permission}":`, hasPermissionCheck);
+    
+    return hasPermissionCheck;
+  };
+
+  const filteredNavigation = navigation.filter(item => hasPermission(item.permission));
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -106,7 +192,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </Button>
           </div>
           <nav className="space-y-1 px-2">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -136,7 +222,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <span className="text-xl font-bold text-primary">Fleetros</span>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link

@@ -2,10 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -158,6 +160,19 @@ export default function LoginPage() {
           <p className="text-center text-xs text-muted-foreground mt-4">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
+
+          {/* Registration Link */}
+          <div className="text-center mt-6 pt-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link 
+                href="/register" 
+                className="text-primary hover:underline font-medium"
+              >
+                Create a master account
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
