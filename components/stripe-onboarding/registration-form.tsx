@@ -33,7 +33,7 @@ export function MerchantRegistrationForm({ onSuccess, returnUrl, refreshUrl }: R
   const [accountId, setAccountId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { toast, error: toastError, success: toastSuccess } = useToast();
 
   const {
     register,
@@ -76,24 +76,22 @@ export function MerchantRegistrationForm({ onSuccess, returnUrl, refreshUrl }: R
         setError(err.message || 'Failed to load user information');
         setIsLoading(false);
         
-        toast({
-          title: 'Error',
-          description: 'Failed to load user information. Please refresh the page.',
-          variant: 'destructive',
-        });
+        toastError(
+          'Failed to Load User Information',
+          'Unable to fetch your account details. Please refresh the page and try again.'
+        );
       }
     };
 
     fetchUserInfo();
-  }, [setValue, toast]);
+  }, [setValue, toastError]);
 
   const onSubmit = async (data: MerchantRegistrationFormData) => {
     if (!accountId) {
-      toast({
-        title: 'Error',
-        description: 'Account information not loaded. Please refresh the page.',
-        variant: 'destructive',
-      });
+      toastError(
+        'Account Not Loaded',
+        'Your account information is not available. Please refresh the page and try again.'
+      );
       return;
     }
 
@@ -111,10 +109,10 @@ export function MerchantRegistrationForm({ onSuccess, returnUrl, refreshUrl }: R
         throw new Error(response.error || 'Registration failed');
       }
 
-      toast({
-        title: 'Success!',
-        description: response.message || 'Registration successful. Redirecting to Stripe...',
-      });
+      toastSuccess(
+        'Registration Successful!',
+        'Redirecting you to Stripe to complete your account setup...'
+      );
 
       // Store businessAccountId in localStorage for later reference
       localStorage.setItem('businessAccountId', response.businessAccountId);
@@ -128,11 +126,10 @@ export function MerchantRegistrationForm({ onSuccess, returnUrl, refreshUrl }: R
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to register merchant',
-        variant: 'destructive',
-      });
+      toastError(
+        'Registration Failed',
+        error.message || 'Unable to register your merchant account. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
