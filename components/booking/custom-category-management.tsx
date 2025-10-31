@@ -293,7 +293,7 @@ export function CustomCategoryManagement({ open, onOpenChange }: CustomCategoryM
                         className="flex-1 sm:flex-none"
                       >
                         <Edit className="h-4 w-4 sm:mr-2" />
-                        <span className="sm:inline hidden">Edit</span>
+                        <span className="sm:inline hidden">{t('common.edit')}</span>
                       </Button>
                       <Button
                         variant="destructive"
@@ -303,7 +303,7 @@ export function CustomCategoryManagement({ open, onOpenChange }: CustomCategoryM
                         className="flex-1 sm:flex-none"
                       >
                         <Trash2 className="h-4 w-4 sm:mr-2" />
-                        <span className="sm:inline hidden">Delete</span>
+                        <span className="sm:inline hidden">{t('common.delete')}</span>
                       </Button>
                     </div>
                   </div>

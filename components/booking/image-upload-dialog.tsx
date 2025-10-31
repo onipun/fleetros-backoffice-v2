@@ -154,7 +154,7 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
       if (file.size > maxSize) {
         toast({
           title: t('booking.images.upload.fileTooLarge'),
-          description: `${file.name} exceeds 50MB. Please select a smaller file.`,
+          description: `${file.name} ${t('booking.images.upload.fileTooLargeDescription')}`,
           variant: 'destructive',
         });
         return false;
@@ -199,8 +199,8 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
     } catch (error) {
       console.error('Error processing images:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to process some images',
+        title: t('common.error'),
+        description: t('booking.images.upload.processingErrorDescription'),
         variant: 'destructive',
       });
     } finally {
@@ -333,9 +333,9 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
             <div className="text-center space-y-4">
               <Upload className="mx-auto h-12 w-12 text-primary animate-bounce" />
               <div className="space-y-2">
-                <p className="text-lg font-semibold">Uploading images...</p>
+                <p className="text-lg font-semibold">{t('booking.images.upload.overlayTitle')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Uploading {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} to server
+                  {`${t('booking.images.upload.overlayStatusPrefix')} ${selectedFiles.length} ${selectedFiles.length === 1 ? t('booking.images.upload.fileSingular') : t('booking.images.upload.filePlural')} ${selectedFiles.length === 1 ? t('booking.images.upload.overlayStatusSuffixSingle') : t('booking.images.upload.overlayStatusSuffixPlural')}`}
                 </p>
               </div>
               <div className="relative w-64 h-3 bg-muted rounded-full overflow-hidden">
@@ -373,7 +373,7 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
               <Upload className={`mx-auto h-12 w-12 text-muted-foreground mb-4 ${isCompressing ? 'animate-pulse' : ''}`} />
               {isCompressing ? (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-primary">Compressing images...</p>
+                  <p className="text-sm font-medium text-primary">{t('booking.images.upload.compressionTitle')}</p>
                   <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-primary animate-pulse"
@@ -383,7 +383,7 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
                       }}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Please wait while we optimize your images</p>
+                    <p className="text-xs text-muted-foreground">{t('booking.images.upload.compressionDescription')}</p>
                   <style jsx>{`
                     @keyframes shimmer {
                       0% { background-position: -200% 0; }
@@ -408,7 +408,7 @@ export function ImageUploadDialog({ open, onOpenChange, bookingId, onUploadSucce
               <div className="flex items-center justify-between mb-2">
                 <Label>{t('booking.images.upload.selectedFiles')} ({selectedFiles.length})</Label>
                 <span className="text-xs text-muted-foreground">
-                  Total: {(selectedFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)}MB
+                  {t('booking.images.upload.totalSizeLabel')}: {(selectedFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)}MB
                 </span>
               </div>
               <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
