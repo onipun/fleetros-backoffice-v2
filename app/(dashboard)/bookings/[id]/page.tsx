@@ -1,5 +1,6 @@
 'use client';
 
+import { BookingReceipt } from '@/components/booking/booking-receipt';
 import { CustomCategoryManagement } from '@/components/booking/custom-category-management';
 import { BookingImageGallery } from '@/components/booking/image-gallery';
 import { ImageUploadDialog } from '@/components/booking/image-upload-dialog';
@@ -11,7 +12,7 @@ import { hateoasClient } from '@/lib/api/hateoas-client';
 import { formatDateTime } from '@/lib/utils';
 import type { Booking, Offering } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Edit, Settings, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Settings, Trash2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -33,6 +34,7 @@ export default function BookingDetailPage() {
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [categoryManagementOpen, setCategoryManagementOpen] = useState(false);
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
   const { data: booking, isLoading: bookingLoading, error: bookingError } = useQuery({
     queryKey: ['booking', bookingId],
@@ -121,6 +123,10 @@ export default function BookingDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setReceiptOpen(true)}>
+            <FileText className="mr-2 h-4 w-4" />
+            {t('booking.receipt.print')}
+          </Button>
           <Button asChild>
             <Link href={`/bookings/${bookingId}/edit`}>
               <Edit className="mr-2 h-4 w-4" />
@@ -295,6 +301,13 @@ export default function BookingDetailPage() {
       <CustomCategoryManagement
         open={categoryManagementOpen}
         onOpenChange={setCategoryManagementOpen}
+      />
+
+      {/* Booking Receipt Dialog */}
+      <BookingReceipt
+        booking={booking}
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
       />
     </div>
   );
