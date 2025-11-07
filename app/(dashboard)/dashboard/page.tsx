@@ -1,10 +1,10 @@
 'use client';
 
 import { EventCalendar } from '@/components/dashboard/event-calendar';
-import { Button } from '@/components/ui/button';
+import { MerchantSetupWidget } from '@/components/merchant/merchant-setup-widget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getMerchantStatus } from '@/lib/api/stripe-onboarding';
-import { AlertCircle, Car, CreditCard, DollarSign, FileText, Package } from 'lucide-react';
+import { Car, DollarSign, FileText, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -92,35 +92,9 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Payment Setup Banner */}
+      {/* Payment Setup Widget */}
       {showPaymentBanner && !isLoadingMerchantStatus && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="p-2 rounded-full bg-primary/10">
-                <CreditCard className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1">Enable Payment Processing</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Set up your payment account to start accepting payments from customers. 
-                  Process credit cards, manage payouts, and track earnings.
-                </p>
-                <Button onClick={() => router.push('/payments/onboarding')}>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Enable Payments
-                </Button>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowPaymentBanner(false)}
-              >
-                <AlertCircle className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <MerchantSetupWidget showDetails={false} compact={false} />
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

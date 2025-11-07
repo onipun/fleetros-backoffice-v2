@@ -1,10 +1,10 @@
 'use client';
 
+import { MerchantSetupWidget } from '@/components/merchant/merchant-setup-widget';
 import { OnboardingStatusDashboard } from '@/components/stripe-onboarding/onboarding-status-dashboard';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { canAcceptPayments, hasCompletedOnboarding } from '@/lib/api/stripe-onboarding';
-import { AlertCircle, CreditCard, Loader2, Plus } from 'lucide-react';
+import { CreditCard, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -73,39 +73,10 @@ export default function PaymentAccountPage() {
         </p>
       </div>
 
-      {/* No Onboarding Started */}
-      {!businessAccountId && (
-        <Card className="border-primary/20">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-primary" />
-              <CardTitle>Payment Account Not Setup</CardTitle>
-            </div>
-            <CardDescription>
-              Start accepting payments by setting up your payment account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">Why set up a payment account?</h4>
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                <li>Accept credit and debit card payments from customers</li>
-                <li>Secure and PCI-compliant payment processing via Stripe</li>
-                <li>Automatic payouts to your bank account</li>
-                <li>Real-time payment tracking and reporting</li>
-                <li>Support for multiple currencies</li>
-                <li>Fraud protection and dispute management</li>
-              </ul>
-            </div>
-            <Button onClick={handleStartOnboarding} size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Setup Payment Account
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {/* Merchant Setup Widget - New Integration */}
+      <MerchantSetupWidget showDetails={true} />
 
-      {/* Onboarding in Progress or Complete */}
+      {/* Legacy Support - Show old onboarding if businessAccountId exists */}
       {businessAccountId && (
         <>
           {/* Payment Capability Status */}

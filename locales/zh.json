@@ -51,8 +51,11 @@
   "refresh": "刷新",
   "saveChanges": "保存更改",
     "required": "*",
-    "optional": "可选",
-    "notAvailable": "暂无"
+  "optional": "可选",
+  "notAvailable": "暂无",
+  "seconds": "秒",
+  "yes": "是",
+  "no": "否"
   },
   "nav": {
     "dashboard": "仪表板",
@@ -91,6 +94,11 @@
       "light": "浅色",
       "dark": "深色",
       "system": "系统"
+    },
+    "paymentAccount": {
+      "title": "付款账户",
+      "description": "管理您的 Stripe 付款账户并接收客户付款",
+      "manage": "管理付款账户"
     },
     "saveSuccess": "设置保存成功",
     "saveError": "保存设置失败"
@@ -882,6 +890,161 @@
       "minBooking": "最低订单",
       "usage": "使用次数",
       "actions": "操作"
+    }
+  },
+  "merchant": {
+    "common": {
+      "countries": {
+        "MY": "马来西亚 (MY)",
+        "SG": "新加坡 (SG)",
+        "US": "美国 (US)",
+        "GB": "英国 (GB)",
+        "AU": "澳大利亚 (AU)"
+      },
+      "placeholders": {
+        "phone": "+60134845807"
+      }
+    },
+    "dashboard": {
+      "title": "商家账户",
+      "description": "管理您的 Stripe 收款账户",
+      "cards": {
+        "paymentProcessing": "付款处理",
+        "paymentProcessingDesc": "通过 Stripe Connect 接受付款",
+        "verification": "账户验证",
+        "verificationDesc": "完成身份与企业验证",
+        "compliance": "合规",
+        "complianceDesc": "满足监管要求"
+      },
+      "status": {
+        "title": "账户状态",
+        "description": "查看商家账户的当前状态"
+      },
+      "help": {
+        "title": "需要帮助？",
+        "onboarding": "开户问题",
+        "onboardingDesc": "就验证问题联系 Stripe 支持",
+        "deletedAccount": "账户被删除",
+        "deletedAccountDesc": "使用重新创建选项生成新账户",
+        "payouts": "结算",
+        "payoutsDesc": "在 Stripe 控制台直接管理结算"
+      }
+    },
+    "status": {
+      "error": "状态加载错误",
+      "errorMessage": "加载商家状态失败",
+      "notFound": "尚无商家账户",
+      "notFoundDescription": "您还未设置商家账户。",
+      "deleted": {
+        "title": "Stripe 账户已删除",
+        "description": "您的 Stripe 账户已被删除或访问被撤销。必须重新创建账户才能继续收款。",
+        "details": "账户详情",
+        "emailLabel": "邮箱",
+        "accountIdLabel": "之前的账户 ID",
+        "statusLabel": "状态",
+        "important": "重要",
+        "point1": "将创建一个全新的 Stripe 账户并生成新的 ID",
+        "point2": "之前的交易记录不会被迁移",
+        "point3": "您需要重新完成开户流程",
+        "autoRedirect": "即将跳转至账户重建，倒计时"
+      },
+      "ready": {
+        "title": "已准备好收款"
+      },
+      "pending": {
+        "title": "开户进行中"
+      },
+      "status": "状态",
+      "email": "邮箱",
+      "business": "商户名称",
+      "charges": "允许收款",
+      "payouts": "允许结算",
+      "enabled": "已启用",
+      "disabled": "未启用"
+    },
+    "onboard": {
+      "title": "开始接受付款",
+      "description": "设置您的 Stripe 账户以接收付款",
+      "start": "开始开户",
+      "continue": "继续开户",
+      "overview": {
+        "message": "您的账户信息已在注册时预先填写。点击下方按钮启动 Stripe 开户流程并完成剩余步骤。"
+      },
+      "errors": {
+        "countryRequired": "请选择国家"
+      },
+      "success": {
+        "title": "开户已开始",
+        "description": "正在跳转至 Stripe..."
+      },
+      "error": {
+        "title": "开户错误"
+      },
+      "form": {
+        "title": "商家信息",
+        "description": "填写业务详情以开始",
+        "country": "国家",
+        "email": "邮箱",
+        "emailHint": "留空则使用您的账户邮箱",
+        "emailPlaceholder": "merchant@example.com",
+        "businessName": "商户名称",
+        "businessNameHint": "可选",
+        "businessNamePlaceholder": "我的企业有限公司",
+        "phone": "联系电话",
+        "phoneHint": "可选",
+        "submit": "开始开户"
+      },
+      "info": {
+        "title": "接下来会发生什么？",
+        "step1": "系统会将您跳转至 Stripe",
+        "step2": "完成身份验证流程",
+        "step3": "提供您的银行账户信息",
+        "step4": "完成后返回控制台"
+      }
+    },
+    "recreate": {
+      "creating": "正在创建账户...",
+      "buttonNow": "立即重建并开始开户",
+      "button": "重建并开始开户",
+      "error": "重建账户失败"
+    },
+    "widget": {
+      "setup": {
+        "title": "付款处理",
+        "description": "设置 Stripe 账户以接收客户付款",
+        "benefits": "优势",
+        "benefit1": "在线接受信用卡付款",
+        "benefit2": "Stripe 提供安全的付款处理",
+        "benefit3": "自动结算到您的银行账户",
+        "benefit4": "实时交易追踪",
+        "button": "设置付款账户",
+        "redirecting": "正在跳转至设置..."
+      },
+      "deleted": {
+        "title": "付款账户问题",
+        "description": "您的 Stripe 账户需要重新创建",
+        "message": "之前的 Stripe 账户已被删除。请重新创建以继续收款。",
+        "button": "修复付款账户"
+      },
+      "active": {
+        "title": "付款处理已启用",
+        "description": "您的账户已准备好收款"
+      },
+      "pending": {
+        "title": "付款设置待完成",
+        "description": "完成验证即可开始收款"
+      },
+      "status": "状态",
+      "email": "邮箱",
+      "charges": {
+        "enabled": "收款功能已启用",
+        "disabled": "收款功能待启用"
+      },
+      "payouts": {
+        "enabled": "结算功能已启用",
+        "disabled": "结算功能待启用"
+      },
+      "manage": "管理付款账户"
     }
   },
   "dateTimePicker": {

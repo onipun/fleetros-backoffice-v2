@@ -86,9 +86,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Return backend response as-is
+    // Return backend response with cache headers
     const userData = await backendResponse.json();
-    return NextResponse.json(userData, { status: 200 });
+    
+    return NextResponse.json(userData, { 
+      status: 200,
+      headers: {
+        // Cache for 5 minutes in the browser
+        'Cache-Control': 'private, max-age=300, stale-while-revalidate=60',
+        // Add ETag for conditional requests
+        'ETag': `"${session.accessToken?.substring(0, 16)}"`,
+      }
+    });
     
   } catch (error) {
     console.error('[/api/auth/me] Error:', error);

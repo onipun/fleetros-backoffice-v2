@@ -4,31 +4,32 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PageTransition } from '@/components/ui/page-transition';
+import { useUserInfo } from '@/hooks/use-user-info';
 import { cn } from '@/lib/utils';
 import {
-  Bell,
-  Car,
-  DollarSign,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Moon,
-  Package,
-  Percent,
-  Settings,
-  Sun,
-  User,
-  Users,
-  X,
+    Bell,
+    Car,
+    DollarSign,
+    FileText,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Moon,
+    Package,
+    Percent,
+    Settings,
+    Sun,
+    User,
+    Users,
+    X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -48,6 +49,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t } = useLocale();
   const pathname = usePathname();
   const router = useRouter();
+  
+  // Use cached user info hook
+  const { data: userInfo } = useUserInfo();
 
   const navigation = [
     { 
@@ -108,8 +112,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     setMounted(true);
-    
-    // Fetch user session
+
+    // Fetch session for user display
     fetch('/api/auth/session')
       .then(res => res.json())
       .then(data => {
@@ -118,21 +122,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         }
       })
       .catch(console.error);
-
-    // Fetch user authorities
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.authorities) {
-          console.log('[Dashboard Layout] User authorities:', data.authorities);
-          setAuthorities(data.authorities);
-        }
-      })
-      .catch(console.error);
   }, []);
 
-  const hasPermission = (permission: string | null): boolean => {
-    if (permission === null) return true; // Always show items without permission requirement
+  // Update authorities when userInfo changes
+  useEffect(() => {
+    if (userInfo?.authorities) {
+      console.log('[Dashboard Layout] User authorities from cache:', userInfo.authorities);
+      setAuthorities(userInfo.authorities);
+    }
+  }, [userInfo]);
+
+  const hasPermission = (permission: string | null): boolean => {    if (permission === null) return true; // Always show items without permission requirement
     if (authorities.length === 0) return false; // No authorities loaded yet
     
     // Check if user has admin or manager roles (they have access to everything)

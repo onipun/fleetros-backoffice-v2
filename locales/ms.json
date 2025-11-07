@@ -43,8 +43,11 @@
     "apply": "Guna",
     "exportCSV": "Eksport CSV",
   "saveChanges": "Simpan Perubahan",
-    "optional": "Pilihan",
-    "notAvailable": "Tidak tersedia"
+  "optional": "Pilihan",
+  "notAvailable": "Tidak tersedia",
+  "seconds": "saat",
+  "yes": "Ya",
+  "no": "Tidak"
   },
   "nav": {
     "dashboard": "Papan Pemuka",
@@ -82,6 +85,11 @@
       "light": "Terang",
       "dark": "Gelap",
       "system": "Sistem"
+    },
+    "paymentAccount": {
+      "title": "Akaun Pembayaran",
+      "description": "Urus akaun pemprosesan Stripe anda dan terima bayaran daripada pelanggan",
+      "manage": "Urus Akaun Pembayaran"
     },
     "saveSuccess": "Tetapan berjaya disimpan",
     "saveError": "Gagal menyimpan tetapan"
@@ -874,6 +882,161 @@
       "minBooking": "Tempahan Minimum",
       "usage": "Penggunaan",
       "actions": "Tindakan"
+    }
+  },
+  "merchant": {
+    "common": {
+      "countries": {
+        "MY": "Malaysia (MY)",
+        "SG": "Singapura (SG)",
+        "US": "Amerika Syarikat (US)",
+        "GB": "United Kingdom (GB)",
+        "AU": "Australia (AU)"
+      },
+      "placeholders": {
+        "phone": "+60134845807"
+      }
+    },
+    "dashboard": {
+      "title": "Akaun Pedagang",
+      "description": "Urus akaun pemprosesan Stripe anda",
+      "cards": {
+        "paymentProcessing": "Pemprosesan Pembayaran",
+        "paymentProcessingDesc": "Terima bayaran melalui Stripe Connect",
+        "verification": "Pengesahan Akaun",
+        "verificationDesc": "Lengkapkan pengesahan identiti dan perniagaan",
+        "compliance": "Pematuhan",
+        "complianceDesc": "Penuhi keperluan peraturan"
+      },
+      "status": {
+        "title": "Status Akaun",
+        "description": "Status semasa akaun pedagang anda"
+      },
+      "help": {
+        "title": "Perlu Bantuan?",
+        "onboarding": "Masalah Onboarding",
+        "onboardingDesc": "Hubungi sokongan Stripe untuk isu pengesahan",
+        "deletedAccount": "Akaun Dipadam",
+        "deletedAccountDesc": "Gunakan pilihan cipta semula untuk akaun baharu",
+        "payouts": "Pembayaran",
+        "payoutsDesc": "Urus pembayaran terus dalam papan pemuka Stripe anda"
+      }
+    },
+    "status": {
+      "error": "Ralat Memuatkan Status",
+      "errorMessage": "Gagal memuatkan status pedagang",
+      "notFound": "Tiada Akaun Pedagang",
+      "notFoundDescription": "Anda belum menetapkan akaun pedagang.",
+      "deleted": {
+        "title": "Akaun Stripe Dipadam",
+        "description": "Akaun Stripe anda telah dipadam atau akses ditarik. Anda mesti mencipta semula akaun untuk menerima pembayaran.",
+        "details": "Butiran Akaun",
+        "emailLabel": "E-mel",
+        "accountIdLabel": "ID Akaun Terdahulu",
+        "statusLabel": "Status",
+        "important": "Penting",
+        "point1": "Akaun Stripe baharu akan dicipta dengan ID baharu",
+        "point2": "Sejarah transaksi terdahulu tidak akan dipindahkan",
+        "point3": "Anda perlu melengkapkan onboarding semula",
+        "autoRedirect": "Mengalih hala ke penciptaan akaun dalam"
+      },
+      "ready": {
+        "title": "Sedia Menerima Pembayaran"
+      },
+      "pending": {
+        "title": "Onboarding Sedang Berjalan"
+      },
+      "status": "Status",
+      "email": "E-mel",
+      "business": "Perniagaan",
+      "charges": "Caj Dibenarkan",
+      "payouts": "Pembayaran Dibenarkan",
+      "enabled": "Diaktifkan",
+      "disabled": "Belum diaktifkan"
+    },
+    "onboard": {
+      "title": "Mula Menerima Pembayaran",
+      "description": "Sediakan akaun Stripe anda untuk menerima bayaran",
+      "start": "Mulakan Onboarding",
+      "continue": "Teruskan Onboarding",
+      "overview": {
+        "message": "Butiran akaun anda telah diisi semasa pendaftaran. Klik di bawah untuk membuka onboarding Stripe dan sahkan langkah yang tinggal."
+      },
+      "errors": {
+        "countryRequired": "Negara diperlukan"
+      },
+      "success": {
+        "title": "Onboarding Bermula",
+        "description": "Mengalihkan ke Stripe..."
+      },
+      "error": {
+        "title": "Ralat Onboarding"
+      },
+      "form": {
+        "title": "Maklumat Pedagang",
+        "description": "Berikan butiran perniagaan anda untuk bermula",
+        "country": "Negara",
+        "email": "E-mel",
+        "emailHint": "Biarkan kosong untuk gunakan e-mel akaun anda",
+        "emailPlaceholder": "merchant@example.com",
+        "businessName": "Nama Perniagaan",
+        "businessNameHint": "Pilihan",
+        "businessNamePlaceholder": "Syarikat Perniagaan Saya",
+        "phone": "Nombor Telefon",
+        "phoneHint": "Pilihan",
+        "submit": "Mulakan Onboarding"
+      },
+      "info": {
+        "title": "Apa yang berlaku seterusnya?",
+        "step1": "Anda akan dialihkan ke Stripe",
+        "step2": "Lengkapkan proses pengesahan identiti",
+        "step3": "Berikan butiran akaun bank anda",
+        "step4": "Kembali ke papan pemuka selepas selesai"
+      }
+    },
+    "recreate": {
+      "creating": "Mencipta Akaun...",
+      "buttonNow": "Cipta Semula & Mulakan Onboarding",
+      "button": "Cipta Semula & Mulakan Onboarding",
+      "error": "Gagal mencipta semula akaun"
+    },
+    "widget": {
+      "setup": {
+        "title": "Pemprosesan Pembayaran",
+        "description": "Sediakan akaun Stripe anda untuk menerima bayaran daripada pelanggan",
+        "benefits": "Faedah",
+        "benefit1": "Terima bayaran kad kredit dalam talian",
+        "benefit2": "Pemprosesan pembayaran selamat dengan Stripe",
+        "benefit3": "Pembayaran automatik ke akaun bank anda",
+        "benefit4": "Penjejakan transaksi masa nyata",
+        "button": "Sediakan Akaun Pembayaran",
+        "redirecting": "Mengalihkan ke set up..."
+      },
+      "deleted": {
+        "title": "Isu Akaun Pembayaran",
+        "description": "Akaun Stripe anda perlu dicipta semula",
+        "message": "Akaun Stripe anda sebelum ini telah dipadam. Sila cipta semula akaun untuk terus menerima pembayaran.",
+        "button": "Baiki Akaun Pembayaran"
+      },
+      "active": {
+        "title": "Pemprosesan Pembayaran Aktif",
+        "description": "Akaun anda sedia menerima pembayaran"
+      },
+      "pending": {
+        "title": "Persediaan Pembayaran Tertunda",
+        "description": "Lengkapkan pengesahan untuk mula menerima pembayaran"
+      },
+      "status": "Status",
+      "email": "E-mel",
+      "charges": {
+        "enabled": "Caj diaktifkan",
+        "disabled": "Caj menunggu"
+      },
+      "payouts": {
+        "enabled": "Pembayaran diaktifkan",
+        "disabled": "Pembayaran menunggu"
+      },
+      "manage": "Urus Akaun Pembayaran"
     }
   },
   "dateTimePicker": {

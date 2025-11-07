@@ -5,7 +5,8 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { Check, DollarSign, Globe, Palette } from 'lucide-react';
+import { ArrowRight, Check, CreditCard, DollarSign, Globe, Palette } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 type Locale = 'en' | 'zh' | 'ms';
@@ -62,6 +63,28 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 max-w-4xl">
+        {/* Payment Account Settings - Quick Access */}
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              <CardTitle>{t('settings.paymentAccount.title') || 'Payment Account'}</CardTitle>
+            </div>
+            <CardDescription>
+              {t('settings.paymentAccount.description') || 'Manage your Stripe payment processing account and accept payments from customers'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/settings/payment-account">
+              <Button className="w-full sm:w-auto">
+                <CreditCard className="mr-2 h-4 w-4" />
+                {t('settings.paymentAccount.manage') || 'Manage Payment Account'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
         {/* Language Settings */}
         <Card>
           <CardHeader>

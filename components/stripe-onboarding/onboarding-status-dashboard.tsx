@@ -280,7 +280,7 @@ export function OnboardingStatusDashboard({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3">
-            {!status.canAcceptPayments && (
+            {!status.canAcceptPayments && !status.chargesEnabled && (
               <Button onClick={handleRefreshLink} disabled={isRefreshingLink}>
                 {isRefreshingLink ? (
                   <>

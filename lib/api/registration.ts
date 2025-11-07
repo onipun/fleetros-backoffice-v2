@@ -19,6 +19,7 @@ export interface MasterAccountRegistrationRequest {
   lastName: string;
   phoneNumber: string;
   companyName: string;
+  country: string;
 }
 
 /**
