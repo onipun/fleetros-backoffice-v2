@@ -7,12 +7,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { TagInput } from '@/components/ui/tag-input';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { usePricingTags } from '@/lib/api/hooks';
+import { preventEnterSubmission } from '@/lib/form-utils';
 import type { PricingFormData } from '@/lib/validations/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
@@ -341,7 +342,7 @@ export default function EditPricingPage() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission}>
         <div className="space-y-6">
           {/* Entity Information */}
           <Card>

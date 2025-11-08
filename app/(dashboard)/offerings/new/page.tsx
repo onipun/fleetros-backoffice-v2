@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
+import { preventEnterSubmission } from '@/lib/form-utils';
 import type { Offering, OfferingType } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -103,7 +104,7 @@ export default function NewOfferingPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission}>
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Basic Information */}

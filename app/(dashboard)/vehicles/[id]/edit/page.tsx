@@ -1,6 +1,7 @@
 'use client';
 
-import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
+import { MultiPricingPanel } from '@/components/pricing/multi-pricing-panel';
+import { type PricingFormData } from '@/components/pricing/pricing-panel';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { VehiclePricingList } from '@/components/vehicle/vehicle-pricing-list';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { usePricingTags } from '@/lib/api/hooks';
+import { preventEnterSubmission } from '@/lib/form-utils';
 import type { Vehicle, VehicleStatus } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
@@ -46,16 +48,7 @@ export default function EditVehiclePage() {
     maxFutureBookingDays: 90,
   });
 
-  const [pricingData, setPricingData] = useState<PricingFormData>({
-    baseRate: 0,
-    rateType: 'Daily',
-    depositAmount: 0,
-    minimumRentalDays: 1,
-    validFrom: '',
-    validTo: '',
-    tags: [],
-    isDefault: false,
-  });
+  const [pricingsData, setPricingsData] = useState<PricingFormData[]>([]);
 
   const statusOptions = useMemo(
     () => [
@@ -123,61 +116,72 @@ export default function EditVehiclePage() {
       return hateoasClient.update<Vehicle>('vehicles', vehicleId, data);
     },
     onSuccess: async () => {
-      // Create pricing if base rate is provided and dates are set
-      let pricingSuccess = false;
-      let pricingError: string | null = null;
+      // Create multiple pricing entries if provided
+      const validPricings = pricingsData.filter(p => p.baseRate > 0 && p.validFrom && p.validTo);
       
-      try {
-        if (pricingData.baseRate > 0 && pricingData.validFrom && pricingData.validTo) {
-          // Format the pricing payload for v1 API
-          // v1 API requires vehicleId as numeric ID and vehicle path for association
-          const pricingPayload = {
-            vehicleId: Number(vehicleId), // v1 API requires numeric vehicleId
-            vehicle: `/api/vehicles/${vehicleId}`,
-            baseRate: Number(pricingData.baseRate),
-            rateType: pricingData.rateType,
-            depositAmount: Number(pricingData.depositAmount),
-            minimumRentalDays: Number(pricingData.minimumRentalDays),
-            validFrom: pricingData.validFrom,
-            validTo: pricingData.validTo,
-            isDefault: Boolean(pricingData.isDefault),
-            ...(pricingData.tags && pricingData.tags.length > 0 && { tagNames: pricingData.tags }),
-          };
-          
-          console.log('Creating pricing with payload:', JSON.stringify(pricingPayload, null, 2));
-          const result = await hateoasClient.create('pricings', pricingPayload);
-          console.log('Pricing created successfully:', result);
-          
-          pricingSuccess = true;
+      if (validPricings.length > 0) {
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const pricing of validPricings) {
+          try {
+            const pricingPayload = {
+              vehicleId: Number(vehicleId),
+              vehicle: `/api/vehicles/${vehicleId}`,
+              baseRate: Number(pricing.baseRate),
+              rateType: pricing.rateType,
+              depositAmount: Number(pricing.depositAmount),
+              minimumRentalDays: Number(pricing.minimumRentalDays),
+              validFrom: pricing.validFrom,
+              validTo: pricing.validTo,
+              isDefault: Boolean(pricing.isDefault),
+              ...(pricing.tags && pricing.tags.length > 0 && { tagNames: pricing.tags }),
+            };
+            
+            console.log('Creating pricing with payload:', JSON.stringify(pricingPayload, null, 2));
+            await hateoasClient.create('pricings', pricingPayload);
+            successCount++;
+          } catch (error) {
+            console.error('Failed to create pricing:', error);
+            failCount++;
+          }
         }
-      } catch (error) {
-        console.error('Failed to create pricing - Full error:', error);
-        if (error instanceof Error) {
-          console.error('Error message:', error.message);
-          console.error('Error stack:', error.stack);
-          pricingError = error.message;
+        
+        // Invalidate ALL related queries AFTER pricing creation
+        await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId] });
+        await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+        await queryClient.invalidateQueries({ queryKey: ['pricings'] });
+        
+        // Show appropriate toast based on results
+        if (failCount === 0) {
+          toast({
+            variant: 'success',
+            title: t('common.success'),
+            description: t('pricing.multiPricing.createMultipleSuccess').replace('{count}', successCount.toString()),
+          });
+        } else if (successCount > 0) {
+          toast({
+            title: t('common.warning'),
+            description: t('pricing.multiPricing.createMultiplePartialSuccess')
+              .replace('{success}', successCount.toString())
+              .replace('{total}', validPricings.length.toString())
+              .replace('{failed}', failCount.toString()),
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: t('common.error'),
+            description: t('pricing.multiPricing.createMultipleError'),
+            variant: 'destructive',
+          });
         }
-      }
-      
-      // Invalidate ALL related queries AFTER pricing creation
-      await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId] });
-      await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      await queryClient.invalidateQueries({ queryKey: ['pricings'] });
-      
-      // Show appropriate toast message
-      if (pricingSuccess) {
-        toast({
-          title: t('common.success'),
-          description: t('vehicle.updateWithPricingSuccess'),
-        });
-      } else if (pricingError) {
-        toast({
-          title: t('vehicle.pricingPartialSuccessTitle'),
-          description: `${t('vehicle.pricingPartialSuccess')} ${pricingError}`,
-          variant: 'destructive',
-        });
       } else {
+        // No pricing entries, just show vehicle update success
+        await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId] });
+        await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+        
         toast({
+          variant: 'success',
           title: t('common.success'),
           description: t('toast.updateSuccess'),
         });
@@ -202,7 +206,7 @@ export default function EditVehiclePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Updating vehicle with pricing data:', pricingData);
+    console.log('Updating vehicle with pricings data:', pricingsData);
     updateMutation.mutate(formData);
   };
 
@@ -253,7 +257,7 @@ export default function EditVehiclePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission}>
         <div className="grid gap-8 xl:grid-cols-2">
           {/* Left Column */}
           <div className="space-y-6">
@@ -525,9 +529,11 @@ export default function EditVehiclePage() {
 
           {/* Right Column */}
           <div className="space-y-6">
-            <PricingPanel 
-              onDataChange={setPricingData} 
-              showValidity={true}
+            {/* Existing Pricings */}
+            <VehiclePricingList vehicleId={vehicleId} />
+            
+            <MultiPricingPanel
+              onDataChange={setPricingsData}
               existingTags={existingTags}
               entityInfo={{
                 type: 'Vehicle',
@@ -535,20 +541,6 @@ export default function EditVehiclePage() {
                 name: vehicle?.name,
               }}
             />
-            
-            {/* Existing Pricings */}
-            <VehiclePricingList vehicleId={vehicleId} />
-            
-            <Card className="bg-muted/50">
-              <CardHeader>
-                <CardTitle>{t('vehicle.addNewPricingTitle')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {t('vehicle.addNewPricingDescription')}
-                </p>
-              </CardContent>
-            </Card>
           </div>
         </div>
 

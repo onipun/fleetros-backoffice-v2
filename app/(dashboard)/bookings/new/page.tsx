@@ -562,6 +562,7 @@ export default function NewBookingPage() {
       // Show preview in a toast or modal
       if (preview.validation.isValid) {
         toast({
+          variant: 'success',
           title: 'Pricing Preview',
           description: `Total: ${formatCurrency(preview.pricingSummary.grandTotal)}. Review the pricing details below.`,
         });
@@ -595,6 +596,7 @@ export default function NewBookingPage() {
     },
     onSuccess: (booking: Booking) => {
       toast({
+        variant: 'success',
         title: t('booking.form.notifications.createSuccessTitle'),
         description: t('booking.form.notifications.createSuccessDescription'),
       });
@@ -831,6 +833,7 @@ export default function NewBookingPage() {
         setIsPreviewingPricing(false);
         // After preview, user needs to click submit again to confirm
         toast({
+          variant: 'success',
           title: 'Review Pricing',
           description: 'Please review the pricing details and click "Create Booking" again to confirm.',
         });
@@ -1228,6 +1231,15 @@ export default function NewBookingPage() {
                         </ul>
                       </div>
                     )}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-muted p-8 text-center">
+                    <p className="text-muted-foreground mb-2">
+                      No pricing preview available yet
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Click "Preview Pricing" button below to calculate the total cost
+                    </p>
                   </div>
                 )}
               </CardContent>

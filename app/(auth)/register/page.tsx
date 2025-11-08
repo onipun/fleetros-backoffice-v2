@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { registerMasterAccount } from '@/lib/api/registration';
+import { preventEnterSubmission } from '@/lib/form-utils';
 import { Building2, Eye, EyeOff, Globe, Lock, Mail, Phone, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -378,7 +379,7 @@ export default function RegisterPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission} className="space-y-6">
             {/* Business Information */}
             <div className="space-y-4 p-6 border rounded-xl bg-gradient-to-br from-muted/30 to-muted/50">
               <div className="flex items-center gap-2 mb-2">

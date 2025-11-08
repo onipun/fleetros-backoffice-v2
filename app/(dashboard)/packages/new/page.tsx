@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
+import { preventEnterSubmission } from '@/lib/form-utils';
 import { parseHalResource } from '@/lib/utils';
 import type { Offering, Package } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -143,7 +144,7 @@ export default function NewPackagePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission}>
         <div className="grid gap-6 md:grid-cols-2">
           {/* Basic Information */}
           <Card>

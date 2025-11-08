@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
+import { preventEnterSubmission } from '@/lib/form-utils';
 import type { PricingFormData } from '@/lib/validations/schemas';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
@@ -149,7 +150,7 @@ export default function NewPricingPage() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission}>
         <div className="space-y-6">
           {/* Entity Information */}
           <Card>

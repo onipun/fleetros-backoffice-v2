@@ -60,7 +60,8 @@ export function PricingPanel({
         isDefault: initialData.isDefault ?? false,
       };
       setFormData(nextData);
-      onDataChange?.(nextData);
+      // Don't call onDataChange here to avoid infinite loops
+      // The parent already has this data as initialData
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);

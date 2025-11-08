@@ -1,16 +1,17 @@
 'use client';
 
-import { PricingPanel, type PricingFormData } from '@/components/pricing/pricing-panel';
+import { MultiPricingPanel } from '@/components/pricing/multi-pricing-panel';
+import { type PricingFormData } from '@/components/pricing/pricing-panel';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +23,7 @@ import { hateoasClient } from '@/lib/api/hateoas-client';
 import { usePricingTags } from '@/lib/api/hooks';
 import type { Vehicle, VehicleStatus } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, ArrowLeft, CheckCircle, Save, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -50,6 +51,11 @@ export default function NewVehiclePage() {
   // Fetch existing tags for autocomplete
   const { data: existingTags = [] } = usePricingTags();
   
+  // Debug: Log tags when they change
+  useEffect(() => {
+    console.log('Available pricing tags:', existingTags);
+  }, [existingTags]);
+  
   const [formData, setFormData] = useState<Partial<Vehicle>>({
     name: '',
     status: 'AVAILABLE' as VehicleStatus,
@@ -68,16 +74,7 @@ export default function NewVehiclePage() {
     details: '',
   });
 
-  const [pricingData, setPricingData] = useState<PricingFormData>({
-    baseRate: 0,
-    rateType: 'Daily',
-    depositAmount: 0,
-    minimumRentalDays: 1,
-    validFrom: '',
-    validTo: '',
-    tags: [],
-    isDefault: true,
-  });
+  const [pricingsData, setPricingsData] = useState<PricingFormData[]>([]);
 
   // Check for existing draft on mount
   useEffect(() => {
@@ -90,7 +87,8 @@ export default function NewVehiclePage() {
     const draft = loadDraft();
     if (draft) {
       setFormData(draft.formData);
-      setPricingData(draft.pricingData);
+      // Support both old single pricing and new multiple pricings format
+      setPricingsData((draft as any).pricingsData || (draft.pricingData ? [draft.pricingData] : []));
       setCurrentStep(draft.currentStep);
     }
     setShowDraftDialog(false);
@@ -106,18 +104,46 @@ export default function NewVehiclePage() {
       return await hateoasClient.create<Vehicle>('vehicles', vehicleData);
     },
     onSuccess: async (createdVehicle) => {
-      // If pricing data is provided, create pricing entries
-      if (pricingData.baseRate > 0) {
-        try {
-          await hateoasClient.create('pricings', {
-            ...pricingData,
-            vehicleId: createdVehicle.id,
+      // Create multiple pricing entries if provided
+      const validPricings = pricingsData.filter(p => p.baseRate > 0 && p.validFrom && p.validTo);
+      
+      if (validPricings.length > 0) {
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const pricing of validPricings) {
+          try {
+            await hateoasClient.create('pricings', {
+              ...pricing,
+              vehicleId: createdVehicle.id,
+            });
+            successCount++;
+          } catch (error) {
+            console.error('Failed to create pricing:', error);
+            failCount++;
+          }
+        }
+        
+        // Show appropriate toast based on results
+        if (failCount === 0) {
+          toast({
+            variant: 'success',
+            title: t('common.success'),
+            description: t('pricing.multiPricing.createMultipleSuccess').replace('{count}', successCount.toString()),
           });
-        } catch (error) {
-          console.error('Failed to create pricing:', error);
+        } else if (successCount > 0) {
+          toast({
+            title: t('common.warning'),
+            description: t('pricing.multiPricing.createMultiplePartialSuccess')
+              .replace('{success}', successCount.toString())
+              .replace('{total}', validPricings.length.toString())
+              .replace('{failed}', failCount.toString()),
+            variant: 'destructive',
+          });
+        } else {
           toast({
             title: t('common.error'),
-            description: t('vehicle.pricingCreationError'),
+            description: t('pricing.multiPricing.createMultipleError'),
             variant: 'destructive',
           });
         }
@@ -125,15 +151,15 @@ export default function NewVehiclePage() {
 
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       clearDraft();
-      toast({
-        title: t('common.success'),
-        description: (
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            <span>{t('vehicle.createSuccess')}</span>
-          </div>
-        ),
-      });
+      
+      if (validPricings.length === 0) {
+        toast({
+          variant: 'success',
+          title: t('common.success'),
+          description: t('vehicle.createSuccess'),
+        });
+      }
+      
       router.push('/vehicles');
     },
     onError: (error: any) => {
@@ -584,9 +610,8 @@ export default function NewVehiclePage() {
           {/* Step 4: Pricing Configuration */}
           {currentStep === 4 && (
             <div className="space-y-6">
-              <PricingPanel 
-                onDataChange={setPricingData}
-                showValidity={true}
+              <MultiPricingPanel
+                onDataChange={setPricingsData}
                 existingTags={existingTags}
                 entityInfo={{
                   type: 'Vehicle',
@@ -594,17 +619,6 @@ export default function NewVehiclePage() {
                   name: formData.name || 'New Vehicle',
                 }}
               />
-              
-              <Card className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle>{t('vehicle.pricingInfo')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {t('vehicle.addPricingMessage')}
-                  </p>
-                </CardContent>
-              </Card>
             </div>
           )}
         </div>
@@ -626,18 +640,15 @@ export default function NewVehiclePage() {
               onClick={() => {
                 saveDraft({
                   formData,
-                  pricingData,
+                  pricingData: pricingsData[0], // For backwards compatibility
+                  pricingsData, // Save all pricings
                   currentStep,
                   timestamp: Date.now(),
-                });
+                } as any);
                 toast({
+                  variant: 'success',
                   title: t('vehicle.draft.savedAsDraft'),
-                  description: (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>{t('vehicle.draft.draftSavedMessage')}</span>
-                    </div>
-                  ),
+                  description: t('vehicle.draft.draftSavedMessage'),
                 });
               }}
             >
