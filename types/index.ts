@@ -319,6 +319,260 @@ export interface Review {
   _links?: Links;
 }
 
+// Loyalty System Types
+export enum LoyaltyTier {
+  BRONZE = 'BRONZE',
+  SILVER = 'SILVER',
+  GOLD = 'GOLD',
+  PLATINUM = 'PLATINUM',
+}
+
+export interface LoyaltyAccount {
+  id: number;
+  customerId: number;
+  merchantAccountId: string;
+  currentTier: LoyaltyTier;
+  availablePoints: number;
+  lifetimePoints: number;
+  redeemedPoints: number;
+  expiredPoints: number;
+  rentalsCurrentYear: number;
+  rentalsLifetime: number;
+  spendingCurrentYear: number;
+  spendingLifetime: number;
+  memberSince: string;
+  tierLastEvaluated: string;
+  active: boolean;
+  _links?: Links;
+}
+
+export interface LoyaltyTierInfo {
+  tier: LoyaltyTier;
+  minRentalsPerYear: number;
+  pointsMultiplier: number;
+  completionBonus: number;
+  benefits: string[];
+}
+
+export interface LoyaltyPointsInfo {
+  availablePoints: number;
+  currentTier: LoyaltyTier;
+  maxPointsDiscount: number;
+  pointsConversionRate: number;
+  isEligibleForRedemption: boolean;
+  minimumPointsForRedemption: number;
+}
+
+export interface LoyaltyTransaction {
+  id: number;
+  loyaltyAccountId: number;
+  transactionType: 'EARN' | 'REDEEM' | 'EXPIRE' | 'ADJUST';
+  points: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  description: string;
+  bookingId?: number;
+  createdAt: string;
+  _links?: Links;
+}
+
+export interface RedeemPointsRequest {
+  loyaltyAccountId: number;
+  pointsToRedeem: number;
+  bookingId?: number;
+  description?: string;
+}
+
+// Booking Request/Response Types
+export interface VehicleBookingRequest {
+  vehicleId: number;
+  startDate: string;
+  endDate: string;
+  pickupLocation?: string;
+  dropoffLocation?: string;
+}
+
+export interface OfferingBookingRequest {
+  offeringId: number;
+  quantity: number;
+}
+
+export interface CreateBookingRequest {
+  vehicles: VehicleBookingRequest[];
+  packageId?: number;
+  offerings?: OfferingBookingRequest[];
+  discountCodes?: string[];
+  pointsToRedeem?: number;
+  applyLoyaltyDiscount?: boolean;
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  linkId?: number;
+  correlationId?: string;
+  currency?: string;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface VehicleRentalSummary {
+  vehicleId?: number;
+  vehicleName: string;
+  rentalPeriod?: string;
+  startDate?: string;
+  endDate?: string;
+  days: number; // Actual API field
+  numberOfDays?: number; // Backup field name
+  dailyRate: number;
+  totalDays?: number;
+  amount: number; // Actual API field
+  subtotal?: number; // Backup field name
+}
+
+export interface PackageSummary {
+  packageId: number;
+  packageName: string;
+  priceModifier: number;
+  discountPercentage: number;
+  amountBeforePackage: number;
+  packageDiscount: number;
+  amountAfterPackage: number;
+}
+
+export interface OfferingSummary {
+  offeringId?: number;
+  offeringName: string;
+  quantity: number;
+  unitPrice: number; // Actual API field
+  pricePerUnit?: number; // Backup field name
+  pricingBasis?: string;
+  amount: number; // Actual API field
+  totalPrice?: number; // Backup field name
+}
+
+export interface DiscountSummary {
+  discountId: number;
+  discountCode: string;
+  discountType: DiscountType;
+  discountValue: number;
+  amountBeforeDiscount: number;
+  discountAmount: number;
+  amountAfterDiscount: number;
+}
+
+export interface LoyaltyDiscount {
+  pointsRedeemed: number;
+  conversionRate: number;
+  discountAmount: number;
+}
+
+export interface BookingPricingSummaryDetailed {
+  vehicleRentals: VehicleRentalSummary[];
+  totalVehicleRentalAmount: number;
+  packageSummary?: PackageSummary;
+  packageDiscountAmount?: number;
+  offerings: OfferingSummary[];
+  totalOfferingsAmount: number;
+  subtotal: number;
+  discounts: DiscountSummary[];
+  totalDiscountAmount: number;
+  loyaltyDiscount?: LoyaltyDiscount;
+  amountAfterDiscounts?: number;
+  taxRate?: number;
+  taxAmount: number;
+  serviceFeeAmount?: number;
+  totalTaxesAndFees?: number;
+  totalDepositAmount?: number;
+  depositBreakdown?: Array<{
+    vehicleName: string;
+    depositAmount: number;
+    depositType: string;
+  }>;
+  grandTotal: number;
+  totalDeposit?: number;
+  dueAtBooking: number;
+  dueAtPickup: number;
+  currency: string;
+  calculatedAt: string;
+  calculationVersion?: string;
+}
+
+export interface VehicleSnapshot {
+  vehicleId: number;
+  vehicleName: string;
+  pricingId: number;
+  baseRate: number;
+  rateType: string;
+  numberOfDays: number;
+  totalAmount: number;
+  depositAmount: number;
+}
+
+export interface PackageSnapshot {
+  packageId: number;
+  packageName: string;
+  priceModifier: number;
+  discountAmount: number;
+}
+
+export interface OfferingSnapshot {
+  offeringId: number;
+  offeringName: string;
+  offeringType: OfferingType;
+  price: number;
+  quantity: number;
+  totalPrice: number;
+}
+
+export interface DiscountSnapshot {
+  discountId: number;
+  discountCode: string;
+  discountType: DiscountType;
+  discountValue: number;
+  discountAmount: number;
+}
+
+export interface DetailedPricingSnapshots {
+  vehicleSnapshots: VehicleSnapshot[];
+  packageSnapshot?: PackageSnapshot;
+  offeringSnapshots: OfferingSnapshot[];
+  discountSnapshots: DiscountSnapshot[];
+}
+
+export interface PreviewPricingResponse {
+  pricingSummary: BookingPricingSummaryDetailed;
+  loyaltyInfo?: LoyaltyPointsInfo; // Actual API field
+  loyaltyPointsInfo?: LoyaltyPointsInfo; // Backup field name
+  validation: ValidationResult;
+  detailedSnapshots: DetailedPricingSnapshots;
+}
+
+export interface BookingResponse {
+  bookingId: number;
+  status: BookingStatus;
+  correlationId?: string;
+  grandTotal: number;
+  totalDeposit: number;
+  dueAtBooking: number;
+  dueAtPickup: number;
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+  totalVehicles: number;
+  totalDays: number;
+  bookingSummary: string;
+}
+
+export interface DiscountCriteria {
+  bookingAmount?: number;
+  packageId?: number;
+  offeringIds?: number[];
+  customerId?: number;
+}
+
 // Authentication Types
 export interface User {
   id: string;

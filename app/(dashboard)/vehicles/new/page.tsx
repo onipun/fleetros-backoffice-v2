@@ -216,6 +216,12 @@ export default function NewVehiclePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // CRITICAL: Only allow submission on the last step
+    if (currentStep !== STEPS.length - 1) {
+      console.warn('Form submission blocked - not on final step');
+      return;
+    }
+    
     // Validate all required steps before submission
     if (!validateStep(0) || !validateStep(1)) {
       toast({
@@ -250,7 +256,11 @@ export default function NewVehiclePage() {
     return validateStep(currentStep);
   };
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    // Prevent any form submission
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     if (!validateStep(currentStep)) {
       // Don't show toast, just prevent navigation
       return;
@@ -264,7 +274,11 @@ export default function NewVehiclePage() {
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = (e?: React.MouseEvent) => {
+    // Prevent any form submission
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     }
@@ -307,7 +321,17 @@ export default function NewVehiclePage() {
         onStepClick={handleStepClick}
       />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onKeyDown={(e) => {
+        // CRITICAL: Prevent ANY form submission when not on final step
+        if (e.key === 'Enter') {
+          // If not on final step, always prevent Enter submission
+          if (currentStep < STEPS.length - 1) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }
+        }
+      }}>
         <div className="min-h-[400px]">
           {/* Step 0: Vehicle Information */}
           {currentStep === 0 && (
@@ -589,7 +613,7 @@ export default function NewVehiclePage() {
         <div className="flex gap-4 justify-between mt-8">
           <div className="flex gap-2">
             {currentStep > 0 && (
-              <Button type="button" variant="outline" onClick={handlePrevious}>
+              <Button type="button" variant="outline" onClick={(e) => handlePrevious(e)}>
                 {t('vehicle.navigation.previous')}
               </Button>
             )}
@@ -624,7 +648,7 @@ export default function NewVehiclePage() {
             {currentStep < STEPS.length - 1 ? (
               <Button
                 type="button"
-                onClick={handleNext}
+                onClick={(e) => handleNext(e)}
                 disabled={!canProceed()}
               >
                 {t('vehicle.navigation.next')}

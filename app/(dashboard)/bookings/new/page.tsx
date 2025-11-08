@@ -14,16 +14,17 @@ import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { parseHalResource } from '@/lib/utils';
 import {
-    BookingStatus,
-    DiscountType,
-    type Booking,
-    type Discount,
-    type Offering,
-    type Package,
-    type Pricing
+  BookingStatus,
+  DiscountType,
+  type Booking,
+  type Discount,
+  type Offering,
+  type Package,
+  type PreviewPricingResponse,
+  type Pricing
 } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, CheckCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -84,7 +85,9 @@ export default function NewBookingPage() {
   const [formState, setFormState] = useState<BookingFormState>(defaultState);
   const [offeringSelections, setOfferingSelections] = useState<Record<number, BookingOfferingSelection>>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [shouldFetchPricing, setShouldFetchPricing] = useState(false);
+  // Removed shouldFetchPricing - no longer auto-fetching legacy pricing API
+  const [pricingPreview, setPricingPreview] = useState<PreviewPricingResponse | null>(null);
+  const [isPreviewingPricing, setIsPreviewingPricing] = useState(false);
   const hasInitializedRef = useRef(false);
 
   const formatDaysLabel = useCallback(
@@ -137,15 +140,12 @@ export default function NewBookingPage() {
     return generateDateRange(formState.startDate, formState.endDate);
   }, [formState.startDate, formState.endDate]);
 
-  // Fetch vehicle pricing for selected dates - only when explicitly triggered
-  const { data: vehiclePricingData, isLoading: isPricingLoading, error: pricingError } = useQuery({
-    queryKey: ['vehicle-pricing', formState.vehicleId, formState.startDate, formState.endDate],
-    queryFn: async () => {
-      if (!formState.vehicleId || !formState.startDate || !formState.endDate) return null;
-      return hateoasClient.getVehiclePricing(formState.vehicleId, [formState.startDate, formState.endDate]);
-    },
-    enabled: Boolean(formState.vehicleId) && Boolean(formState.startDate) && Boolean(formState.endDate) && shouldFetchPricing,
-  });
+  // OLD: Disabled legacy pricing API - now using preview pricing API instead
+  // This was calling /api/rental-pricing/calculate which is deprecated
+  // Now we use /api/v1/bookings/preview-pricing via the previewPricingMutation
+  const vehiclePricingData = null;
+  const isPricingLoading = false;
+  const pricingError = null;
 
   const { data: selectedPackage } = useQuery({
     queryKey: ['package', formState.packageId],
@@ -300,16 +300,18 @@ export default function NewBookingPage() {
     return Math.max(0.01, exactHours);
   }, [formState.startDate, formState.endDate]);
 
-  // Trigger pricing fetch when both dates are set (after OK button clicked in date picker)
+  // Clear preview when form data changes
   useEffect(() => {
-    if (formState.startDate && formState.endDate && formState.vehicleId) {
-      // Enable pricing fetch when all required fields are present
-      setShouldFetchPricing(true);
-    } else {
-      // Reset flag when any required field is missing
-      setShouldFetchPricing(false);
-    }
-  }, [formState.startDate, formState.endDate, formState.vehicleId]);
+    // Clear preview whenever key booking details change
+    setPricingPreview(null);
+  }, [
+    formState.vehicleId,
+    formState.packageId,
+    formState.discountId,
+    formState.startDate,
+    formState.endDate,
+    offeringSelections,
+  ]);
 
   // Format duration for display (days and hours)
   const durationDisplay = useMemo(() => {
@@ -356,16 +358,17 @@ export default function NewBookingPage() {
     })[0];
   }, []);
 
-  // Calculate average base rate from the new pricing summary format
+  // Calculate average base rate from the preview pricing or fallback to 0
+  // (No longer using old pricing API - only preview pricing)
   const vehicleBaseRate = useMemo(() => {
-    if (!vehiclePricingData) {
+    if (!pricingPreview?.pricingSummary?.vehicleRentals?.length) {
       return 0;
     }
     
-    // Use the subtotal from backend and divide by total days/hours
-    const totalUnits = vehiclePricingData.totalFullDays + (vehiclePricingData.totalPartialHours / 24);
-    return totalUnits > 0 ? vehiclePricingData.subtotal / totalUnits : 0;
-  }, [vehiclePricingData]);
+    // Get the first vehicle rental from preview pricing
+    const rental = pricingPreview.pricingSummary.vehicleRentals[0];
+    return rental.dailyRate || 0;
+  }, [pricingPreview]);
 
   const vehicleBaseCharge = roundToTwo(vehicleBaseRate * computedTotalDays);
   const packageModifier = selectedPackage?.priceModifier ?? 1;
@@ -427,14 +430,13 @@ export default function NewBookingPage() {
 
   const offeringCharge = offeringChargeResult.total;
   
-  // Calculate subtotal: use vehicle pricing data if available, otherwise use packageCharge
-  const vehicleSubtotal = vehiclePricingData && (vehiclePricingData as any).analysis 
-    ? (vehiclePricingData as any).analysis.subtotal 
-    : packageCharge;
+  // Use preview pricing data when available, otherwise use local calculations
+  const vehicleSubtotal = pricingPreview?.pricingSummary?.totalVehicleRentalAmount ?? packageCharge;
   
-  const subtotal = roundToTwo(vehicleSubtotal + offeringCharge);
+  const subtotal = pricingPreview?.pricingSummary?.subtotal ?? roundToTwo(vehicleSubtotal + offeringCharge);
 
-  const discountAmount = useMemo(() => {
+  // IMPORTANT: Always call useMemo (Rules of Hooks) - then choose which value to use
+  const calculatedDiscountAmount = useMemo(() => {
     if (!selectedDiscount || subtotal <= 0) return 0;
     let amount = 0;
 
@@ -447,114 +449,67 @@ export default function NewBookingPage() {
     return roundToTwo(Math.min(amount, subtotal));
   }, [selectedDiscount, subtotal]);
 
-  const total = roundToTwo(subtotal - discountAmount);
+  // Use preview pricing discount if available, otherwise use calculated discount
+  const discountAmount = pricingPreview?.pricingSummary?.totalDiscountAmount ?? calculatedDiscountAmount;
+
+  const total = pricingPreview?.pricingSummary?.grandTotal ?? roundToTwo(subtotal - discountAmount);
 
   const pricingLineItems = useMemo(() => {
     const items: Array<{ id: string; label: string; amount: number; helper?: string }> = [];
 
-    // Show pricing breakdown using the actual API response format (applicablePricings array)
-    if (vehiclePricingData && (vehiclePricingData as any).applicablePricings) {
-      const pricings = (vehiclePricingData as any).applicablePricings;
-      
-      pricings.forEach((pricing: any, index: number) => {
-        if (pricing.rateType && pricing.applicableUnits > 0) {
-          const isHourly = pricing.rateType === 'HOURLY';
-          const unitText = isHourly 
-            ? `${pricing.applicableUnits} ${pricing.applicableUnits === 1 ? 'hour' : 'hours'}`
-            : `${pricing.applicableUnits} ${pricing.applicableUnits === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}`;
-          
-          const rateLabel = pricing.category || pricing.rateType;
-          
-          items.push({
-            id: `vehicle-pricing-${index}`,
-            label: `Vehicle Rate [${rateLabel}]`,
-            amount: roundToTwo(pricing.lineTotal),
-            helper: `${unitText} × ${formatCurrency(pricing.rate)}${isHourly ? '/hr' : '/day'}`,
-          });
-        }
-      });
-    } else if (vehiclePricingData) {
-      // Try the new summary-based format
-      const summaries = [
-        { key: 'weekdayDailySummary', data: vehiclePricingData.weekdayDailySummary },
-        { key: 'weekendDailySummary', data: vehiclePricingData.weekendDailySummary },
-        { key: 'weekdayHourlySummary', data: vehiclePricingData.weekdayHourlySummary },
-        { key: 'weekendHourlySummary', data: vehiclePricingData.weekendHourlySummary },
-        { key: 'holidayDailySummary', data: vehiclePricingData.holidayDailySummary },
-        { key: 'holidayHourlySummary', data: vehiclePricingData.holidayHourlySummary },
-      ];
-
-      summaries.forEach(({ key, data }) => {
-        if (data && data.units > 0) {
-          const isHourly = data.category.toLowerCase().includes('hourly');
-          const unitText = isHourly 
-            ? `${data.units} ${data.units === 1 ? 'hour' : 'hours'}`
-            : `${data.units} ${data.units === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}`;
-          
-          items.push({
-            id: `vehicle-pricing-${key}`,
-            label: `Vehicle Rate [${data.category}]`,
-            amount: roundToTwo(data.subtotal),
-            helper: `${unitText} × ${formatCurrency(data.unitRate)}${isHourly ? '/hr' : '/day'}`,
-          });
-        }
+    // Use preview pricing data if available
+    if (pricingPreview?.pricingSummary?.vehicleRentals) {
+      pricingPreview.pricingSummary.vehicleRentals.forEach((rental, index) => {
+        const days = rental.days || rental.numberOfDays || 0;
+        const amount = rental.amount || rental.subtotal || 0;
+        items.push({
+          id: `vehicle-rental-${index}`,
+          label: `Vehicle: ${rental.vehicleName}`,
+          amount: roundToTwo(amount),
+          helper: `${days} ${days === 1 ? 'day' : 'days'} × ${formatCurrency(rental.dailyRate)}/day`,
+        });
       });
     }
 
-    // Apply package modifier if selected (works for both formats)
-    if (vehiclePricingData && formState.packageId && packageModifier !== 1) {
-      const modifierAmount = vehicleBaseCharge * (packageModifier - 1);
-      const percentLabel = `${Math.round(packageModifier * 100)}%`;
-      
+    // Package discount
+    if (pricingPreview?.pricingSummary?.packageSummary) {
+      const pkg = pricingPreview.pricingSummary.packageSummary;
       items.push({
-        id: 'package-modifier',
-        label: selectedPackage?.name || 'Package Adjustment',
-        amount: roundToTwo(modifierAmount),
-        helper: `${percentLabel} ${t('booking.form.summary.packageModifierSuffix')}`,
-      });
-    }
-    
-    // Fallback when no pricing data available
-    if (!vehiclePricingData && packageCharge > 0) {
-      const helperParts: string[] = [];
-      if (computedTotalDays > 0) {
-        helperParts.push(durationDisplay);
-      }
-      if (formState.packageId && packageModifier !== 1) {
-        helperParts.push(`${Math.round(packageModifier * 100)}% ${t('booking.form.summary.packageModifierSuffix')}`);
-      }
-
-      items.push({
-        id: 'package-charge',
-        label: selectedPackage?.name || t('booking.form.summary.vehicleRateFallback'),
-        amount: packageCharge,
-        helper: helperParts.join(' • '),
+        id: 'package-discount',
+        label: `Package: ${pkg.packageName}`,
+        amount: -roundToTwo(pkg.amountBeforePackage - pkg.amountAfterPackage),
+        helper: `${pkg.discountPercentage}% discount`,
       });
     }
 
-    offeringChargeResult.billableLines.forEach((line) => {
-      items.push({
-        id: `offering-${line.id}`,
-        label: line.label,
-        amount: roundToTwo(line.amount),
-        helper: `${line.quantity} × ${formatCurrency(line.unitPrice)}`,
+    // Offerings from preview pricing
+    if (pricingPreview?.pricingSummary?.offerings) {
+      pricingPreview.pricingSummary.offerings.forEach((offering, index) => {
+        const amount = offering.amount || offering.totalPrice || 0;
+        const unitPrice = offering.unitPrice || offering.pricePerUnit || 0;
+        items.push({
+          id: `offering-${index}`,
+          label: offering.offeringName,
+          amount: roundToTwo(amount),
+          helper: offering.quantity > 1 ? `${offering.quantity} × ${formatCurrency(unitPrice)}` : undefined,
+        });
       });
-    });
+    }
+
+    // Discounts from preview pricing
+    if (pricingPreview?.pricingSummary?.discounts) {
+      pricingPreview.pricingSummary.discounts.forEach((discount, index) => {
+        items.push({
+          id: `discount-${index}`,
+          label: `Discount: ${discount.discountCode}`,
+          amount: -roundToTwo(discount.discountAmount),
+          helper: discount.discountType === 'PERCENTAGE' ? `${discount.discountValue}%` : undefined,
+        });
+      });
+    }
 
     return items;
-  }, [
-    vehiclePricingData,
-    computedTotalDays,
-    formState.packageId,
-    packageCharge,
-    packageModifier,
-    vehicleBaseCharge,
-    offeringChargeResult.billableLines,
-    selectedPackage?.name,
-    durationDisplay,
-    t,
-    formatCurrency,
-  ]);
+  }, [pricingPreview, formatCurrency]);
 
   const includedOfferingNames = offeringChargeResult.includedNames;
   const discountDisplay =
@@ -567,6 +522,66 @@ export default function NewBookingPage() {
   const discountLabelWithDescriptor = discountDisplay
     ? `${discountLabel} (${discountDisplay})`
     : discountLabel;
+
+  // Preview pricing mutation - called when user reaches final step
+  const previewPricingMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const vehicles = [{
+        vehicleId: payload.vehicleId,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
+        pickupLocation: payload.pickupLocation,
+        dropoffLocation: payload.dropoffLocation,
+      }];
+
+      const offerings = payload.offerings?.map((o: any) => ({
+        offeringId: o.offeringId,
+        quantity: o.quantity,
+      })) || [];
+
+      const discountCodes: string[] = [];
+      if (payload.discountId && selectedDiscount?.code) {
+        discountCodes.push(selectedDiscount.code);
+      }
+
+      const previewRequest = {
+        vehicles,
+        packageId: payload.packageId ?? undefined,
+        offerings,
+        discountCodes,
+        applyLoyaltyDiscount: false, // Set based on user selection if loyalty is implemented
+        pointsToRedeem: 0,
+        currency: 'MYR',
+      };
+
+      return hateoasClient.previewBookingPricing(previewRequest);
+    },
+    onSuccess: (preview: PreviewPricingResponse) => {
+      setPricingPreview(preview);
+      
+      // Show preview in a toast or modal
+      if (preview.validation.isValid) {
+        toast({
+          title: 'Pricing Preview',
+          description: `Total: ${formatCurrency(preview.pricingSummary.grandTotal)}. Review the pricing details below.`,
+        });
+      } else {
+        // Show validation errors
+        toast({
+          title: 'Validation Errors',
+          description: preview.validation.errors.join(', '),
+          variant: 'destructive',
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Preview Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const createMutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -705,14 +720,22 @@ export default function NewBookingPage() {
     }
   }, [currentStep, formState, computedTotalDays]);
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    // Prevent any form submission
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     if (canProceed() && currentStep < STEPS.length - 1) {
       setValidatedSteps((prev) => new Set(prev).add(currentStep));
       setCurrentStep((prev) => prev + 1);
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = (e?: React.MouseEvent) => {
+    // Prevent any form submission
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     }
@@ -773,7 +796,7 @@ export default function NewBookingPage() {
       })
       .filter((payload) => payload.quantity > 0);
 
-    createMutation.mutate({
+    const bookingPayload = {
       vehicleId: formState.vehicleId,
       packageId: formState.packageId ?? null,
       discountId: formState.discountId ?? null,
@@ -798,7 +821,34 @@ export default function NewBookingPage() {
       },
       // Include complete vehicle pricing response from API
       appliedPricing: vehiclePricingData || null,
-    });
+    };
+
+    // CRITICAL: Call preview pricing API first if not already previewed
+    if (!pricingPreview) {
+      setIsPreviewingPricing(true);
+      try {
+        await previewPricingMutation.mutateAsync(bookingPayload);
+        setIsPreviewingPricing(false);
+        // After preview, user needs to click submit again to confirm
+        toast({
+          title: 'Review Pricing',
+          description: 'Please review the pricing details and click "Create Booking" again to confirm.',
+        });
+        return;
+      } catch (error) {
+        setIsPreviewingPricing(false);
+        return; // Don't proceed if preview fails
+      }
+    }
+
+    // If preview is valid, proceed with creation
+    if (pricingPreview && !pricingPreview.validation.isValid) {
+      setFormError('Please fix validation errors before creating booking');
+      return;
+    }
+
+    // Create the booking
+    createMutation.mutate(bookingPayload);
   };
 
   return (
@@ -829,12 +879,13 @@ export default function NewBookingPage() {
       />
 
       <form onSubmit={handleSubmit} onKeyDown={(e) => {
-        // Prevent Enter key from submitting form unless explicitly on submit button
-        if (e.key === 'Enter' && e.target !== e.currentTarget) {
-          const target = e.target as HTMLElement;
-          // Only allow Enter on submit button
-          if (target.tagName !== 'BUTTON' || currentStep < STEPS.length - 1) {
+        // CRITICAL: Prevent ANY form submission when not on final step
+        if (e.key === 'Enter') {
+          // If not on final step, always prevent Enter submission
+          if (currentStep < STEPS.length - 1) {
             e.preventDefault();
+            e.stopPropagation();
+            return false;
           }
         }
       }}>
@@ -1005,69 +1056,180 @@ export default function NewBookingPage() {
               <CardHeader>
                 <CardTitle>{t('booking.form.sections.pricing')}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Booking Date Range */}
-                {dateRangeDisplay && (
-                  <div className="rounded-md bg-primary/5 p-3 border border-primary/20">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground font-medium">Rental Period</span>
-                      <span className="font-medium text-primary">{dateRangeDisplay}</span>
+              <CardContent>
+                {/* Preview Pricing Result */}
+                {pricingPreview ? (
+                  <div className="rounded-lg border-2 border-green-500 bg-green-50 p-4 dark:bg-green-950/20">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <h4 className="font-semibold text-green-900 dark:text-green-100">
+                        Preview Pricing Result
+                      </h4>
                     </div>
-                  </div>
-                )}
-
-                <div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Duration</span>
-                    <span className="font-medium">{durationDisplay}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {t('booking.form.summary.durationHint')}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">{t('booking.form.summary.billDetails')}</h4>
-                  <div className="space-y-3 rounded-md border bg-muted/30 p-3">
-                    {pricingLineItems.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        {t('booking.form.summary.billPlaceholder')}
-                      </p>
-                    ) : (
-                      pricingLineItems.map((item) => (
-                        <div key={item.id} className="flex items-start justify-between gap-4 text-sm">
-                          <div>
-                            <p className="font-medium">{item.label}</p>
-                            {item.helper && (
-                              <p className="text-xs text-muted-foreground">{item.helper}</p>
-                            )}
+                    
+                    {pricingPreview.validation.isValid ? (
+                      <div className="space-y-3">
+                        {/* Rental Details */}
+                        {pricingPreview.pricingSummary.vehicleRentals?.map((rental, idx) => (
+                          <div key={idx} className="text-sm">
+                            <p className="font-medium text-green-900 dark:text-green-100">
+                              {rental.vehicleName}
+                            </p>
+                            <p className="text-xs text-green-700 dark:text-green-300">
+                              {rental.rentalPeriod || `${rental.startDate} - ${rental.endDate}`}
+                            </p>
+                            <div className="flex justify-between mt-1">
+                              <span className="text-green-700 dark:text-green-300">
+                                {rental.days || rental.numberOfDays} days × {formatCurrency(rental.dailyRate)}
+                              </span>
+                              <span className="font-semibold">
+                                {formatCurrency(rental.amount || rental.subtotal || 0)}
+                              </span>
+                            </div>
                           </div>
-                          <span className="font-medium">{formatCurrency(item.amount)}</span>
+                        ))}
+
+                        {/* Offerings */}
+                        {pricingPreview.pricingSummary.offerings?.length > 0 && (
+                          <div className="pt-2 border-t border-green-300">
+                            <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Add-ons:
+                            </p>
+                            {pricingPreview.pricingSummary.offerings.map((offering, idx) => (
+                              <div key={idx} className="flex justify-between text-sm">
+                                <span className="text-green-700 dark:text-green-300">
+                                  {offering.offeringName} × {offering.quantity}
+                                </span>
+                                <span>{formatCurrency(offering.amount || offering.totalPrice || 0)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Pricing Breakdown */}
+                        <div className="pt-2 border-t border-green-300 space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-700 dark:text-green-300">Subtotal:</span>
+                            <span>{formatCurrency(pricingPreview.pricingSummary.subtotal)}</span>
+                          </div>
+                          
+                          {pricingPreview.pricingSummary.totalDiscountAmount > 0 && (
+                            <div className="flex justify-between text-sm text-green-600">
+                              <span>Total Savings:</span>
+                              <span className="font-semibold">
+                                -{formatCurrency(pricingPreview.pricingSummary.totalDiscountAmount)}
+                              </span>
+                            </div>
+                          )}
+
+                          {pricingPreview.pricingSummary.taxAmount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-green-700 dark:text-green-300">Tax:</span>
+                              <span>{formatCurrency(pricingPreview.pricingSummary.taxAmount)}</span>
+                            </div>
+                          )}
+
+                          {pricingPreview.pricingSummary.serviceFeeAmount && pricingPreview.pricingSummary.serviceFeeAmount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-green-700 dark:text-green-300">Service Fee:</span>
+                              <span>{formatCurrency(pricingPreview.pricingSummary.serviceFeeAmount)}</span>
+                            </div>
+                          )}
                         </div>
-                      ))
+
+                        {/* Grand Total */}
+                        <div className="pt-2 border-t-2 border-green-400">
+                          <div className="flex justify-between text-base">
+                            <span className="font-bold text-green-900 dark:text-green-100">Grand Total:</span>
+                            <span className="font-bold text-green-700 dark:text-green-300">
+                              {formatCurrency(pricingPreview.pricingSummary.grandTotal)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Payment Breakdown */}
+                        <div className="pt-2 border-t border-green-300 space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-700 dark:text-green-300">Due at Booking:</span>
+                            <span className="font-semibold">
+                              {formatCurrency(pricingPreview.pricingSummary.dueAtBooking)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-green-700 dark:text-green-300">Due at Pickup:</span>
+                            <span className="font-semibold">
+                              {formatCurrency(pricingPreview.pricingSummary.dueAtPickup)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Deposit Info */}
+                        {pricingPreview.pricingSummary.depositBreakdown && pricingPreview.pricingSummary.depositBreakdown.length > 0 && (
+                          <div className="pt-2 border-t border-green-300">
+                            <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Deposit Details:
+                            </p>
+                            {pricingPreview.pricingSummary.depositBreakdown.map((deposit, idx) => (
+                              <div key={idx} className="flex justify-between text-sm">
+                                <span className="text-green-700 dark:text-green-300">
+                                  {deposit.vehicleName} ({deposit.depositType})
+                                </span>
+                                <span>{formatCurrency(deposit.depositAmount)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Loyalty Info */}
+                        {(pricingPreview.loyaltyInfo || pricingPreview.loyaltyPointsInfo) && (
+                          <div className="pt-2 border-t border-green-300">
+                            <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                              Loyalty Points:
+                            </p>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-green-700 dark:text-green-300">Current Tier:</span>
+                              <span className="font-semibold">
+                                {(pricingPreview.loyaltyInfo || pricingPreview.loyaltyPointsInfo)?.currentTier}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-green-700 dark:text-green-300">Available Points:</span>
+                              <span>
+                                {(pricingPreview.loyaltyInfo || pricingPreview.loyaltyPointsInfo)?.availablePoints.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {pricingPreview.validation.warnings.length > 0 && (
+                          <div className="pt-2 border-t border-green-300">
+                            <p className="text-xs font-medium text-amber-700 mb-1">Warnings:</p>
+                            <p className="text-xs text-amber-600">
+                              {pricingPreview.validation.warnings.join(' • ')}
+                            </p>
+                          </div>
+                        )}
+                        
+                        <p className="text-xs text-green-700 dark:text-green-300 mt-2 pt-2 border-t border-green-300">
+                          ✓ Pricing validated. Click "Confirm & Create Booking" to proceed.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-red-600 dark:text-red-400 font-semibold">
+                          Validation Errors:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {pricingPreview.validation.errors.map((error, idx) => (
+                            <li key={idx} className="text-sm text-red-600 dark:text-red-400">
+                              {error}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </div>
-                  {includedOfferingNames.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {`${t('booking.form.summary.includedPrefix')}: ${includedOfferingNames.join(', ')}`}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-1 rounded-md bg-muted/20 p-3">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{t('booking.form.summary.subtotal')}</span>
-                    <span>{formatCurrency(subtotal)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{discountLabelWithDescriptor}</span>
-                    <span>-{formatCurrency(discountAmount)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-base font-semibold">
-                    <span>{t('booking.form.summary.total')}</span>
-                    <span>{formatCurrency(total)}</span>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1077,7 +1239,7 @@ export default function NewBookingPage() {
         <div className="flex gap-4 justify-between mt-8">
           <div className="flex gap-2">
             {currentStep > 0 && (
-              <Button type="button" variant="outline" onClick={handlePrevious}>
+              <Button type="button" variant="outline" onClick={(e) => handlePrevious(e)}>
                 {t('booking.form.navigation.previous')}
               </Button>
             )}
@@ -1087,15 +1249,42 @@ export default function NewBookingPage() {
             {currentStep < STEPS.length - 1 ? (
               <Button
                 type="button"
-                onClick={handleNext}
+                onClick={(e) => handleNext(e)}
                 disabled={!canProceed()}
               >
                 {t('booking.form.navigation.next')}
               </Button>
             ) : (
-              <Button type="submit" disabled={createMutation.isPending || !canProceed()}>
-                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                {createMutation.isPending ? t('common.saving') : t('booking.form.submit.create')}
+              <Button 
+                type="submit" 
+                disabled={
+                  isPreviewingPricing || 
+                  createMutation.isPending || 
+                  !canProceed() ||
+                  (pricingPreview !== null && !pricingPreview.validation.isValid)
+                }
+              >
+                {isPreviewingPricing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Previewing Pricing...
+                  </>
+                ) : createMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('common.saving')}
+                  </>
+                ) : pricingPreview ? (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                    Confirm & Create Booking
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                    Preview Pricing
+                  </>
+                )}
               </Button>
             )}
           </div>

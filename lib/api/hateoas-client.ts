@@ -1,4 +1,20 @@
-import type { HATEOASCollection, HATEOASResource, VehiclePricingResponse } from '@/types';
+import type {
+    BookingPricingSummaryDetailed,
+    BookingResponse,
+    CreateBookingRequest,
+    DetailedPricingSnapshots,
+    Discount,
+    DiscountCriteria,
+    HATEOASCollection,
+    HATEOASResource,
+    LoyaltyAccount,
+    LoyaltyTierInfo,
+    LoyaltyTransaction,
+    PreviewPricingResponse,
+    RedeemPointsRequest,
+    ValidationResult,
+    VehiclePricingResponse,
+} from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
 
@@ -375,6 +391,86 @@ export class HATEOASClient {
       method: 'POST',
       body: JSON.stringify({ vehicleId, startDate, endDate }),
     });
+  }
+
+  /**
+   * Preview booking pricing with complete validation
+   */
+  async previewBookingPricing(request: CreateBookingRequest): Promise<PreviewPricingResponse> {
+    return this.request<PreviewPricingResponse>(`${this.baseUrl}/api/v1/bookings/preview-pricing`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Create a new booking
+   */
+  async createBooking(request: CreateBookingRequest): Promise<BookingResponse> {
+    return this.request<BookingResponse>(`${this.baseUrl}/api/v1/bookings`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Get pricing snapshot for a booking
+   */
+  async getPricingSnapshot(bookingId: number): Promise<DetailedPricingSnapshots> {
+    return this.request<DetailedPricingSnapshots>(
+      `${this.baseUrl}/api/v1/bookings/${bookingId}/pricing-snapshot`
+    );
+  }
+
+  /**
+   * Get pricing summary for a booking
+   */
+  async getPricingSummary(bookingId: number): Promise<BookingPricingSummaryDetailed> {
+    return this.request<BookingPricingSummaryDetailed>(
+      `${this.baseUrl}/api/v1/bookings/${bookingId}/pricing-summary`
+    );
+  }
+
+  /**
+   * Get loyalty account for a customer
+   */
+  async getLoyaltyAccount(customerId: number): Promise<LoyaltyAccount> {
+    return this.request<LoyaltyAccount>(`${this.baseUrl}/api/v1/loyalty/accounts/${customerId}`);
+  }
+
+  /**
+   * Redeem loyalty points
+   */
+  async redeemLoyaltyPoints(request: RedeemPointsRequest): Promise<LoyaltyTransaction> {
+    return this.request<LoyaltyTransaction>(`${this.baseUrl}/api/v1/loyalty/redeem`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Get all loyalty tiers information
+   */
+  async getLoyaltyTiers(): Promise<LoyaltyTierInfo[]> {
+    return this.request<LoyaltyTierInfo[]>(`${this.baseUrl}/api/v1/loyalty/tiers`);
+  }
+
+  /**
+   * Validate discount codes
+   */
+  async validateDiscountCodes(codes: string[], bookingAmount: number): Promise<ValidationResult> {
+    return this.request<ValidationResult>(`${this.baseUrl}/api/v1/discounts/validate`, {
+      method: 'POST',
+      body: JSON.stringify({ codes, bookingAmount }),
+    });
+  }
+
+  /**
+   * Get applicable discounts based on criteria
+   */
+  async getApplicableDiscounts(criteria: DiscountCriteria): Promise<Discount[]> {
+    const queryParams = this.buildQueryParams(criteria);
+    return this.request<Discount[]>(`${this.baseUrl}/api/v1/discounts/applicable${queryParams}`);
   }
 }
 
