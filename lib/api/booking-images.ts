@@ -144,7 +144,7 @@ export async function uploadBookingImages(
     formData.append('notes', options.notes);
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/images`, {
+  const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/images`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
@@ -184,7 +184,7 @@ export async function uploadSingleBookingImage(
     formData.append('notes', options.notes);
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/images/single`, {
+  const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/images/single`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
@@ -202,7 +202,7 @@ export async function uploadSingleBookingImage(
 
 export async function fetchBookingImages(bookingId: number | string): Promise<BookingImage[]> {
   const token = await getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/images`, {
+  const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/images`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -228,7 +228,7 @@ export async function fetchBookingImagesByCategory(
   category: BookingImageCategory
 ): Promise<{ images: BookingImage[]; count: number; category: string }> {
   const token = await getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/images/by-category/${category}`, {
+  const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/images/by-category/${category}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -245,7 +245,7 @@ export async function fetchBookingImagesByCustomCategory(
 ): Promise<{ images: BookingImage[]; count: number; customCategoryId: number }> {
   const token = await getAuthToken();
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/bookings/${bookingId}/images/by-custom-category/${customCategoryId}`,
+    `${API_BASE_URL}/api/bookings/${bookingId}/images/by-custom-category/${customCategoryId}`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
@@ -260,7 +260,7 @@ export async function fetchBookingImagesByCustomCategory(
 
 export async function fetchGroupedBookingImages(bookingId: number | string): Promise<GroupedBookingImages> {
   const token = await getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/images/grouped`, {
+  const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/images/grouped`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -275,7 +275,7 @@ export async function fetchGroupedBookingImages(bookingId: number | string): Pro
 
 export async function deleteBookingImage(bookingId: number | string, imageId: number): Promise<{ message: string }> {
   const token = await getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/images/${imageId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/images/${imageId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -290,7 +290,7 @@ export async function deleteBookingImage(bookingId: number | string, imageId: nu
 
 export async function deleteAllBookingImages(bookingId: number | string): Promise<{ message: string }> {
   const token = await getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/images`, {
+  const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/images`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
