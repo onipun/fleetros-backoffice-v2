@@ -68,6 +68,7 @@ export interface BookingFormProps {
   isSubmitting?: boolean;
   submitLabel: string;
   onCancel?: () => void;
+  hidePricingCard?: boolean; // Hide the pricing overview card (used when pricing is shown elsewhere)
 }
 
 type BookingFormState = {
@@ -102,6 +103,7 @@ export function BookingForm({
   isSubmitting = false,
   submitLabel,
   onCancel,
+  hidePricingCard = false,
 }: BookingFormProps) {
   const { t, formatCurrency } = useLocale();
   const [formState, setFormState] = useState<BookingFormState>(defaultState);
@@ -845,65 +847,67 @@ export function BookingForm({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('booking.form.sections.pricing')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{t('booking.form.summary.totalDays')}</span>
-                <span className="font-medium">{computedTotalDays > 0 ? computedTotalDays : '-'}</span>
+        {!hidePricingCard && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('booking.form.sections.pricing')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{t('booking.form.summary.totalDays')}</span>
+                  <span className="font-medium">{computedTotalDays > 0 ? computedTotalDays : '-'}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('booking.form.summary.durationHint')}
+                </p>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t('booking.form.summary.durationHint')}
-              </p>
-            </div>
 
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">{t('booking.form.summary.billDetails')}</h4>
-              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
-                {pricingLineItems.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t('booking.form.summary.billPlaceholder')}
-                  </p>
-                ) : (
-                  pricingLineItems.map((item) => (
-                    <div key={item.id} className="flex items-start justify-between gap-4 text-sm">
-                      <div>
-                        <p className="font-medium">{item.label}</p>
-                        {item.helper && (
-                          <p className="text-xs text-muted-foreground">{item.helper}</p>
-                        )}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">{t('booking.form.summary.billDetails')}</h4>
+                <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                  {pricingLineItems.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t('booking.form.summary.billPlaceholder')}
+                    </p>
+                  ) : (
+                    pricingLineItems.map((item) => (
+                      <div key={item.id} className="flex items-start justify-between gap-4 text-sm">
+                        <div>
+                          <p className="font-medium">{item.label}</p>
+                          {item.helper && (
+                            <p className="text-xs text-muted-foreground">{item.helper}</p>
+                          )}
+                        </div>
+                        <span className="font-medium">{formatCurrency(item.amount)}</span>
                       </div>
-                      <span className="font-medium">{formatCurrency(item.amount)}</span>
-                    </div>
-                  ))
+                    ))
+                  )}
+                </div>
+                {includedOfferingNames.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {`${t('booking.form.summary.includedPrefix')}: ${includedOfferingNames.join(', ')}`}
+                  </p>
                 )}
               </div>
-              {includedOfferingNames.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {`${t('booking.form.summary.includedPrefix')}: ${includedOfferingNames.join(', ')}`}
-                </p>
-              )}
-            </div>
 
-            <div className="space-y-1 rounded-md bg-muted/20 p-3">
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{t('booking.form.summary.subtotal')}</span>
-                <span>{formatCurrency(subtotal)}</span>
+              <div className="space-y-1 rounded-md bg-muted/20 p-3">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{t('booking.form.summary.subtotal')}</span>
+                  <span>{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{discountLabelWithDescriptor}</span>
+                  <span>-{formatCurrency(discountAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between text-base font-semibold">
+                  <span>{t('booking.form.summary.total')}</span>
+                  <span>{formatCurrency(total)}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{discountLabelWithDescriptor}</span>
-                <span>-{formatCurrency(discountAmount)}</span>
-              </div>
-              <div className="flex items-center justify-between text-base font-semibold">
-                <span>{t('booking.form.summary.total')}</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <BookingOfferingSelector

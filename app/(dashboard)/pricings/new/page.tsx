@@ -58,7 +58,7 @@ export default function NewPricingPage() {
       } else if (data.entityType === 'package' && data.entityId > 0) {
         payload.package = `/api/packages/${data.entityId}`;
       } else if (data.entityType === 'booking' && data.entityId > 0) {
-        payload.booking = `/api/bookings/${data.entityId}`;
+        payload.booking = `/api/v1/bookings/${data.entityId}`;
       }
 
       return hateoasClient.create('pricings', payload);

@@ -28,13 +28,8 @@ export function TagInput({
 
   // Filter suggestions based on input
   const filteredSuggestions = React.useMemo(() => {
-    console.log('TagInput - suggestions prop:', suggestions);
-    console.log('TagInput - current value:', value);
-    console.log('TagInput - input value:', inputValue);
-    
     // Always exclude already-added tags
     const availableSuggestions = suggestions.filter((tag) => !value.includes(tag));
-    console.log('TagInput - available suggestions after filtering:', availableSuggestions);
     
     // If no input, show all available suggestions
     if (!inputValue.trim()) {
@@ -42,11 +37,9 @@ export function TagInput({
     }
     
     // Filter based on input
-    const filtered = availableSuggestions.filter((tag) =>
+    return availableSuggestions.filter((tag) =>
       tag.toLowerCase().includes(inputValue.toLowerCase())
     );
-    console.log('TagInput - filtered by input:', filtered);
-    return filtered;
   }, [inputValue, suggestions, value]);
 
   // Close suggestions on outside click

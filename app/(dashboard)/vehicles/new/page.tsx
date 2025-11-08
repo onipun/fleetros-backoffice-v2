@@ -51,11 +51,6 @@ export default function NewVehiclePage() {
   // Fetch existing tags for autocomplete
   const { data: existingTags = [] } = usePricingTags();
   
-  // Debug: Log tags when they change
-  useEffect(() => {
-    console.log('Available pricing tags:', existingTags);
-  }, [existingTags]);
-  
   const [formData, setFormData] = useState<Partial<Vehicle>>({
     name: '',
     status: 'AVAILABLE' as VehicleStatus,

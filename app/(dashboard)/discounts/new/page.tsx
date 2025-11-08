@@ -33,7 +33,7 @@ function buildDiscountPayload(values: DiscountFormState) {
   }
 
   if (values.applicableScope === 'BOOKING' && values.targetEntityId) {
-    payload.booking = `/api/bookings/${values.targetEntityId}`;
+    payload.booking = `/api/v1/bookings/${values.targetEntityId}`;
   }
 
   return payload;

@@ -16,7 +16,6 @@ import { parseHalResource } from '@/lib/utils';
 import {
   BookingStatus,
   DiscountType,
-  type Booking,
   type Discount,
   type Offering,
   type Package,
@@ -31,6 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const STEPS = [
   { id: 'reservation-details', title: 'Reservation Details', description: 'Vehicle, dates & offerings' },
+  { id: 'customer-information', title: 'Customer Information', description: 'Guest contact details' },
   { id: 'logistic-coverage', title: 'Logistic Coverage', description: 'Location & insurance' },
   { id: 'pricing-overview', title: 'Pricing Overview', description: 'Review & total' },
 ];
@@ -62,6 +62,9 @@ type BookingFormState = {
   dropoffLocation: string;
   insurancePolicy: string;
   status: BookingStatus;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
 };
 
 const defaultState: BookingFormState = {
@@ -74,6 +77,9 @@ const defaultState: BookingFormState = {
   dropoffLocation: '',
   insurancePolicy: '',
   status: BookingStatus.PENDING,
+  guestName: '',
+  guestEmail: '',
+  guestPhone: '',
 };
 
 export default function NewBookingPage() {
@@ -586,23 +592,49 @@ export default function NewBookingPage() {
 
   const createMutation = useMutation({
     mutationFn: async (payload: any) => {
-      const normalizedPayload = {
-        ...payload,
+      // Transform to CreateBookingRequest format for /api/v1/bookings
+      const vehicles = [{
+        vehicleId: payload.vehicleId,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
+        pickupLocation: payload.pickupLocation,
+        dropoffLocation: payload.dropoffLocation,
+      }];
+
+      const offerings = payload.offerings?.map((o: any) => ({
+        offeringId: o.offeringId,
+        quantity: o.quantity,
+      })) || [];
+
+      const discountCodes: string[] = [];
+      if (payload.discountId && selectedDiscount?.code) {
+        discountCodes.push(selectedDiscount.code);
+      }
+
+      const createRequest = {
+        vehicles,
         packageId: payload.packageId ?? undefined,
-        discountId: payload.discountId ?? undefined,
+        offerings,
+        discountCodes,
+        applyLoyaltyDiscount: false,
+        pointsToRedeem: 0,
+        currency: 'MYR',
+        guestName: payload.guestName || undefined,
+        guestEmail: payload.guestEmail || undefined,
+        guestPhone: payload.guestPhone || undefined,
       };
 
-      return hateoasClient.create<Booking>('bookings', normalizedPayload);
+      return hateoasClient.createBooking(createRequest);
     },
-    onSuccess: (booking: Booking) => {
+    onSuccess: (response) => {
       toast({
         variant: 'success',
         title: t('booking.form.notifications.createSuccessTitle'),
         description: t('booking.form.notifications.createSuccessDescription'),
       });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      if (booking.id) {
-        router.push(`/bookings/${booking.id}`);
+      if (response.bookingId) {
+        router.push(`/bookings/${response.bookingId}`);
       } else {
         router.push('/bookings');
       }
@@ -712,9 +744,12 @@ export default function NewBookingPage() {
           computedTotalDays > 0
         );
       case 1:
+        // Customer information: either email or phone must be provided
+        return !!(formState.guestEmail || formState.guestPhone);
+      case 2:
         // Logistic coverage: pickup and dropoff locations required
         return !!formState.pickupLocation && !!formState.dropoffLocation;
-      case 2:
+      case 3:
         // Pricing overview: always can proceed
         return true;
       default:
@@ -778,6 +813,12 @@ export default function NewBookingPage() {
       return;
     }
 
+    // Validate customer information: either email or phone is required
+    if (!formState.guestEmail && !formState.guestPhone) {
+      setFormError('Either guest email or phone number is required');
+      return;
+    }
+
     setFormError(null);
 
     const offeringPayload = Object.entries(offeringSelections)
@@ -813,6 +854,9 @@ export default function NewBookingPage() {
       balancePayment: total,
       status: formState.status,
       offerings: offeringPayload,
+      guestName: formState.guestName,
+      guestEmail: formState.guestEmail,
+      guestPhone: formState.guestPhone,
       pricingSummary: {
         vehicleCharge: vehicleBaseCharge,
         packageCharge,
@@ -1010,8 +1054,64 @@ export default function NewBookingPage() {
             </div>
           )}
 
-          {/* Step 1: Logistic Coverage */}
+          {/* Step 1: Customer Information */}
           {currentStep === 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guestName">Guest Name (Optional)</Label>
+                  <Input
+                    id="guestName"
+                    value={formState.guestName}
+                    onChange={handleFieldChange('guestName')}
+                    placeholder="Enter guest name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="guestEmail">
+                    Guest Email {!formState.guestPhone && <span className="text-destructive">*</span>}
+                  </Label>
+                  <Input
+                    id="guestEmail"
+                    type="email"
+                    value={formState.guestEmail}
+                    onChange={handleFieldChange('guestEmail')}
+                    placeholder="guest@example.com"
+                  />
+                  {!formState.guestEmail && !formState.guestPhone && (
+                    <p className="text-xs text-muted-foreground">
+                      Either email or phone number is required
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="guestPhone">
+                    Guest Phone {!formState.guestEmail && <span className="text-destructive">*</span>}
+                  </Label>
+                  <Input
+                    id="guestPhone"
+                    type="tel"
+                    value={formState.guestPhone}
+                    onChange={handleFieldChange('guestPhone')}
+                    placeholder="+60123456789"
+                  />
+                  {!formState.guestEmail && !formState.guestPhone && (
+                    <p className="text-xs text-muted-foreground">
+                      Either email or phone number is required
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 2: Logistic Coverage */}
+          {currentStep === 2 && (
             <Card>
               <CardHeader>
                 <CardTitle>{t('booking.form.sections.logistics')}</CardTitle>
@@ -1053,8 +1153,8 @@ export default function NewBookingPage() {
             </Card>
           )}
 
-          {/* Step 2: Pricing Overview */}
-          {currentStep === 2 && (
+          {/* Step 3: Pricing Overview */}
+          {currentStep === 3 && (
             <Card>
               <CardHeader>
                 <CardTitle>{t('booking.form.sections.pricing')}</CardTitle>

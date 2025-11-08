@@ -213,7 +213,7 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
 
         {/* Hidden DatePicker for calendar functionality */}
         {showDatePicker && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-popover rounded-md border shadow-lg">
+          <div className="absolute top-full left-0 mt-1 z-50 bg-popover rounded-lg shadow-lg overflow-hidden border border-border">
             <DatePicker
               ref={datePickerRef}
               selected={tempDate}
@@ -225,22 +225,22 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
               inline
               calendarClassName="react-datepicker-calendar"
             />
-            {/* OK Button */}
-            <div className="p-3 border-t flex justify-end gap-2">
+            {/* Action Buttons */}
+            <div className="px-3 py-3 bg-muted/30 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => {
                   setShowDatePicker(false);
                   setTempDate(selectedDate);
                 }}
-                className="px-4 py-2 text-sm rounded-md border hover:bg-accent transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleOkClick}
-                className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                className="px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
               >
                 OK
               </button>
@@ -254,10 +254,10 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           
           .react-datepicker {
             font-family: inherit;
-            border: 1px solid hsl(var(--border));
-            border-radius: 0.5rem;
+            border: none !important;
+            border-radius: 0;
             background-color: hsl(var(--popover));
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            box-shadow: none;
             display: flex;
             flex-direction: row;
           }
@@ -269,6 +269,7 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           
           .react-datepicker__time {
             background: hsl(var(--popover));
+            border-radius: 0;
           }
           
           .react-datepicker__time-box {
@@ -278,6 +279,25 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           .react-datepicker__time-list {
             height: 204px !important;
             overflow-y: auto !important;
+            padding: 0;
+          }
+          
+          /* Custom scrollbar for time list */
+          .react-datepicker__time-list::-webkit-scrollbar {
+            width: 8px;
+          }
+          
+          .react-datepicker__time-list::-webkit-scrollbar-track {
+            background: hsl(var(--muted));
+          }
+          
+          .react-datepicker__time-list::-webkit-scrollbar-thumb {
+            background: hsl(var(--muted-foreground) / 0.3);
+            border-radius: 4px;
+          }
+          
+          .react-datepicker__time-list::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--muted-foreground) / 0.5);
           }
           
           /* Mobile responsive layout */
@@ -303,21 +323,44 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           }
           
           .react-datepicker__header {
-            background-color: hsl(var(--muted));
-            border-bottom: 1px solid hsl(var(--border));
-            border-radius: 0.5rem 0.5rem 0 0;
-            padding-top: 0.5rem;
+            background-color: hsl(var(--muted) / 0.5);
+            border-bottom: none;
+            border-radius: 0;
+            padding-top: 0.75rem;
+            padding-bottom: 0.5rem;
           }
           
-          .react-datepicker__current-month,
-          .react-datepicker__day-name {
+          .react-datepicker__current-month {
             color: hsl(var(--foreground));
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+          }
+          
+          .react-datepicker__day-names {
+            margin-top: 0.5rem;
+          }
+          
+          .react-datepicker__day-name {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.75rem;
+            font-weight: 600;
+            width: 2rem;
+            line-height: 2rem;
+          }
+          
+          .react-datepicker__month {
+            margin: 0.5rem;
           }
           
           .react-datepicker__day {
             color: hsl(var(--foreground));
             border-radius: 0.375rem;
             transition: all 0.2s;
+            width: 2rem;
+            line-height: 2rem;
+            margin: 0.15rem;
+            font-size: 0.875rem;
           }
           
           .react-datepicker__day:hover {
@@ -327,13 +370,25 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           
           .react-datepicker__day--selected,
           .react-datepicker__day--keyboard-selected {
-            background-color: hsl(var(--primary));
-            color: hsl(var(--primary-foreground));
+            background-color: hsl(var(--primary)) !important;
+            color: hsl(var(--primary-foreground)) !important;
+            font-weight: 600;
+          }
+          
+          .react-datepicker__day--today {
+            font-weight: 600;
+            color: hsl(var(--primary));
           }
           
           .react-datepicker__day--disabled {
-            color: hsl(var(--muted-foreground));
+            color: hsl(var(--muted-foreground)) !important;
             cursor: not-allowed;
+            opacity: 0.5;
+          }
+          
+          .react-datepicker__day--outside-month {
+            color: hsl(var(--muted-foreground));
+            opacity: 0.4;
           }
           
           .react-datepicker__time-container {
@@ -341,7 +396,10 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           }
           
           .react-datepicker__time-list-item {
-            transition: all 0.2s;
+            transition: all 0.15s;
+            height: auto !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.875rem;
           }
           
           .react-datepicker__time-list-item:hover {
@@ -352,10 +410,26 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
           .react-datepicker__time-list-item--selected {
             background-color: hsl(var(--primary)) !important;
             color: hsl(var(--primary-foreground)) !important;
+            font-weight: 600 !important;
+          }
+          
+          .react-datepicker__navigation {
+            top: 0.75rem;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+          }
+          
+          .react-datepicker__navigation:hover {
+            background-color: hsl(var(--accent));
           }
           
           .react-datepicker__navigation-icon::before {
             border-color: hsl(var(--foreground));
+            border-width: 2px 2px 0 0;
+            width: 7px;
+            height: 7px;
           }
           
           .react-datepicker__triangle {

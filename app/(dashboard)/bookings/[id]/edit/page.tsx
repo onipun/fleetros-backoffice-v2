@@ -37,7 +37,7 @@ export default function EditBookingPage() {
   });
 
   // Fetch applied pricing snapshot
-  const { data: appliedPricing, isLoading: isPricingLoading } = useQuery({
+  const { data: pricingSnapshot, isLoading: isPricingLoading } = useQuery({
     queryKey: ['booking', bookingId, 'pricing-snapshot'],
     queryFn: async () => {
       const token = await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken);
@@ -61,7 +61,33 @@ export default function EditBookingPage() {
         throw new Error('Failed to fetch pricing snapshot');
       }
       
-      return response.json();
+      const data = await response.json();
+      
+      // Parse JSON strings in the pricing snapshot response
+      let pricingSummary = null;
+      let detailedSnapshots = null;
+      
+      if (data.pricingSummaryJson && typeof data.pricingSummaryJson === 'string') {
+        try {
+          pricingSummary = JSON.parse(data.pricingSummaryJson);
+        } catch (e) {
+          console.error('Failed to parse pricingSummaryJson:', e);
+        }
+      }
+      
+      if (data.detailedSnapshotsJson && typeof data.detailedSnapshotsJson === 'string') {
+        try {
+          detailedSnapshots = JSON.parse(data.detailedSnapshotsJson);
+        } catch (e) {
+          console.error('Failed to parse detailedSnapshotsJson:', e);
+        }
+      }
+      
+      return {
+        ...data,
+        pricingSummary,
+        detailedSnapshots,
+      };
     },
     enabled: !!bookingId,
   });
@@ -94,42 +120,68 @@ export default function EditBookingPage() {
     },
   });
 
-  // Compute pricing line items from applied pricing snapshot
+  // Compute pricing line items from pricing snapshot
   const pricingLineItems = useMemo(() => {
     const items: Array<{ id: string; label: string; amount: number; helper?: string }> = [];
 
-    if (appliedPricing && (appliedPricing as any).applicablePricings) {
-      const pricings = (appliedPricing as any).applicablePricings;
-      
-      pricings.forEach((pricing: any, index: number) => {
-        if (pricing.rateType && pricing.applicableUnits > 0) {
-          const isHourly = pricing.rateType === 'HOURLY';
-          const unitText = isHourly 
-            ? `${pricing.applicableUnits} ${pricing.applicableUnits === 1 ? 'hour' : 'hours'}`
-            : `${pricing.applicableUnits} ${pricing.applicableUnits === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}`;
-          
-          const rateLabel = pricing.category || pricing.rateType;
-          
-          items.push({
-            id: `vehicle-pricing-${index}`,
-            label: `Vehicle Rate [${rateLabel}]`,
-            amount: roundToTwo(pricing.lineTotal),
-            helper: `${unitText} × ${formatCurrency(pricing.rate)}${isHourly ? '/hr' : '/day'}`,
-          });
-        }
+    if (!pricingSnapshot?.pricingSummary) return items;
+
+    const summary = pricingSnapshot.pricingSummary;
+
+    // Vehicle rentals
+    if (summary.vehicleRentals) {
+      summary.vehicleRentals.forEach((rental: any, index: number) => {
+        items.push({
+          id: `vehicle-rental-${index}`,
+          label: `Vehicle: ${rental.vehicleName}`,
+          amount: roundToTwo(rental.amount),
+          helper: `${rental.days} ${rental.days === 1 ? 'day' : 'days'} × ${formatCurrency(rental.dailyRate)}/day`,
+        });
+      });
+    }
+
+    // Package discount
+    if (summary.packageSummary && summary.packageDiscountAmount > 0) {
+      items.push({
+        id: 'package-discount',
+        label: `Package: ${summary.packageSummary.packageName}`,
+        amount: -roundToTwo(summary.packageDiscountAmount),
+        helper: `${summary.packageSummary.discountPercentage}% discount`,
+      });
+    }
+
+    // Offerings
+    if (summary.offerings) {
+      summary.offerings.forEach((offering: any, index: number) => {
+        items.push({
+          id: `offering-${index}`,
+          label: offering.offeringName,
+          amount: roundToTwo(offering.amount),
+          helper: offering.quantity > 1 ? `${offering.quantity} × ${formatCurrency(offering.unitPrice)}` : undefined,
+        });
+      });
+    }
+
+    // Discounts
+    if (summary.discounts) {
+      summary.discounts.forEach((discount: any, index: number) => {
+        items.push({
+          id: `discount-${index}`,
+          label: `Discount: ${discount.discountCode}`,
+          amount: -roundToTwo(discount.discountAmount),
+          helper: discount.description,
+        });
       });
     }
 
     return items;
-  }, [appliedPricing, t]);
+  }, [pricingSnapshot, t]);
 
-  // Get analysis data from applied pricing
-  const pricingAnalysis = useMemo(() => {
-    if (appliedPricing && (appliedPricing as any).analysis) {
-      return (appliedPricing as any).analysis;
-    }
-    return null;
-  }, [appliedPricing]);
+  // Get summary data from pricing snapshot
+  const pricingSummary = useMemo(() => {
+    if (!pricingSnapshot?.pricingSummary) return null;
+    return pricingSnapshot.pricingSummary;
+  }, [pricingSnapshot]);
 
   const handleSubmit = (values: BookingFormSubmission) => {
     updateMutation.mutate(values);
@@ -173,7 +225,7 @@ export default function EditBookingPage() {
       </div>
 
       {/* Applied Pricing Overview */}
-      {appliedPricing && pricingLineItems.length > 0 && (
+      {pricingSnapshot && pricingLineItems.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -183,45 +235,33 @@ export default function EditBookingPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Date Range */}
-            {pricingAnalysis && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  {new Date(booking?.startDate || '').toLocaleDateString('en-MY', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                  {' → '}
-                  {new Date(booking?.endDate || '').toLocaleDateString('en-MY', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {new Date(booking?.startDate || '').toLocaleDateString('en-MY', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+                {' → '}
+                {new Date(booking?.endDate || '').toLocaleDateString('en-MY', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
 
             {/* Duration */}
-            {pricingAnalysis && (
+            {pricingSummary?.vehicleRentals?.[0] && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{t('booking.form.summary.duration')}:</span>
                 <span className="font-medium">
-                  {pricingAnalysis.totalFullDays > 0 && (
-                    <>
-                      {pricingAnalysis.totalFullDays} {pricingAnalysis.totalFullDays === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}
-                    </>
-                  )}
-                  {pricingAnalysis.totalFullDays > 0 && pricingAnalysis.totalPartialHours > 0 && ', '}
-                  {pricingAnalysis.totalPartialHours > 0 && (
-                    <>
-                      {pricingAnalysis.totalPartialHours} {pricingAnalysis.totalPartialHours === 1 ? 'hour' : 'hours'}
-                    </>
-                  )}
+                  {pricingSummary.vehicleRentals[0].days} {pricingSummary.vehicleRentals[0].days === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}
                 </span>
               </div>
             )}
@@ -245,21 +285,47 @@ export default function EditBookingPage() {
             </div>
 
             {/* Totals */}
-            {pricingAnalysis && (
+            {pricingSummary && (
               <div className="space-y-1 rounded-md bg-muted/20 p-3">
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>{t('booking.form.summary.subtotal')}</span>
-                  <span>{formatCurrency(pricingAnalysis.subtotal)}</span>
+                  <span>{formatCurrency(pricingSummary.subtotal)}</span>
                 </div>
-                {pricingAnalysis.depositAmount > 0 && (
+                {pricingSummary.totalDepositAmount > 0 && (
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>{t('booking.form.summary.deposit')}</span>
-                    <span>{formatCurrency(pricingAnalysis.depositAmount)}</span>
+                    <span>{formatCurrency(pricingSummary.totalDepositAmount)}</span>
                   </div>
                 )}
-                <div className="flex items-center justify-between text-base font-semibold">
+                {pricingSummary.totalDiscountAmount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-green-600">
+                    <span>Total Savings</span>
+                    <span>-{formatCurrency(pricingSummary.totalDiscountAmount)}</span>
+                  </div>
+                )}
+                {pricingSummary.taxAmount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Tax ({((pricingSummary.taxAmount / pricingSummary.subtotal) * 100).toFixed(0)}%)</span>
+                    <span>{formatCurrency(pricingSummary.taxAmount)}</span>
+                  </div>
+                )}
+                {pricingSummary.serviceFeeAmount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Service Fee</span>
+                    <span>{formatCurrency(pricingSummary.serviceFeeAmount)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-base font-semibold pt-2 border-t">
                   <span>{t('booking.form.summary.total')}</span>
-                  <span>{formatCurrency(pricingAnalysis.totalAmount)}</span>
+                  <span>{formatCurrency(pricingSummary.grandTotal)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Due at Booking</span>
+                  <span className="font-medium">{formatCurrency(pricingSummary.dueAtBooking)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Due at Pickup</span>
+                  <span className="font-medium">{formatCurrency(pricingSummary.dueAtPickup)}</span>
                 </div>
               </div>
             )}
@@ -273,6 +339,7 @@ export default function EditBookingPage() {
         onSubmit={handleSubmit}
         isSubmitting={updateMutation.isPending}
         onCancel={() => router.push(`/bookings/${bookingId}`)}
+        hidePricingCard={true}
       />
     </div>
   );
