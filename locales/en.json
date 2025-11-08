@@ -679,6 +679,98 @@
       "noInsurance": "No insurance policy",
       "thankYou": "Thank you for choosing FleetROS!",
       "questions": "For questions or support, please contact us."
+    },
+    "modification": {
+      "title": "Modify Booking",
+      "button": "Modify Booking",
+      "description": "Update booking details with preview before confirmation",
+      "policy": {
+        "title": "Modification Policy",
+        "description": "Review the policy before proceeding",
+        "freeWindow": "Free Modification Window",
+        "lateFee": "Late Modification Fee",
+        "hoursUntilPickup": "Hours Until Pickup",
+        "estimatedFee": "Estimated Fee",
+        "free": "FREE",
+        "allowedChanges": "Allowed Modifications",
+        "dateChanges": "Date Changes",
+        "vehicleChanges": "Vehicle Changes",
+        "locationChanges": "Location Changes",
+        "noChangesAllowed": "No Modifications Allowed"
+      },
+      "form": {
+        "title": "Modification Details",
+        "description": "Update booking information",
+        "startDate": "Start Date & Time",
+        "endDate": "End Date & Time",
+        "pickupLocation": "Pickup Location",
+        "dropoffLocation": "Dropoff Location",
+        "reason": "Reason for Modification",
+        "reasonPlaceholder": "Please provide a reason for this modification (minimum 5 characters)",
+        "reasonRequired": "Modification reason is required (minimum 5 characters)",
+        "noChangesDetected": "No Changes Detected",
+        "noChangesMessage": "Please modify at least one field to proceed"
+      },
+      "preview": {
+        "title": "Modification Preview",
+        "description": "Review changes before confirming",
+        "changedFields": "Changed Fields",
+        "pricingChanges": "Pricing Changes",
+        "previousAmount": "Previous Amount",
+        "newAmount": "New Amount",
+        "modificationFee": "Modification Fee",
+        "totalAdjustment": "Total Adjustment",
+        "paymentRequired": "Additional Payment Required",
+        "refundIssued": "Refund Will Be Issued",
+        "updatedPricing": "Updated Pricing Details"
+      },
+      "steps": {
+        "policy": "Policy",
+        "details": "Details",
+        "preview": "Preview",
+        "confirm": "Confirm"
+      },
+      "actions": {
+        "back": "Back",
+        "cancel": "Cancel",
+        "continue": "Continue",
+        "previewChanges": "Preview Changes",
+        "confirmModification": "Confirm Modification",
+        "previewing": "Generating Preview...",
+        "confirming": "Confirming..."
+      },
+      "messages": {
+        "previewGenerated": "Preview Generated",
+        "previewDescription": "Review the changes below before confirming",
+        "success": "Booking Modified Successfully",
+        "failed": "Modification Failed",
+        "invalidBooking": "Invalid Booking",
+        "reasonTooShort": "Reason Required"
+      }
+    },
+    "history": {
+      "title": "Booking History",
+      "description": "Complete audit trail of all changes made to this booking",
+      "loading": "Loading modification history...",
+      "noHistory": "No History Available",
+      "noHistoryMessage": "This booking has no modification history yet",
+      "failedToLoad": "Failed to Load History",
+      "changeTypes": {
+        "created": "Created",
+        "modified": "Modified",
+        "cancelled": "Cancelled",
+        "completed": "Completed"
+      },
+      "modifiedBy": "Modified by",
+      "changedFields": "Changed Fields",
+      "priceAdjustment": "Price Adjustment",
+      "modificationFee": "Modification Fee",
+      "viewDetails": "View Details",
+      "before": "Before",
+      "after": "After",
+      "dates": "Dates",
+      "amount": "Amount",
+      "vehicle": "Vehicle"
     }
   },
   "offering": {

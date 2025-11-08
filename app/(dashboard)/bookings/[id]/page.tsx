@@ -1,18 +1,22 @@
 'use client';
 
+import { BookingAuditTrail } from '@/components/booking/booking-audit-trail';
+import { BookingModificationDialog } from '@/components/booking/booking-modification-dialog';
 import { BookingReceipt } from '@/components/booking/booking-receipt';
 import { CustomCategoryManagement } from '@/components/booking/custom-category-management';
 import { BookingImageGallery } from '@/components/booking/image-gallery';
 import { ImageUploadDialog } from '@/components/booking/image-upload-dialog';
+import { ModificationPolicyCard } from '@/components/booking/modification-policy-card';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { formatDateTime } from '@/lib/utils';
 import type { Booking, Offering } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, DollarSign, Edit, FileText, Settings, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Calendar, DollarSign, Edit3, FileText, History, Settings, Trash2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -46,6 +50,8 @@ export default function BookingDetailPage() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [categoryManagementOpen, setCategoryManagementOpen] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
+  const [modificationDialogOpen, setModificationDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
 
   const { data: booking, isLoading: bookingLoading, error: bookingError } = useQuery({
     queryKey: ['booking', bookingId],
@@ -257,11 +263,9 @@ export default function BookingDetailPage() {
             <FileText className="mr-2 h-4 w-4" />
             {t('booking.receipt.print')}
           </Button>
-          <Button asChild>
-            <Link href={`/bookings/${bookingId}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              {t('booking.detail.edit')}
-            </Link>
+          <Button variant="outline" onClick={() => setModificationDialogOpen(true)}>
+            <Edit3 className="mr-2 h-4 w-4" />
+            Modify Booking
           </Button>
           <Button
             variant="destructive"
@@ -278,6 +282,9 @@ export default function BookingDetailPage() {
           </Button>
         </div>
       </div>
+      
+      {/* Modification Policy Card */}
+      <ModificationPolicyCard bookingId={Number(bookingId)} compact />
 
       {/* Applied Pricing Overview */}
       {pricingSnapshot && pricingLineItems.length > 0 && (
@@ -388,38 +395,51 @@ export default function BookingDetailPage() {
         </Card>
       )}
 
-      <div className="grid gap-8 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{t('booking.detail.images.title')}</CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCategoryManagementOpen(true)}
-                  title={t('booking.images.customCategories.title')}
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setUploadDialogOpen(true)}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t('booking.images.upload.title')}
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <BookingImageGallery bookingId={bookingId} />
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="details">
+            <Calendar className="mr-2 h-4 w-4" />
+            Details
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="mr-2 h-4 w-4" />
+            History
+          </TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-6">
-          <Card>
+        <TabsContent value="details" className="space-y-8">
+          <div className="grid gap-8 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{t('booking.detail.images.title')}</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCategoryManagementOpen(true)}
+                      title={t('booking.images.customCategories.title')}
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setUploadDialogOpen(true)}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {t('booking.images.upload.title')}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <BookingImageGallery bookingId={bookingId} />
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card>
             <CardHeader>
               <CardTitle>{t('booking.detail.sections.reservation')}</CardTitle>
             </CardHeader>
@@ -525,6 +545,12 @@ export default function BookingDetailPage() {
           </Card>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-6">
+          <BookingAuditTrail bookingId={Number(bookingId)} />
+        </TabsContent>
+      </Tabs>
 
       {/* Image Upload Dialog */}
       <ImageUploadDialog
@@ -547,6 +573,17 @@ export default function BookingDetailPage() {
         booking={booking}
         open={receiptOpen}
         onOpenChange={setReceiptOpen}
+      />
+
+      {/* Booking Modification Dialog */}
+      <BookingModificationDialog
+        booking={booking}
+        open={modificationDialogOpen}
+        onOpenChange={setModificationDialogOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
+          queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        }}
       />
     </div>
   );

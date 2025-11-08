@@ -221,17 +221,6 @@ export default function BookingsPage() {
                           {t('common.viewDetails')}
                         </Button>
                       )}
-                      {bookingId ? (
-                        <Button size="sm" variant="outline" asChild>
-                          <Link href={`/bookings/${bookingId}/edit`}>
-                            {t('common.edit')}
-                          </Link>
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline" disabled>
-                          {t('common.edit')}
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>

@@ -88,7 +88,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   const formatCurrency = (amount: number): string => {
     const symbol = currencySymbols[currency];
-    return `${symbol}${amount.toFixed(2)}`;
+    const safeAmount = amount ?? 0;
+    return `${symbol}${safeAmount.toFixed(2)}`;
   };
 
   // Prevent hydration mismatch by not rendering until mounted

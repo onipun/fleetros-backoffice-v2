@@ -239,8 +239,126 @@ export interface BookingImageCategoriesResponse {
 
 export interface GroupedBookingImages {
   grouped: Record<string, BookingImage[]>;
-  categories: string[];
-  totalCategories: number;
+  categories: BookingImageCategory[];
+  customCategories: CustomImageCategory[];
+  total: number;
+}
+
+// Booking Modification Types
+export type FeeType = 'FLAT' | 'PERCENTAGE' | 'PER_DAY';
+export type AdjustmentType = 'CHARGE' | 'REFUND' | 'NO_CHANGE';
+export type ChangeType = 'CREATED' | 'MODIFIED' | 'CANCELLED' | 'COMPLETED';
+
+export interface ModificationPolicyResponse {
+  id: number;
+  policyName: string;
+  description: string;
+  freeModificationHours: number;
+  lateModificationFee: number;
+  feeType: FeeType;
+  allowDateChange: boolean;
+  allowVehicleChange: boolean;
+  allowLocationChange: boolean;
+  hoursUntilPickup: number;
+  isFreeModification: boolean;
+  estimatedFee: number;
+  contextMessage: string;
+}
+
+export interface VehicleBookingRequest {
+  vehicleId: number;
+  startDate: string;
+  endDate: string;
+  pickupLocation?: string;
+  dropoffLocation?: string;
+}
+
+export interface UpdateBookingRequest {
+  bookingId: number;
+  vehicles: VehicleBookingRequest[];
+  modificationReason: string;
+}
+
+export interface PaymentAdjustmentInfo {
+  adjustmentType: AdjustmentType;
+  amount: number;
+  description: string;
+}
+
+export interface VehiclePricingDetail {
+  vehicleId: number;
+  vehicleName: string;
+  startDate: string;
+  endDate: string;
+  daysRented: number;
+  hoursRented: number;
+  dailyRate: number;
+  subtotal: number;
+  tax: number;
+  total: number;
+}
+
+export interface NewPricingDetails {
+  subtotal: number;
+  tax: number;
+  discount: number;
+  discountPercentage: number;
+  grandTotal: number;
+  currency: string;
+  loyaltyPointsEarned: number;
+  loyaltyPointsRedeemed: number;
+  vehicles: VehiclePricingDetail[];
+}
+
+export interface BookingModificationResponse {
+  bookingId: number;
+  success: boolean;
+  message: string;
+  previousAmount: number;
+  newAmount: number;
+  modificationFee: number;
+  totalAdjustment: number;
+  refundAmount: number;
+  additionalPayment: number;
+  paymentAdjustment: PaymentAdjustmentInfo;
+  newPricingDetails: NewPricingDetails;
+  changedFields: string[];
+  isPreview: boolean;
+  modificationTimestamp?: string;
+}
+
+export interface BookingSnapshot {
+  bookingId: number;
+  status: string;
+  startDate: string;
+  endDate: string;
+  currentAmount: number;
+  vehicles: {
+    vehicleId: number;
+    vehicleName: string;
+    startDate: string;
+    endDate: string;
+    [key: string]: any;
+  }[];
+  [key: string]: any;
+}
+
+export interface BookingHistoryResponse {
+  id: number;
+  bookingId: number;
+  changeType: ChangeType;
+  changeReason: string;
+  modifiedAt: string;
+  modifiedBy: string | number;
+  previousState: BookingSnapshot | null;
+  newState: BookingSnapshot | null;
+  changedFields: string[];
+  modificationFee?: number;
+  priceAdjustment?: number;
+  // Additional fields from API
+  previousAmount?: number;
+  newAmount?: number;
+  priceDifference?: number;
 }
 
 export interface Offering {
