@@ -1,0 +1,293 @@
+'use client';
+
+/**
+ * Booking Search Filters Component
+ * 
+ * Enterprise-grade search UI following SOLID and KISS principles:
+ * - Single Responsibility: Handles only search filter UI
+ * - Clean, intuitive interface
+ * - Responsive design
+ * - Real-time validation
+ */
+
+import { useLocale } from '@/components/providers/locale-provider';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { BookingSearchParams, BookingStatus } from '@/lib/api/booking-search';
+import { Calendar, Filter, RotateCcw, Search, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
+interface BookingSearchFiltersProps {
+  onSearch: (params: BookingSearchParams) => void;
+  onReset: () => void;
+  isLoading?: boolean;
+}
+
+type SearchMode = 'all' | 'customer' | 'dateRange' | 'status' | 'advanced';
+
+export function BookingSearchFilters({
+  onSearch,
+  onReset,
+  isLoading = false,
+}: BookingSearchFiltersProps) {
+  const { t } = useLocale();
+  
+  // Search mode
+  const [searchMode, setSearchMode] = useState<SearchMode>('all');
+  
+  // Search filters
+  const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [status, setStatus] = useState<BookingStatus | ''>('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
+  // Validation
+  const [dateError, setDateError] = useState('');
+  
+  /**
+   * Validate date range
+   */
+  const validateDateRange = useCallback(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (start > end) {
+        setDateError('End date must be after start date');
+        return false;
+      }
+    }
+    setDateError('');
+    return true;
+  }, [startDate, endDate]);
+  
+  /**
+   * Validate on date change
+   */
+  useEffect(() => {
+    if (startDate || endDate) {
+      validateDateRange();
+    }
+  }, [startDate, endDate, validateDateRange]);
+  
+  /**
+   * Format date for API (ISO-8601)
+   */
+  const formatDateForApi = (dateString: string): string => {
+    if (!dateString) return '';
+    
+    // If already includes time, return as is
+    if (dateString.includes('T')) {
+      return dateString;
+    }
+    
+    // Add time component for API
+    return `${dateString}T00:00:00`;
+  };
+  
+  /**
+   * Handle search submission
+   */
+  const handleSearch = () => {
+    if (!validateDateRange()) {
+      return;
+    }
+    
+    const params: BookingSearchParams = {
+      page: 0,
+      size: 20,
+      sort: 'startDate,desc',
+    };
+    
+    // Add filters based on mode
+    if (searchMode === 'customer' && emailOrPhone) {
+      params.emailOrPhone = emailOrPhone.trim();
+    } else if (searchMode === 'status' && status) {
+      params.status = status;
+    } else if (searchMode === 'dateRange' && startDate && endDate) {
+      params.startDate = formatDateForApi(startDate);
+      params.endDate = formatDateForApi(endDate);
+    } else if (searchMode === 'advanced') {
+      if (emailOrPhone) params.emailOrPhone = emailOrPhone.trim();
+      if (status) params.status = status;
+      if (startDate) params.startDate = formatDateForApi(startDate);
+      if (endDate) params.endDate = formatDateForApi(endDate);
+    }
+    
+    onSearch(params);
+  };
+  
+  /**
+   * Handle reset
+   */
+  const handleReset = () => {
+    setSearchMode('all');
+    setEmailOrPhone('');
+    setStatus('');
+    setStartDate('');
+    setEndDate('');
+    setDateError('');
+    onReset();
+  };
+  
+  /**
+   * Check if search button should be enabled
+   */
+  const canSearch = () => {
+    if (searchMode === 'all') return true;
+    if (searchMode === 'customer') return emailOrPhone.trim().length > 0;
+    if (searchMode === 'status') return status !== '';
+    if (searchMode === 'dateRange') return startDate && endDate && !dateError;
+    if (searchMode === 'advanced') {
+      return (emailOrPhone || status || (startDate && endDate)) && !dateError;
+    }
+    return false;
+  };
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Filter className="h-5 w-5" />
+          {t('booking.search.title')}
+        </CardTitle>
+        <CardDescription>{t('booking.search.description')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Search Mode Selector */}
+        <div className="space-y-2">
+          <Label>{t('booking.search.mode')}</Label>
+          <Select value={searchMode} onValueChange={(value) => setSearchMode(value as SearchMode)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('booking.search.allBookings')}</SelectItem>
+              <SelectItem value="customer">{t('booking.search.byCustomer')}</SelectItem>
+              <SelectItem value="status">{t('booking.search.byStatus')}</SelectItem>
+              <SelectItem value="dateRange">{t('booking.search.byDateRange')}</SelectItem>
+              <SelectItem value="advanced">{t('booking.search.advanced')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Customer Search */}
+        {(searchMode === 'customer' || searchMode === 'advanced') && (
+          <div className="space-y-2">
+            <Label htmlFor="emailOrPhone">
+              {t('booking.search.emailOrPhone')}
+            </Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="emailOrPhone"
+                placeholder={t('booking.search.emailOrPhonePlaceholder')}
+                value={emailOrPhone}
+                onChange={(e) => setEmailOrPhone(e.target.value)}
+                className="pl-9"
+                disabled={isLoading}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t('booking.search.emailOrPhoneHint')}
+            </p>
+          </div>
+        )}
+        
+        {/* Status Filter */}
+        {(searchMode === 'status' || searchMode === 'advanced') && (
+          <div className="space-y-2">
+            <Label htmlFor="status">{t('booking.search.status')}</Label>
+            <Select value={status} onValueChange={(value) => setStatus(value as BookingStatus | '')}>
+              <SelectTrigger id="status" disabled={isLoading}>
+                <SelectValue placeholder={t('booking.search.selectStatus')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t('common.allStatuses')}</SelectItem>
+                <SelectItem value="PENDING">{t('booking.status.pending')}</SelectItem>
+                <SelectItem value="CONFIRMED">{t('booking.status.confirmed')}</SelectItem>
+                <SelectItem value="IN_PROGRESS">{t('booking.status.inProgress')}</SelectItem>
+                <SelectItem value="COMPLETED">{t('booking.status.completed')}</SelectItem>
+                <SelectItem value="CANCELLED">{t('booking.status.cancelled')}</SelectItem>
+                <SelectItem value="NO_SHOW">{t('booking.status.noShow')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
+        {/* Date Range Filter */}
+        {(searchMode === 'dateRange' || searchMode === 'advanced') && (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">
+                  <Calendar className="inline h-4 w-4 mr-1" />
+                  {t('booking.search.startDate')}
+                </Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="endDate">
+                  <Calendar className="inline h-4 w-4 mr-1" />
+                  {t('booking.search.endDate')}
+                </Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+            
+            {dateError && (
+              <p className="text-sm text-destructive">{dateError}</p>
+            )}
+            
+            <p className="text-xs text-muted-foreground">
+              {t('booking.search.dateRangeHint')}
+            </p>
+          </div>
+        )}
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-4">
+          <Button
+            onClick={handleSearch}
+            disabled={!canSearch() || isLoading}
+            className="flex-1"
+          >
+            <Search className="mr-2 h-4 w-4" />
+            {isLoading ? t('common.searching') : t('common.search')}
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={isLoading}
+          >
+            {searchMode === 'all' ? (
+              <RotateCcw className="h-4 w-4" />
+            ) : (
+              <>
+                <X className="mr-2 h-4 w-4" />
+                {t('common.reset')}
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

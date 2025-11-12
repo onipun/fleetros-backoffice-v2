@@ -158,6 +158,10 @@ export interface Booking {
   status: BookingStatus;
   createdAt?: string;
   updatedAt?: string;
+  // Customer details
+  guestName?: string;
+  guestEmail?: string;
+  customerId?: number;
   _links?: Links;
   package?: string; // HATEOAS link to package
   packageId?: number; // For display purposes
