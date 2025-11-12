@@ -1,17 +1,17 @@
 'use client';
 
+import { DashboardStatistics } from '@/components/dashboard/dashboard-statistics';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
+import { RevenueReport } from '@/components/dashboard/revenue-report';
 import { MerchantSetupWidget } from '@/components/merchant/merchant-setup-widget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getMerchantStatus } from '@/lib/api/stripe-onboarding';
-import { Car, DollarSign, FileText, Package } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [showPaymentBanner, setShowPaymentBanner] = useState(false);
   const [isLoadingMerchantStatus, setIsLoadingMerchantStatus] = useState(true);
+  const [accountId, setAccountId] = useState<number | null>(null);
 
   useEffect(() => {
     const checkMerchantStatus = async () => {
@@ -28,6 +28,9 @@ export default function DashboardPage() {
         if (!userData.authenticated || !userData.accountId) {
           return;
         }
+
+        // Set account ID for reporting
+        setAccountId(userData.accountId);
 
         // Check merchant status
         try {
@@ -52,36 +55,6 @@ export default function DashboardPage() {
 
     checkMerchantStatus();
   }, []);
-  const stats = [
-    {
-      title: 'Total Vehicles',
-      value: '124',
-      icon: Car,
-      trend: '+12%',
-      trendUp: true,
-    },
-    {
-      title: 'Active Bookings',
-      value: '45',
-      icon: FileText,
-      trend: '+8%',
-      trendUp: true,
-    },
-    {
-      title: 'Total Revenue',
-      value: '$52,340',
-      icon: DollarSign,
-      trend: '+23%',
-      trendUp: true,
-    },
-    {
-      title: 'Active Packages',
-      value: '12',
-      icon: Package,
-      trend: '-2%',
-      trendUp: false,
-    },
-  ];
 
   return (
     <div className="space-y-8">
@@ -97,48 +70,27 @@ export default function DashboardPage() {
         <MerchantSetupWidget showDetails={false} compact={false} />
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p
-                className={`text-xs ${
-                  stat.trendUp ? 'text-success' : 'text-destructive'
-                }`}
-              >
-                {stat.trend} from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Dashboard Statistics from Reporting Service */}
+      {accountId && (
+        <DashboardStatistics accountId={accountId} />
+      )}
+
+      {/* Revenue Report from Reporting Service */}
+      {accountId && (
+        <RevenueReport accountId={accountId} />
+      )}
 
       <EventCalendar />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Recent Bookings</CardTitle>
+            <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Booking #{1000 + i}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Tesla Model 3 - John Doe
-                    </p>
-                  </div>
-                  <div className="text-sm font-medium">$450.00</div>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              View recent bookings and transactions in the Bookings section
+            </p>
           </CardContent>
         </Card>
 
@@ -147,17 +99,29 @@ export default function DashboardPage() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <button className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors">
+            <button 
+              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
+              onClick={() => window.location.href = '/vehicles'}
+            >
               Add New Vehicle
             </button>
-            <button className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors">
+            <button 
+              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
+              onClick={() => window.location.href = '/bookings'}
+            >
               Create Booking
             </button>
-            <button className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors">
+            <button 
+              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
+              onClick={() => window.location.href = '/discounts'}
+            >
               Manage Discounts
             </button>
-            <button className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors">
-              View Reports
+            <button 
+              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
+              onClick={() => window.location.href = '/packages'}
+            >
+              View Packages
             </button>
           </CardContent>
         </Card>
