@@ -28,7 +28,7 @@ export default function EditPackagePage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    priceModifier: 0.90,
+    priceModifier: 1,
     validFrom: '',
     validTo: '',
     minRentalDays: 2,
@@ -121,7 +121,7 @@ export default function EditPackagePage() {
       setFormData({
         name: pkg.name || '',
         description: pkg.description || '',
-        priceModifier: pkg.priceModifier || 0.90,
+        priceModifier: 1,
         validFrom: pkg.validFrom || '',
         validTo: pkg.validTo || '',
         minRentalDays: pkg.minRentalDays || 2,
@@ -287,23 +287,41 @@ export default function EditPackagePage() {
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6 md:grid-cols-2">
           {/* Basic Information */}
-          <Card>
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>{t('package.basicInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  {t('package.name')} {t('common.required')}
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder={t('package.namePlaceholder')}
-                  required
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">
+                    {t('package.name')} {t('common.required')}
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder={t('package.namePlaceholder')}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="minRentalDays">
+                    {t('package.minRentalDays')} {t('common.required')}
+                  </Label>
+                  <Input
+                    id="minRentalDays"
+                    name="minRentalDays"
+                    type="number"
+                    min="1"
+                    value={formData.minRentalDays}
+                    onChange={handleInputChange}
+                    placeholder={t('package.minRentalDaysPlaceholder')}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -315,51 +333,6 @@ export default function EditPackagePage() {
                   onChange={handleInputChange}
                   placeholder={t('package.descriptionPlaceholder')}
                   rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Pricing & Requirements */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('package.pricingRequirements')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="priceModifier">
-                  {t('package.priceModifierLabel')} {t('common.required')}
-                </Label>
-                <Input
-                  id="priceModifier"
-                  name="priceModifier"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="2"
-                  value={formData.priceModifier}
-                  onChange={handleInputChange}
-                  placeholder={t('package.discountRatePlaceholder')}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t('package.priceModifierHelper')}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="minRentalDays">
-                  {t('package.minRentalDays')} {t('common.required')}
-                </Label>
-                <Input
-                  id="minRentalDays"
-                  name="minRentalDays"
-                  type="number"
-                  min="1"
-                  value={formData.minRentalDays}
-                  onChange={handleInputChange}
-                  placeholder={t('package.minRentalDaysPlaceholder')}
-                  required
                 />
               </div>
             </CardContent>
