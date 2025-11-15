@@ -1,5 +1,6 @@
 'use client';
 
+import { OfferingMultiPricingPanel, type OfferingPricingFormData } from '@/components/offering/offering-multi-pricing-panel';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
+import { createOfferingPrice } from '@/lib/api/offering-price-api';
 import { preventEnterSubmission } from '@/lib/form-utils';
 import type { Offering, OfferingType } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,6 +34,7 @@ export default function NewOfferingPage() {
     isMandatory: false,
     description: '',
   });
+  const [pricingsData, setPricingsData] = useState<OfferingPricingFormData[]>([]);
 
   const offeringTypeOptions = useMemo(
     () => [
@@ -50,6 +53,45 @@ export default function NewOfferingPage() {
       return hateoasClient.create<Offering>('offerings', data);
     },
     onSuccess: async (offering: Offering) => {
+      // Create offering prices if user provided any via the multi-pricing panel
+      const validPricings = pricingsData.filter((p) => p.baseRate > 0 && p.validFrom && p.validTo);
+
+      if (validPricings.length > 0) {
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const pricing of validPricings) {
+          try {
+            const payload = {
+              baseRate: Number(pricing.baseRate),
+              rateType: pricing.rateType,
+              priority: pricing.priority,
+              active: pricing.active,
+              isDefault: Boolean(pricing.isDefault),
+              minimumQuantity: pricing.minimumQuantity,
+              maximumQuantity: pricing.maximumQuantity,
+              validFrom: pricing.validFrom || undefined,
+              validTo: pricing.validTo || undefined,
+              description: pricing.description || undefined,
+            } as any;
+
+            await createOfferingPrice(Number(offering.id), payload);
+            successCount++;
+          } catch (err) {
+            console.error('Failed to create offering price:', err);
+            failCount++;
+          }
+        }
+
+        toast({
+          title: t('common.success'),
+          description:
+            successCount > 0
+              ? t('pricing.multiPricing.createMultipleSuccess').replace('{count}', successCount.toString())
+              : t('pricing.multiPricing.createMultiplePartialSuccess'),
+        });
+      }
+
       toast({
         title: t('common.success'),
         description: t('toast.createSuccess'),
@@ -227,8 +269,11 @@ export default function NewOfferingPage() {
             </Card>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-4">
+          {/* Multi-pricing (add multiple offering pricing rules like vehicle flow) */}
+          <div className="space-y-6">
+            <OfferingMultiPricingPanel onDataChange={setPricingsData} entityInfo={{ type: 'Offering', id: 'New', name: formData.name || 'New Offering' }} />
+          </div>            {/* Actions */}
+            <div className="flex justify-end gap-4">
             <Link href="/offerings">
               <Button variant="outline" type="button">
                 {t('common.cancel')}

@@ -5,15 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { hateoasClient } from '@/lib/api/hateoas-client';
 import { useCollection } from '@/lib/api/hooks';
 import { parseHalResource } from '@/lib/utils';
 import type { Offering } from '@/types';
-import { Download, Plus, Search } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Download, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 export default function OfferingsPage() {
   const { t, formatCurrency } = useLocale();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
@@ -26,6 +30,34 @@ export default function OfferingsPage() {
 
   const offerings = data ? parseHalResource<Offering>(data, 'offerings') : [];
   const totalPages = data?.page?.totalPages || 0;
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (offeringId: number | string) => {
+      return hateoasClient.delete('offerings', offeringId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      toast({
+        title: t('common.success'),
+        description: 'Offering deleted successfully',
+      });
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('common.error'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleDelete = (offeringId: number | string, offeringName: string) => {
+    if (confirm(`Are you sure you want to delete "${offeringName}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(offeringId);
+    }
+  };
 
   const typeIcons = useMemo(
     () => ({
@@ -208,6 +240,15 @@ export default function OfferingsPage() {
                                   {t('common.edit')}
                                 </Button>
                               </Link>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => handleDelete(offeringId!, offering.name || 'Unnamed Offering')}
+                                disabled={deleteMutation.isPending}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </td>
                         </tr>

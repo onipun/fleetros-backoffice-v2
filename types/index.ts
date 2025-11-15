@@ -365,6 +365,31 @@ export interface BookingHistoryResponse {
   priceDifference?: number;
 }
 
+export enum OfferingRateType {
+  DAILY = 'DAILY',
+  HOURLY = 'HOURLY',
+  FIXED = 'FIXED',
+  PER_RENTAL = 'PER_RENTAL',
+}
+
+export interface OfferingPrice {
+  id?: number;
+  offering?: string; // URI reference to offering
+  baseRate: number;
+  rateType: OfferingRateType;
+  priority: number;
+  active: boolean;
+  isDefault: boolean;
+  minimumQuantity?: number;
+  maximumQuantity?: number;
+  validFrom?: string; // ISO 8601 format
+  validTo?: string; // ISO 8601 format
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  _links?: Links;
+}
+
 export interface Offering {
   id?: number;
   name: string;
@@ -374,6 +399,7 @@ export interface Offering {
   maxQuantityPerBooking: number;
   isMandatory: boolean;
   description?: string;
+  offeringPrices?: OfferingPrice[];
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;
