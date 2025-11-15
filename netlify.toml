@@ -1,11 +1,9 @@
 # Netlify configuration for Next.js 15 SSR with standalone output
 [build]
   command = "npm run build"
-  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--legacy-peer-deps"
 
 # Next.js standalone output configuration
 [[plugins]]
