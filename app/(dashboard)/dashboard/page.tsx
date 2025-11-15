@@ -81,51 +81,6 @@ export default function DashboardPage() {
       )}
 
       <EventCalendar />
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              View recent bookings and transactions in the Bookings section
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <button 
-              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
-              onClick={() => window.location.href = '/vehicles'}
-            >
-              Add New Vehicle
-            </button>
-            <button 
-              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
-              onClick={() => window.location.href = '/bookings'}
-            >
-              Create Booking
-            </button>
-            <button 
-              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
-              onClick={() => window.location.href = '/discounts'}
-            >
-              Manage Discounts
-            </button>
-            <button 
-              className="w-full text-left px-4 py-2 rounded-md hover:bg-accent transition-colors text-sm font-medium"
-              onClick={() => window.location.href = '/packages'}
-            >
-              View Packages
-            </button>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
