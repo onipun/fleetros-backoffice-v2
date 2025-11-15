@@ -4,7 +4,6 @@ import { DashboardStatistics } from '@/components/dashboard/dashboard-statistics
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { RevenueReport } from '@/components/dashboard/revenue-report';
 import { MerchantSetupWidget } from '@/components/merchant/merchant-setup-widget';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getMerchantStatus } from '@/lib/api/stripe-onboarding';
 import { useEffect, useState } from 'react';
 
