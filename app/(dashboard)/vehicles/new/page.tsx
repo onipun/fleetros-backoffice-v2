@@ -62,6 +62,8 @@ export default function NewVehiclePage() {
     year: new Date().getFullYear(),
     fuelType: 'Gasoline',
     transmissionType: 'Automatic',
+    carType: '',
+    seaterCount: 0,
     bufferMinutes: 30,
     minRentalHours: 24,
     maxRentalDays: 30,
@@ -492,6 +494,50 @@ export default function NewVehiclePage() {
                       <option value="Hybrid">Hybrid</option>
                       <option value="Plug-in Hybrid">Plug-in Hybrid</option>
                     </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="carType">{t('vehicle.carTypeLabel')} *</Label>
+                    <select
+                      id="carType"
+                      name="carType"
+                      value={formData.carType || ''}
+                      onChange={handleChange}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      required
+                    >
+                      <option value="">{t('vehicle.selectCarTypeRequired')}</option>
+                      <option value="SEDAN">{t('vehicle.carType.sedan')}</option>
+                      <option value="SUV">{t('vehicle.carType.suv')}</option>
+                      <option value="HATCHBACK">{t('vehicle.carType.hatchback')}</option>
+                      <option value="COUPE">{t('vehicle.carType.coupe')}</option>
+                      <option value="CONVERTIBLE">{t('vehicle.carType.convertible')}</option>
+                      <option value="WAGON">{t('vehicle.carType.wagon')}</option>
+                      <option value="VAN">{t('vehicle.carType.van')}</option>
+                      <option value="PICKUP">{t('vehicle.carType.pickup')}</option>
+                      <option value="LUXURY">{t('vehicle.carType.luxury')}</option>
+                      <option value="SPORTS">{t('vehicle.carType.sports')}</option>
+                      <option value="ELECTRIC">{t('vehicle.carType.electric')}</option>
+                      <option value="HYBRID">{t('vehicle.carType.hybrid')}</option>
+                      <option value="MOTORCYCLE">{t('vehicle.carType.motorcycle')}</option>
+                      <option value="OTHER">{t('vehicle.carType.other')}</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="seaterCount">{t('vehicle.seaterCount')} *</Label>
+                    <Input
+                      id="seaterCount"
+                      name="seaterCount"
+                      type="number"
+                      value={formData.seaterCount || ''}
+                      onChange={handleChange}
+                      placeholder="e.g., 5"
+                      min="1"
+                      max="20"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">{t('vehicle.seaterCountHint')}</p>
                   </div>
 
                   <div className="space-y-2">

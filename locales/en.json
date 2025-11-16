@@ -233,6 +233,11 @@
       "advanced": "Search by name...",
       "advancedMake": "e.g., Honda, Tesla"
     },
+    "carTypeLabel": "Vehicle Category",
+    "selectCarType": "Select category (optional)",
+    "selectCarTypeRequired": "Select vehicle category",
+    "seaterCount": "Number of Seats",
+    "seaterCountHint": "Number of passenger seats (e.g., 2, 4, 5, 7, 8)",
     "carType": {
       "sedan": "Sedan",
       "suv": "SUV",

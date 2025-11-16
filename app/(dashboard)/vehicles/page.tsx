@@ -125,6 +125,18 @@ export default function VehiclesPage() {
                         <p className="font-medium truncate">{vehicle.licensePlate || t('common.notAvailable')}</p>
                       </div>
                       <div>
+                        <span className="text-muted-foreground text-xs">{t('vehicle.carTypeLabel')}:</span>
+                        <p className="font-medium truncate">
+                          {vehicle.carType ? t(`vehicle.carType.${vehicle.carType.toLowerCase()}`) : t('common.notAvailable')}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">{t('vehicle.seaterCount')}:</span>
+                        <p className="font-medium truncate">
+                          {vehicle.seaterCount != null ? `${vehicle.seaterCount} ${vehicle.seaterCount === 1 ? 'seat' : 'seats'}` : t('common.notAvailable')}
+                        </p>
+                      </div>
+                      <div>
                         <span className="text-muted-foreground text-xs">{t('vehicle.fuelType')}:</span>
                         <p className="font-medium truncate">{vehicle.fuelType || t('common.notAvailable')}</p>
                       </div>

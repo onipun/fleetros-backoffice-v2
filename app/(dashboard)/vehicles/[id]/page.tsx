@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -576,6 +576,18 @@ export default function VehicleDetailPage() {
                 <div>
                   <span className="text-sm text-muted-foreground">{t('vehicle.year')}</span>
                   <p className="font-medium">{vehicle.year || t('common.notAvailable')}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.carTypeLabel')}</span>
+                  <p className="font-medium">
+                    {vehicle.carType ? t(`vehicle.carType.${vehicle.carType.toLowerCase()}`) : t('common.notAvailable')}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">{t('vehicle.seaterCount')}</span>
+                  <p className="font-medium">
+                    {vehicle.seaterCount != null ? `${vehicle.seaterCount} ${vehicle.seaterCount === 1 ? 'seat' : 'seats'}` : t('common.notAvailable')}
+                  </p>
                 </div>
                 <div>
                   <span className="text-sm text-muted-foreground">{t('vehicle.fuelType')}</span>
