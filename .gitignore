@@ -18,3 +18,5 @@ test-results
 *.md
 /md
 /docs
+playwright-test/test-results
+playwright-test/reports

@@ -1,0 +1,1646 @@
+{
+  "testSuite": "Vehicle CRUD Operations",
+  "version": "1.0.0",
+  "description": "Comprehensive test scenarios for vehicle CRUD operations including image management",
+  "baseUrl": "http://localhost:3000",
+  "apiBaseUrl": "http://localhost:8082",
+  "testCategories": [
+    {
+      "category": "Authentication & Setup",
+      "scenarios": [
+        {
+          "id": "AUTH-001",
+          "title": "Login with valid credentials",
+          "priority": "Critical",
+          "preconditions": [
+            "User account exists with MERCHANT_ADMIN role",
+            "Keycloak server is running",
+            "Backend API is accessible"
+          ],
+          "steps": [
+            "Navigate to login page",
+            "Enter valid username",
+            "Enter valid password",
+            "Click login button",
+            "Wait for Keycloak authentication",
+            "Verify redirect to dashboard"
+          ],
+          "expectedResults": [
+            "User is authenticated successfully",
+            "JWT token is stored in session",
+            "User is redirected to /vehicles or dashboard",
+            "User info is displayed in header"
+          ],
+          "testData": {
+            "username": "john.admin",
+            "password": "SecurePassword123!"
+          }
+        },
+        {
+          "id": "AUTH-002",
+          "title": "Verify user has vehicle permissions",
+          "priority": "Critical",
+          "preconditions": [
+            "User is logged in",
+            "User has MERCHANT_ADMIN or MERCHANT_MANAGER role"
+          ],
+          "steps": [
+            "Fetch current user info from /api/auth/me",
+            "Verify user role includes vehicle permissions",
+            "Check for CAR_READ and CAR_WRITE permissions"
+          ],
+          "expectedResults": [
+            "User has CAR_READ permission",
+            "User has CAR_WRITE permission",
+            "User can access /vehicles page"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Vehicle Create (C)",
+      "scenarios": [
+        {
+          "id": "VEH-CREATE-001",
+          "title": "Create vehicle with all required fields",
+          "priority": "Critical",
+          "preconditions": [
+            "User is authenticated with CAR_WRITE permission",
+            "Navigate to /vehicles/new page"
+          ],
+          "steps": [
+            "Fill in vehicle name",
+            "Fill in license plate (unique)",
+            "Select vehicle status (AVAILABLE)",
+            "Click Next to Step 2",
+            "Fill in make (e.g., Toyota)",
+            "Fill in model (e.g., Camry)",
+            "Fill in year (e.g., 2024)",
+            "Fill in VIN (unique)",
+            "Fill in odometer (e.g., 5000)",
+            "Select fuel type (e.g., Gasoline)",
+            "Select transmission type (e.g., Automatic)",
+            "Click Next to Step 3",
+            "Set buffer minutes (e.g., 30)",
+            "Set min rental hours (e.g., 24)",
+            "Set max rental days (e.g., 30)",
+            "Set max future booking days (e.g., 90)",
+            "Click Next to Step 4",
+            "Add optional details/description",
+            "Click Next to Step 5 (pricing - optional)",
+            "Click Create Vehicle button"
+          ],
+          "expectedResults": [
+            "Vehicle is created successfully",
+            "Success toast notification appears",
+            "User is redirected to /vehicles page",
+            "New vehicle appears in vehicle list",
+            "Vehicle has AVAILABLE status"
+          ],
+          "testData": {
+            "name": "Test Vehicle 001",
+            "licensePlate": "ABC-1234",
+            "status": "AVAILABLE",
+            "make": "Toyota",
+            "model": "Camry",
+            "year": 2024,
+            "vin": "1HGBH41JXMN109186",
+            "odometer": 5000,
+            "fuelType": "Gasoline",
+            "transmissionType": "Automatic",
+            "bufferMinutes": 30,
+            "minRentalHours": 24,
+            "maxRentalDays": 30,
+            "maxFutureBookingDays": 90,
+            "details": "Test vehicle for automation"
+          },
+          "apiEndpoint": "POST /api/vehicles",
+          "validation": {
+            "name": "string, min length 1",
+            "make": "string, min length 1",
+            "model": "string, min length 1",
+            "year": "number, 1900 to current year + 1",
+            "licensePlate": "string, min length 1, unique",
+            "vin": "string, min length 1, unique",
+            "odometer": "number, min 0",
+            "fuelType": "string, min length 1",
+            "transmissionType": "string, min length 1",
+            "status": "enum: AVAILABLE, RENTED, MAINTENANCE, RETIRED",
+            "bufferMinutes": "number, min 0",
+            "minRentalHours": "number, min 1",
+            "maxRentalDays": "number, min 1",
+            "maxFutureBookingDays": "number, min 1"
+          }
+        },
+        {
+          "id": "VEH-CREATE-002",
+          "title": "Create vehicle with pricing configuration",
+          "priority": "High",
+          "preconditions": [
+            "User is at vehicle creation Step 5 (Pricing)",
+            "All required vehicle fields are filled"
+          ],
+          "steps": [
+            "Navigate through Steps 1-4 with valid data",
+            "On Step 5, click 'Add Pricing' button",
+            "Set base rate (e.g., 50.00)",
+            "Select rate type (e.g., daily)",
+            "Set deposit amount (e.g., 100.00)",
+            "Set minimum rental days (e.g., 1)",
+            "Select valid from date",
+            "Select valid to date",
+            "Add optional pricing tags",
+            "Set isDefault checkbox if needed",
+            "Click Create Vehicle"
+          ],
+          "expectedResults": [
+            "Vehicle is created successfully",
+            "Pricing configuration is saved",
+            "Success message for vehicle creation",
+            "Success message for pricing creation",
+            "Pricing appears in vehicle detail page"
+          ],
+          "testData": {
+            "baseRate": 50.00,
+            "rateType": "daily",
+            "depositAmount": 100.00,
+            "minimumRentalDays": 1,
+            "validFrom": "2024-01-01",
+            "validTo": "2024-12-31",
+            "tags": ["standard", "weekday"],
+            "isDefault": true
+          }
+        },
+        {
+          "id": "VEH-CREATE-003",
+          "title": "Create vehicle with draft save",
+          "priority": "Medium",
+          "preconditions": [
+            "User is at /vehicles/new",
+            "LocalStorage is enabled"
+          ],
+          "steps": [
+            "Fill in partial vehicle data (Step 1)",
+            "Click 'Save Draft' button",
+            "Navigate away from page",
+            "Return to /vehicles/new",
+            "Verify draft dialog appears",
+            "Click 'Load Draft' button"
+          ],
+          "expectedResults": [
+            "Draft is saved to localStorage",
+            "Success toast appears on save",
+            "Draft dialog appears on return",
+            "Previously filled data is restored",
+            "User can continue from where they left off"
+          ],
+          "localStorage": {
+            "key": "vehicle-form-draft",
+            "timestampKey": "vehicle-form-draft-timestamp"
+          }
+        },
+        {
+          "id": "VEH-CREATE-004",
+          "title": "Validation - Create vehicle with missing required fields",
+          "priority": "High",
+          "preconditions": [
+            "User is at /vehicles/new"
+          ],
+          "steps": [
+            "Leave name field empty",
+            "Try to proceed to next step",
+            "Fill name, leave licensePlate empty",
+            "Try to proceed to next step",
+            "Fill all Step 1 fields, proceed",
+            "On Step 2, leave make empty",
+            "Try to proceed to next step"
+          ],
+          "expectedResults": [
+            "Validation error for empty name",
+            "User cannot proceed to next step",
+            "Error message displayed",
+            "Form highlights invalid fields",
+            "Submit button remains disabled"
+          ],
+          "validationErrors": {
+            "name": "Name is required",
+            "licensePlate": "License plate is required",
+            "make": "Make is required",
+            "model": "Model is required",
+            "vin": "VIN is required",
+            "fuelType": "Fuel type is required",
+            "transmissionType": "Transmission type is required"
+          }
+        },
+        {
+          "id": "VEH-CREATE-005",
+          "title": "Validation - Create vehicle with duplicate license plate",
+          "priority": "High",
+          "preconditions": [
+            "At least one vehicle exists with license plate 'XYZ-9999'"
+          ],
+          "steps": [
+            "Fill all required fields",
+            "Enter existing license plate 'XYZ-9999'",
+            "Complete all steps",
+            "Click Create Vehicle"
+          ],
+          "expectedResults": [
+            "API returns 400 or 409 error",
+            "Error message displayed",
+            "Error mentions duplicate license plate",
+            "Vehicle is not created",
+            "User remains on form"
+          ],
+          "testData": {
+            "licensePlate": "XYZ-9999"
+          }
+        },
+        {
+          "id": "VEH-CREATE-006",
+          "title": "Validation - Invalid year range",
+          "priority": "Medium",
+          "preconditions": [
+            "User is at vehicle creation Step 2"
+          ],
+          "steps": [
+            "Enter year 1899",
+            "Verify validation error",
+            "Enter year (current year + 2)",
+            "Verify validation error"
+          ],
+          "expectedResults": [
+            "Year 1899 shows error: minimum is 1900",
+            "Future year beyond +1 shows error",
+            "Validation prevents form submission",
+            "User sees clear error message"
+          ],
+          "validation": {
+            "minYear": 1900,
+            "maxYear": "currentYear + 1"
+          }
+        },
+        {
+          "id": "VEH-CREATE-007",
+          "title": "Create multiple vehicles in sequence",
+          "priority": "Medium",
+          "preconditions": [
+            "User has CAR_WRITE permission"
+          ],
+          "steps": [
+            "Create first vehicle with unique data",
+            "Verify creation success",
+            "Navigate to /vehicles/new again",
+            "Create second vehicle with different unique data",
+            "Verify creation success",
+            "Create third vehicle",
+            "Verify all three appear in vehicle list"
+          ],
+          "expectedResults": [
+            "All three vehicles created successfully",
+            "Each has unique ID",
+            "Each has unique license plate and VIN",
+            "All appear in /vehicles list",
+            "No data overlap between vehicles"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Vehicle Read (R)",
+      "scenarios": [
+        {
+          "id": "VEH-READ-001",
+          "title": "View all vehicles list",
+          "priority": "Critical",
+          "preconditions": [
+            "User is authenticated",
+            "At least 3 vehicles exist in database"
+          ],
+          "steps": [
+            "Navigate to /vehicles page",
+            "Wait for vehicles to load",
+            "Verify vehicle cards are displayed",
+            "Check pagination if more than page size"
+          ],
+          "expectedResults": [
+            "Vehicle list page loads successfully",
+            "All vehicles are displayed in grid",
+            "Each vehicle card shows: name, make, model, year, status",
+            "Primary image is displayed if available",
+            "Loading skeleton appears during fetch",
+            "Error display shown if fetch fails"
+          ],
+          "apiEndpoint": "GET /api/vehicles"
+        },
+        {
+          "id": "VEH-READ-002",
+          "title": "View single vehicle details",
+          "priority": "Critical",
+          "preconditions": [
+            "At least one vehicle exists with ID = 1"
+          ],
+          "steps": [
+            "Navigate to /vehicles/1",
+            "Wait for vehicle details to load",
+            "Verify all vehicle information is displayed",
+            "Check images section",
+            "Check pricing list section",
+            "Verify HATEOAS links are present"
+          ],
+          "expectedResults": [
+            "Vehicle details page loads successfully",
+            "All vehicle fields are displayed correctly",
+            "Vehicle status badge is shown",
+            "Images section shows all vehicle images",
+            "Pricing list shows associated pricings",
+            "Edit and Delete buttons are visible",
+            "Back button navigates to /vehicles"
+          ],
+          "apiEndpoint": "GET /api/vehicles/{id}",
+          "displayedFields": [
+            "name",
+            "make",
+            "model",
+            "year",
+            "licensePlate",
+            "vin",
+            "odometer",
+            "fuelType",
+            "transmissionType",
+            "status",
+            "bufferMinutes",
+            "minRentalHours",
+            "maxRentalDays",
+            "maxFutureBookingDays",
+            "details",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        {
+          "id": "VEH-READ-003",
+          "title": "Search vehicles by name",
+          "priority": "High",
+          "preconditions": [
+            "Multiple vehicles exist with different names"
+          ],
+          "steps": [
+            "Navigate to /vehicles",
+            "Enter search term in search input (e.g., 'Toyota')",
+            "Wait for filtered results",
+            "Verify only matching vehicles are shown"
+          ],
+          "expectedResults": [
+            "Search input is functional",
+            "Results are filtered in real-time",
+            "Only vehicles matching search term are displayed",
+            "Search is case-insensitive",
+            "Empty state shown if no matches"
+          ]
+        },
+        {
+          "id": "VEH-READ-004",
+          "title": "View vehicle with no images",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle exists with no uploaded images"
+          ],
+          "steps": [
+            "Navigate to vehicle detail page",
+            "Check images section"
+          ],
+          "expectedResults": [
+            "Images section shows empty state",
+            "Message indicates no images available",
+            "Upload button is still visible and functional",
+            "Page does not crash or show errors"
+          ]
+        },
+        {
+          "id": "VEH-READ-005",
+          "title": "View vehicle not found",
+          "priority": "Medium",
+          "preconditions": [
+            "User navigates to non-existent vehicle ID"
+          ],
+          "steps": [
+            "Navigate to /vehicles/99999",
+            "Wait for API response"
+          ],
+          "expectedResults": [
+            "404 error is handled gracefully",
+            "Error message: 'Vehicle not found'",
+            "Back to vehicles button is displayed",
+            "No application crash"
+          ],
+          "apiEndpoint": "GET /api/vehicles/99999",
+          "expectedStatus": 404
+        },
+        {
+          "id": "VEH-READ-006",
+          "title": "View vehicle pricing list",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle has at least 2 pricing configurations"
+          ],
+          "steps": [
+            "Navigate to vehicle detail page",
+            "Scroll to pricing list section",
+            "Verify all pricings are displayed"
+          ],
+          "expectedResults": [
+            "Pricing list component loads",
+            "All pricing entries are displayed",
+            "Each pricing shows: base rate, rate type, valid dates, tags",
+            "Default pricing is highlighted",
+            "Edit/delete buttons available per pricing"
+          ],
+          "relatedComponent": "VehiclePricingList"
+        }
+      ]
+    },
+    {
+      "category": "Vehicle Update (U)",
+      "scenarios": [
+        {
+          "id": "VEH-UPDATE-001",
+          "title": "Update vehicle basic information",
+          "priority": "Critical",
+          "preconditions": [
+            "Vehicle with ID = 1 exists",
+            "User has CAR_WRITE permission"
+          ],
+          "steps": [
+            "Navigate to /vehicles/1",
+            "Click Edit button",
+            "Navigate to /vehicles/1/edit",
+            "Update vehicle name",
+            "Update odometer reading",
+            "Update status to MAINTENANCE",
+            "Click Update Vehicle button"
+          ],
+          "expectedResults": [
+            "Edit form loads with current data",
+            "All fields are pre-populated",
+            "Changes are saved successfully",
+            "Success toast notification",
+            "Redirected to vehicle detail page",
+            "Updated information is displayed",
+            "Database is updated"
+          ],
+          "testData": {
+            "name": "Updated Vehicle Name",
+            "odometer": 15000,
+            "status": "MAINTENANCE"
+          },
+          "apiEndpoint": "PUT /api/vehicles/{id} or PATCH /api/vehicles/{id}"
+        },
+        {
+          "id": "VEH-UPDATE-002",
+          "title": "Update vehicle specifications",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle exists and is in edit mode"
+          ],
+          "steps": [
+            "Navigate to edit page",
+            "Change make to 'Honda'",
+            "Change model to 'Accord'",
+            "Change year to 2023",
+            "Change fuel type to 'Hybrid'",
+            "Change transmission to 'CVT'",
+            "Click Update"
+          ],
+          "expectedResults": [
+            "All specification updates are saved",
+            "No validation errors",
+            "Success notification appears",
+            "Vehicle detail page shows updated specs"
+          ],
+          "testData": {
+            "make": "Honda",
+            "model": "Accord",
+            "year": 2023,
+            "fuelType": "Hybrid",
+            "transmissionType": "CVT"
+          }
+        },
+        {
+          "id": "VEH-UPDATE-003",
+          "title": "Update rental settings",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle exists and user is on edit page"
+          ],
+          "steps": [
+            "Update buffer minutes to 60",
+            "Update min rental hours to 48",
+            "Update max rental days to 60",
+            "Update max future booking days to 180",
+            "Click Update"
+          ],
+          "expectedResults": [
+            "Rental settings are updated successfully",
+            "New settings are applied to future bookings",
+            "Validation passes for all fields"
+          ],
+          "testData": {
+            "bufferMinutes": 60,
+            "minRentalHours": 48,
+            "maxRentalDays": 60,
+            "maxFutureBookingDays": 180
+          }
+        },
+        {
+          "id": "VEH-UPDATE-004",
+          "title": "Update vehicle details/description",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle exists"
+          ],
+          "steps": [
+            "Navigate to edit page",
+            "Update details field with new description",
+            "Click Update"
+          ],
+          "expectedResults": [
+            "Details are updated",
+            "Long text is handled correctly",
+            "Details appear on vehicle page"
+          ],
+          "testData": {
+            "details": "This is an updated description with special characters: @#$%, numbers 12345, and multiple lines.\nLine 2 of description.\nLine 3 with more details."
+          }
+        },
+        {
+          "id": "VEH-UPDATE-005",
+          "title": "Update with pricing changes",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle exists with existing pricing"
+          ],
+          "steps": [
+            "Navigate to edit page",
+            "Scroll to pricing section",
+            "Add new pricing configuration",
+            "Set base rate to 75.00",
+            "Set valid date range",
+            "Add tags",
+            "Click Update"
+          ],
+          "expectedResults": [
+            "Vehicle is updated",
+            "New pricing is created and associated",
+            "Success messages for both operations",
+            "Pricing appears in vehicle pricing list"
+          ],
+          "testData": {
+            "baseRate": 75.00,
+            "rateType": "daily",
+            "validFrom": "2024-06-01",
+            "validTo": "2024-08-31",
+            "tags": ["summer", "peak-season"]
+          }
+        },
+        {
+          "id": "VEH-UPDATE-006",
+          "title": "Validation - Update with invalid data",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle is in edit mode"
+          ],
+          "steps": [
+            "Clear required field (name)",
+            "Try to submit",
+            "Enter negative odometer value",
+            "Try to submit",
+            "Enter invalid year (1800)",
+            "Try to submit"
+          ],
+          "expectedResults": [
+            "Validation errors displayed",
+            "Form submission prevented",
+            "User stays on edit page",
+            "Error messages are clear",
+            "No partial updates to database"
+          ]
+        },
+        {
+          "id": "VEH-UPDATE-007",
+          "title": "Update vehicle status flow",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle exists with AVAILABLE status"
+          ],
+          "steps": [
+            "Update status to RENTED",
+            "Verify update successful",
+            "Update status to COMPLETED (via booking)",
+            "Update status to MAINTENANCE",
+            "Verify each transition"
+          ],
+          "expectedResults": [
+            "Each status transition is saved",
+            "Status badge updates on detail page",
+            "Status changes are logged",
+            "Business rules for status changes are enforced"
+          ],
+          "statusTransitions": [
+            "AVAILABLE -> RENTED",
+            "RENTED -> AVAILABLE",
+            "AVAILABLE -> MAINTENANCE",
+            "MAINTENANCE -> AVAILABLE",
+            "ANY -> RETIRED"
+          ]
+        },
+        {
+          "id": "VEH-UPDATE-008",
+          "title": "Concurrent update handling",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle exists",
+            "Two users open same vehicle edit page"
+          ],
+          "steps": [
+            "User A updates name and saves",
+            "User B updates odometer and saves (without refreshing)",
+            "Check which update persists"
+          ],
+          "expectedResults": [
+            "Last write wins or optimistic locking error",
+            "No data corruption",
+            "Clear error message if conflict detected",
+            "User prompted to refresh and retry"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Vehicle Delete (D)",
+      "scenarios": [
+        {
+          "id": "VEH-DELETE-001",
+          "title": "Delete vehicle successfully",
+          "priority": "Critical",
+          "preconditions": [
+            "Vehicle exists with no active bookings",
+            "User has CAR_WRITE permission"
+          ],
+          "steps": [
+            "Navigate to vehicle detail page",
+            "Click Delete button",
+            "Confirm deletion in dialog",
+            "Wait for deletion to complete"
+          ],
+          "expectedResults": [
+            "Confirmation dialog appears",
+            "Vehicle is deleted from database",
+            "Success toast notification",
+            "User redirected to /vehicles page",
+            "Deleted vehicle no longer appears in list",
+            "Associated images are cleaned up"
+          ],
+          "apiEndpoint": "DELETE /api/vehicles/{id}",
+          "confirmationMessage": "Are you sure you want to delete this vehicle?"
+        },
+        {
+          "id": "VEH-DELETE-002",
+          "title": "Cancel vehicle deletion",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle exists",
+            "User is on vehicle detail page"
+          ],
+          "steps": [
+            "Click Delete button",
+            "Click Cancel in confirmation dialog"
+          ],
+          "expectedResults": [
+            "Deletion is cancelled",
+            "Vehicle is NOT deleted",
+            "User remains on vehicle detail page",
+            "No changes to database"
+          ]
+        },
+        {
+          "id": "VEH-DELETE-003",
+          "title": "Delete vehicle with active bookings",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle has active or confirmed bookings"
+          ],
+          "steps": [
+            "Attempt to delete vehicle",
+            "Confirm deletion"
+          ],
+          "expectedResults": [
+            "Deletion is prevented",
+            "Error message explains vehicle has active bookings",
+            "Vehicle remains in database",
+            "User informed to complete/cancel bookings first"
+          ],
+          "expectedError": "Cannot delete vehicle with active bookings"
+        },
+        {
+          "id": "VEH-DELETE-004",
+          "title": "Delete vehicle with images",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle has multiple uploaded images",
+            "No active bookings"
+          ],
+          "steps": [
+            "Delete vehicle",
+            "Confirm deletion",
+            "Verify image cleanup"
+          ],
+          "expectedResults": [
+            "Vehicle is deleted",
+            "All associated images are removed from storage",
+            "Image records are removed from database",
+            "No orphaned image files"
+          ]
+        },
+        {
+          "id": "VEH-DELETE-005",
+          "title": "Delete vehicle with pricing",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle has associated pricing configurations"
+          ],
+          "steps": [
+            "Delete vehicle",
+            "Confirm deletion",
+            "Check pricing records"
+          ],
+          "expectedResults": [
+            "Vehicle is deleted",
+            "Associated pricings are handled (cascade delete or orphaned)",
+            "No database constraint violations",
+            "Pricing records cleaned up appropriately"
+          ]
+        },
+        {
+          "id": "VEH-DELETE-006",
+          "title": "Delete non-existent vehicle",
+          "priority": "Low",
+          "preconditions": [
+            "Vehicle ID 99999 does not exist"
+          ],
+          "steps": [
+            "Send DELETE request to /api/vehicles/99999"
+          ],
+          "expectedResults": [
+            "404 error response",
+            "Error message: Vehicle not found",
+            "No database changes",
+            "Graceful error handling"
+          ],
+          "apiEndpoint": "DELETE /api/vehicles/99999",
+          "expectedStatus": 404
+        },
+        {
+          "id": "VEH-DELETE-007",
+          "title": "Unauthorized vehicle deletion",
+          "priority": "High",
+          "preconditions": [
+            "User has CAR_READ but NOT CAR_WRITE permission"
+          ],
+          "steps": [
+            "Attempt to delete vehicle"
+          ],
+          "expectedResults": [
+            "403 Forbidden error",
+            "Error message about insufficient permissions",
+            "Vehicle is NOT deleted",
+            "Delete button may be hidden in UI"
+          ],
+          "expectedStatus": 403
+        }
+      ]
+    },
+    {
+      "category": "Vehicle Image Upload",
+      "scenarios": [
+        {
+          "id": "IMG-UPLOAD-001",
+          "title": "Upload single image with metadata",
+          "priority": "Critical",
+          "preconditions": [
+            "Vehicle exists",
+            "User is on vehicle detail page",
+            "Valid image file is prepared"
+          ],
+          "steps": [
+            "Click Upload button",
+            "Select image file (JPEG, 2MB)",
+            "Upload dialog opens",
+            "Enter image description",
+            "Set as primary image checkbox",
+            "Click Upload in dialog",
+            "Wait for upload to complete"
+          ],
+          "expectedResults": [
+            "Image is uploaded successfully",
+            "Image appears in vehicle images section",
+            "Primary badge shown if set as primary",
+            "Description is saved",
+            "Thumbnail is generated",
+            "Success toast notification"
+          ],
+          "testData": {
+            "fileName": "vehicle-front.jpg",
+            "fileSize": "2MB",
+            "fileType": "image/jpeg",
+            "description": "Front view of the vehicle",
+            "isPrimary": true
+          },
+          "apiEndpoint": "POST /api/vehicles/{id}/images/single",
+          "validation": {
+            "maxFileSize": "10MB",
+            "allowedTypes": ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+          }
+        },
+        {
+          "id": "IMG-UPLOAD-002",
+          "title": "Upload multiple images sequentially",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle exists",
+            "Multiple image files available"
+          ],
+          "steps": [
+            "Upload first image with description 'Front view'",
+            "Wait for upload to complete",
+            "Upload second image with description 'Side view'",
+            "Wait for upload to complete",
+            "Upload third image with description 'Interior'",
+            "Verify all three appear in image gallery"
+          ],
+          "expectedResults": [
+            "All three images uploaded successfully",
+            "Each has unique description",
+            "Only first is marked as primary",
+            "Images appear in correct order",
+            "Each has thumbnail generated"
+          ]
+        },
+        {
+          "id": "IMG-UPLOAD-003",
+          "title": "Validation - Upload oversized image",
+          "priority": "High",
+          "preconditions": [
+            "Image file larger than 10MB is available"
+          ],
+          "steps": [
+            "Attempt to select 15MB image file",
+            "Check for validation error"
+          ],
+          "expectedResults": [
+            "File selection is rejected",
+            "Error toast notification",
+            "Error message: 'File too large. Maximum size is 10MB. Your file is 15MB.'",
+            "File input is cleared",
+            "No upload is attempted"
+          ],
+          "testData": {
+            "fileName": "large-image.jpg",
+            "fileSize": "15MB"
+          },
+          "maxFileSize": "10MB"
+        },
+        {
+          "id": "IMG-UPLOAD-004",
+          "title": "Validation - Upload invalid file type",
+          "priority": "High",
+          "preconditions": [
+            "Non-image file available (e.g., PDF, TXT)"
+          ],
+          "steps": [
+            "Attempt to select PDF file",
+            "Check for validation error"
+          ],
+          "expectedResults": [
+            "File is rejected",
+            "Error toast: 'Invalid file type'",
+            "Error message lists allowed types",
+            "File input is cleared",
+            "No upload attempted"
+          ],
+          "testData": {
+            "fileName": "document.pdf",
+            "fileType": "application/pdf"
+          },
+          "allowedTypes": ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+        },
+        {
+          "id": "IMG-UPLOAD-005",
+          "title": "Upload image without description",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle exists",
+            "Valid image file selected"
+          ],
+          "steps": [
+            "Select image file",
+            "Leave description field empty",
+            "Set isPrimary to false",
+            "Click Upload"
+          ],
+          "expectedResults": [
+            "Image uploads successfully",
+            "Description is null or empty string",
+            "Image is saved without description",
+            "No validation error for empty description"
+          ]
+        },
+        {
+          "id": "IMG-UPLOAD-006",
+          "title": "Set uploaded image as primary",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle has 3 existing images",
+            "None are marked as primary"
+          ],
+          "steps": [
+            "Upload new image",
+            "Check 'Set as primary' checkbox",
+            "Click Upload"
+          ],
+          "expectedResults": [
+            "Image uploads successfully",
+            "Image is marked as primary",
+            "Primary badge displayed on image",
+            "Vehicle.primaryImageUrl is updated",
+            "Previous primary (if any) is unmarked"
+          ],
+          "testData": {
+            "isPrimary": true
+          }
+        },
+        {
+          "id": "IMG-UPLOAD-007",
+          "title": "Upload first image defaults to primary",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle has no images"
+          ],
+          "steps": [
+            "Upload first image",
+            "Note that isPrimary checkbox is pre-checked"
+          ],
+          "expectedResults": [
+            "isPrimary checkbox is checked by default",
+            "First image becomes primary automatically",
+            "Primary badge is shown",
+            "Vehicle primaryImageUrl is set"
+          ]
+        },
+        {
+          "id": "IMG-UPLOAD-008",
+          "title": "Upload image types - JPEG",
+          "priority": "Medium",
+          "testData": {
+            "fileType": "image/jpeg",
+            "fileName": "test.jpg"
+          },
+          "expectedResults": ["Upload succeeds", "Image displays correctly"]
+        },
+        {
+          "id": "IMG-UPLOAD-009",
+          "title": "Upload image types - PNG",
+          "priority": "Medium",
+          "testData": {
+            "fileType": "image/png",
+            "fileName": "test.png"
+          },
+          "expectedResults": ["Upload succeeds", "Transparency preserved"]
+        },
+        {
+          "id": "IMG-UPLOAD-010",
+          "title": "Upload image types - GIF",
+          "priority": "Medium",
+          "testData": {
+            "fileType": "image/gif",
+            "fileName": "test.gif"
+          },
+          "expectedResults": ["Upload succeeds", "Animation preserved if animated"]
+        },
+        {
+          "id": "IMG-UPLOAD-011",
+          "title": "Upload image types - WebP",
+          "priority": "Medium",
+          "testData": {
+            "fileType": "image/webp",
+            "fileName": "test.webp"
+          },
+          "expectedResults": ["Upload succeeds", "Modern format handled correctly"]
+        },
+        {
+          "id": "IMG-UPLOAD-012",
+          "title": "Upload with authentication token",
+          "priority": "Critical",
+          "preconditions": [
+            "User is authenticated"
+          ],
+          "steps": [
+            "Get access token from session",
+            "Include Bearer token in upload request headers",
+            "Upload image"
+          ],
+          "expectedResults": [
+            "Token is retrieved from /api/auth/session",
+            "Authorization header includes Bearer token",
+            "Upload succeeds with valid authentication",
+            "401 error if token missing/invalid"
+          ],
+          "authentication": {
+            "method": "Bearer token",
+            "header": "Authorization: Bearer {token}",
+            "tokenSource": "/api/auth/session"
+          }
+        },
+        {
+          "id": "IMG-UPLOAD-013",
+          "title": "Upload progress indication",
+          "priority": "Low",
+          "preconditions": [
+            "Large image file (8MB) available"
+          ],
+          "steps": [
+            "Start uploading large image",
+            "Observe UI during upload"
+          ],
+          "expectedResults": [
+            "Upload button shows 'Uploading...' state",
+            "Upload button is disabled during upload",
+            "User cannot start another upload during active upload",
+            "Success/error state shown after completion"
+          ]
+        },
+        {
+          "id": "IMG-UPLOAD-014",
+          "title": "Cancel upload dialog",
+          "priority": "Low",
+          "preconditions": [
+            "Image file selected",
+            "Upload dialog is open"
+          ],
+          "steps": [
+            "Select image file",
+            "Upload dialog opens",
+            "Click Cancel or close dialog"
+          ],
+          "expectedResults": [
+            "Dialog closes",
+            "Upload is cancelled",
+            "No image is uploaded",
+            "File input is cleared"
+          ]
+        },
+        {
+          "id": "IMG-UPLOAD-015",
+          "title": "Upload with special characters in description",
+          "priority": "Low",
+          "testData": {
+            "description": "Test description with special chars: @#$%^&*(), quotes \"', and emojis 🚗🔧"
+          },
+          "expectedResults": [
+            "Upload succeeds",
+            "Description is saved correctly",
+            "Special characters are not corrupted",
+            "Description displays properly"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Vehicle Image Management",
+      "scenarios": [
+        {
+          "id": "IMG-READ-001",
+          "title": "View all vehicle images",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle has 5 images uploaded"
+          ],
+          "steps": [
+            "Navigate to vehicle detail page",
+            "View images section"
+          ],
+          "expectedResults": [
+            "All 5 images are displayed",
+            "Images are shown as thumbnails",
+            "Primary image has badge",
+            "Descriptions are visible",
+            "Images load without errors"
+          ],
+          "apiEndpoint": "GET /api/vehicles/{id}/images"
+        },
+        {
+          "id": "IMG-READ-002",
+          "title": "View image in fullscreen",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle has images"
+          ],
+          "steps": [
+            "Click on any image thumbnail",
+            "Image opens in fullscreen/modal"
+          ],
+          "expectedResults": [
+            "Image opens in larger view",
+            "Full resolution image loads",
+            "Navigation to other images available",
+            "Close button returns to detail page"
+          ]
+        },
+        {
+          "id": "IMG-READ-003",
+          "title": "View vehicle with no images",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle has zero images"
+          ],
+          "steps": [
+            "View vehicle detail page images section"
+          ],
+          "expectedResults": [
+            "Empty state message displayed",
+            "Upload button is visible",
+            "No broken image placeholders",
+            "Section renders correctly"
+          ]
+        },
+        {
+          "id": "IMG-DELETE-001",
+          "title": "Delete vehicle image",
+          "priority": "Critical",
+          "preconditions": [
+            "Vehicle has multiple images",
+            "User has CAR_WRITE permission"
+          ],
+          "steps": [
+            "Hover over image thumbnail",
+            "Delete button appears",
+            "Click delete button",
+            "Confirm deletion in prompt"
+          ],
+          "expectedResults": [
+            "Confirmation prompt appears",
+            "Image is deleted from storage",
+            "Image removed from gallery",
+            "Success toast notification",
+            "Remaining images still displayed"
+          ],
+          "apiEndpoint": "DELETE /api/vehicles/{vehicleId}/images/{imageId}",
+          "confirmationMessage": "Are you sure you want to delete this image?"
+        },
+        {
+          "id": "IMG-DELETE-002",
+          "title": "Delete primary image",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle has primary image and other images"
+          ],
+          "steps": [
+            "Delete the primary image",
+            "Confirm deletion"
+          ],
+          "expectedResults": [
+            "Primary image is deleted",
+            "Another image may become primary (or none)",
+            "Vehicle.primaryImageUrl is updated",
+            "No broken image references"
+          ]
+        },
+        {
+          "id": "IMG-DELETE-003",
+          "title": "Delete last remaining image",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle has only one image"
+          ],
+          "steps": [
+            "Delete the only image",
+            "Confirm deletion"
+          ],
+          "expectedResults": [
+            "Image is deleted",
+            "Empty state is shown",
+            "Vehicle.primaryImageUrl is null",
+            "Upload button still functional"
+          ]
+        },
+        {
+          "id": "IMG-DELETE-004",
+          "title": "Cancel image deletion",
+          "priority": "Low",
+          "preconditions": [
+            "Vehicle has images"
+          ],
+          "steps": [
+            "Click delete on an image",
+            "Click Cancel in confirmation"
+          ],
+          "expectedResults": [
+            "Deletion is cancelled",
+            "Image remains in gallery",
+            "No API call is made",
+            "No changes to database"
+          ]
+        },
+        {
+          "id": "IMG-DELETE-005",
+          "title": "Delete image - API error handling",
+          "priority": "Medium",
+          "preconditions": [
+            "Backend API returns error"
+          ],
+          "steps": [
+            "Trigger image deletion",
+            "API returns 404/500 error"
+          ],
+          "expectedResults": [
+            "Error is caught gracefully",
+            "Error toast notification shown",
+            "Image remains in gallery (if it still exists)",
+            "User informed of failure"
+          ],
+          "errorScenarios": [
+            "404 - Image not found",
+            "401 - Unauthorized",
+            "403 - Forbidden",
+            "500 - Internal server error",
+            "Network error - Failed to fetch"
+          ]
+        },
+        {
+          "id": "IMG-UPDATE-001",
+          "title": "Change primary image",
+          "priority": "High",
+          "preconditions": [
+            "Vehicle has multiple images",
+            "One is currently primary"
+          ],
+          "steps": [
+            "Upload new image and set as primary",
+            "Verify primary badge moves"
+          ],
+          "expectedResults": [
+            "New image becomes primary",
+            "Previous primary loses primary badge",
+            "Vehicle.primaryImageUrl updates",
+            "Change is persisted in database"
+          ]
+        },
+        {
+          "id": "IMG-UPDATE-002",
+          "title": "Update image description",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle has images with descriptions"
+          ],
+          "steps": [
+            "Edit image description (if edit feature exists)",
+            "Update and save"
+          ],
+          "expectedResults": [
+            "Description is updated",
+            "New description displayed",
+            "Change persisted to database"
+          ],
+          "note": "This test applies if image editing is implemented"
+        }
+      ]
+    },
+    {
+      "category": "Integration & Edge Cases",
+      "scenarios": [
+        {
+          "id": "INT-001",
+          "title": "Create vehicle and immediately upload images",
+          "priority": "High",
+          "preconditions": [
+            "User completes vehicle creation"
+          ],
+          "steps": [
+            "Create new vehicle",
+            "Immediately navigate to vehicle detail",
+            "Upload 3 images",
+            "Set first as primary"
+          ],
+          "expectedResults": [
+            "Vehicle created successfully",
+            "Images upload successfully",
+            "Primary image set correctly",
+            "Vehicle displays with all images"
+          ]
+        },
+        {
+          "id": "INT-002",
+          "title": "Update vehicle and manage images in same session",
+          "priority": "Medium",
+          "steps": [
+            "Update vehicle name",
+            "Upload new image",
+            "Delete old image",
+            "Update vehicle status"
+          ],
+          "expectedResults": [
+            "All operations succeed",
+            "Changes are persisted",
+            "No data inconsistencies",
+            "Cache is properly invalidated"
+          ]
+        },
+        {
+          "id": "INT-003",
+          "title": "Vehicle list shows correct image count",
+          "priority": "Medium",
+          "preconditions": [
+            "Multiple vehicles with varying image counts"
+          ],
+          "steps": [
+            "View /vehicles list",
+            "Check image indicators on cards"
+          ],
+          "expectedResults": [
+            "Each vehicle card shows correct primary image or placeholder",
+            "Image count badge displayed if implemented",
+            "No broken images in list view"
+          ]
+        },
+        {
+          "id": "INT-004",
+          "title": "Pagination and filtering with images",
+          "priority": "Low",
+          "preconditions": [
+            "More vehicles than page size"
+          ],
+          "steps": [
+            "Navigate through pages",
+            "Apply filters",
+            "Check images load correctly"
+          ],
+          "expectedResults": [
+            "Images load on each page",
+            "No performance degradation",
+            "Filtering doesn't break image display"
+          ]
+        },
+        {
+          "id": "INT-005",
+          "title": "Browser back/forward with vehicle pages",
+          "priority": "Low",
+          "steps": [
+            "Navigate: List -> Detail -> Edit",
+            "Use browser back button",
+            "Use browser forward button"
+          ],
+          "expectedResults": [
+            "Navigation works correctly",
+            "Data is not lost",
+            "Images still display",
+            "Form state preserved in edit mode"
+          ]
+        },
+        {
+          "id": "INT-006",
+          "title": "Session expiry during operations",
+          "priority": "High",
+          "preconditions": [
+            "User session is about to expire"
+          ],
+          "steps": [
+            "Start uploading image",
+            "Session expires mid-upload",
+            "Check error handling"
+          ],
+          "expectedResults": [
+            "401 error is caught",
+            "User informed session expired",
+            "User redirected to login",
+            "No data corruption"
+          ]
+        },
+        {
+          "id": "INT-007",
+          "title": "Network interruption during image upload",
+          "priority": "Medium",
+          "steps": [
+            "Start image upload",
+            "Disconnect network mid-upload",
+            "Reconnect network"
+          ],
+          "expectedResults": [
+            "Upload fails gracefully",
+            "Error message: Network error",
+            "User can retry upload",
+            "No partial/corrupted uploads"
+          ]
+        },
+        {
+          "id": "INT-008",
+          "title": "Permission changes during session",
+          "priority": "Medium",
+          "preconditions": [
+            "User has CAR_WRITE permission",
+            "Admin changes user permissions"
+          ],
+          "steps": [
+            "User attempts operation after permission removal"
+          ],
+          "expectedResults": [
+            "403 error on next operation",
+            "User informed of insufficient permissions",
+            "UI updates to reflect new permissions"
+          ]
+        },
+        {
+          "id": "INT-009",
+          "title": "Refresh during multi-step create",
+          "priority": "Low",
+          "preconditions": [
+            "User is at Step 3 of vehicle creation"
+          ],
+          "steps": [
+            "Press F5 to refresh browser"
+          ],
+          "expectedResults": [
+            "Draft is preserved if feature enabled",
+            "User can resume from saved point or",
+            "User is informed about lost progress"
+          ]
+        },
+        {
+          "id": "INT-010",
+          "title": "Multiple tabs - same vehicle",
+          "priority": "Low",
+          "steps": [
+            "Open vehicle detail in Tab 1",
+            "Open same vehicle in Tab 2",
+            "Edit in Tab 1 and save",
+            "Refresh Tab 2"
+          ],
+          "expectedResults": [
+            "Tab 2 shows updated data after refresh",
+            "No data conflicts",
+            "Cache invalidation works across tabs"
+          ]
+        },
+        {
+          "id": "PERF-001",
+          "title": "Load time - Vehicle list with many vehicles",
+          "priority": "Medium",
+          "preconditions": [
+            "Database has 100+ vehicles"
+          ],
+          "expectedResults": [
+            "Page loads in < 3 seconds",
+            "Pagination is implemented",
+            "Images lazy load",
+            "Smooth scrolling"
+          ],
+          "performanceMetrics": {
+            "maxLoadTime": "3s",
+            "maxImageCount": "paginated"
+          }
+        },
+        {
+          "id": "PERF-002",
+          "title": "Load time - Vehicle detail with many images",
+          "priority": "Medium",
+          "preconditions": [
+            "Vehicle has 20+ images"
+          ],
+          "expectedResults": [
+            "Page loads in < 2 seconds",
+            "Thumbnails load progressively",
+            "Full images load on demand",
+            "No UI blocking"
+          ]
+        },
+        {
+          "id": "SEC-001",
+          "title": "Unauthorized access - Direct URL",
+          "priority": "High",
+          "preconditions": [
+            "User not logged in"
+          ],
+          "steps": [
+            "Navigate directly to /vehicles/1",
+            "Navigate to /vehicles/new",
+            "Navigate to /vehicles/1/edit"
+          ],
+          "expectedResults": [
+            "User redirected to login",
+            "No data exposed",
+            "Protected routes require authentication"
+          ]
+        },
+        {
+          "id": "SEC-002",
+          "title": "Cross-merchant vehicle access",
+          "priority": "Critical",
+          "preconditions": [
+            "Two merchants exist",
+            "Merchant A creates vehicle ID 1",
+            "Merchant B user is logged in"
+          ],
+          "steps": [
+            "Merchant B user tries to access /vehicles/1",
+            "Merchant B user tries to edit vehicle 1",
+            "Merchant B user tries to delete vehicle 1"
+          ],
+          "expectedResults": [
+            "403 Forbidden error",
+            "No data from Merchant A visible to Merchant B",
+            "No cross-merchant operations allowed",
+            "Audit log records attempt"
+          ]
+        },
+        {
+          "id": "ACC-001",
+          "title": "Keyboard navigation",
+          "priority": "Low",
+          "steps": [
+            "Use Tab to navigate form fields",
+            "Use Enter to submit",
+            "Use Esc to close dialogs"
+          ],
+          "expectedResults": [
+            "All interactive elements are keyboard accessible",
+            "Focus indicators visible",
+            "Logical tab order"
+          ]
+        },
+        {
+          "id": "ACC-002",
+          "title": "Screen reader compatibility",
+          "priority": "Low",
+          "steps": [
+            "Use screen reader to navigate vehicle list",
+            "Navigate vehicle detail page"
+          ],
+          "expectedResults": [
+            "Proper ARIA labels",
+            "Form labels associated correctly",
+            "Images have alt text",
+            "Meaningful announcements"
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalScenarios": 137,
+    "byCategory": {
+      "Authentication & Setup": 2,
+      "Vehicle Create": 7,
+      "Vehicle Read": 6,
+      "Vehicle Update": 8,
+      "Vehicle Delete": 7,
+      "Vehicle Image Upload": 15,
+      "Vehicle Image Management": 9,
+      "Integration & Edge Cases": 10,
+      "Performance": 2,
+      "Security": 2,
+      "Accessibility": 2
+    },
+    "byPriority": {
+      "Critical": 20,
+      "High": 35,
+      "Medium": 45,
+      "Low": 37
+    }
+  },
+  "executionNotes": {
+    "setupRequirements": [
+      "Keycloak server must be running and configured",
+      "Backend API must be running on port 8082",
+      "Frontend must be running on port 3000",
+      "Test database with clean state",
+      "Test merchant account created",
+      "Test image files prepared in test fixtures"
+    ],
+    "testDataManagement": [
+      "Use unique identifiers for each test run (timestamps, UUIDs)",
+      "Clean up test vehicles after test suite completion",
+      "Manage test images in dedicated storage bucket",
+      "Reset database state between test runs if needed"
+    ],
+    "parallelization": [
+      "Read operations can run in parallel",
+      "Create/Update/Delete should be serialized per vehicle",
+      "Image operations can be parallelized across different vehicles"
+    ],
+    "reporting": [
+      "Capture screenshots on failures",
+      "Log API requests and responses",
+      "Track execution time per scenario",
+      "Generate HTML report with test results"
+    ]
+  }
+}
