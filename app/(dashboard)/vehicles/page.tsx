@@ -4,91 +4,28 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
-import { Input } from '@/components/ui/input';
 import { VehicleImage } from '@/components/vehicle/vehicle-image';
+import { VehicleSearchFilters } from '@/components/vehicle/vehicle-search-filters';
 import { VehicleListSkeleton } from '@/components/vehicle/vehicle-skeletons';
-import { hateoasClient } from '@/lib/api/hateoas-client';
-import { useCollection } from '@/lib/api/hooks';
-import { parseHalResource } from '@/lib/utils';
-import type { HATEOASCollection, Vehicle } from '@/types';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Search } from 'lucide-react';
+import { useVehicleSearch } from '@/hooks/use-vehicle-search';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 
 export default function VehiclesPage() {
   const { t } = useLocale();
-  const [page, setPage] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setPage(0); // Reset to first page on search
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Reset page when status filter changes
-  useEffect(() => {
-    setPage(0);
-  }, [statusFilter]);
-
-  // Determine which query to use based on filters
-  const shouldUseSearch = Boolean(debouncedSearchTerm || statusFilter);
-
-  // Fetch using search endpoint when filters are active
-  const searchQuery = useQuery({
-    queryKey: ['vehicles', 'search', debouncedSearchTerm, statusFilter, page],
-    queryFn: async () => {
-      if (statusFilter && debouncedSearchTerm) {
-        // Search by both status and name
-        return hateoasClient.search<Vehicle>('vehicles', 'findByStatusAndNameContainingIgnoreCase', {
-          status: statusFilter,
-          name: debouncedSearchTerm,
-          page,
-          size: 20,
-          sort: 'name,asc',
-        });
-      } else if (statusFilter) {
-        // Search by status only
-        return hateoasClient.search<Vehicle>('vehicles', 'findByStatus', {
-          status: statusFilter,
-          page,
-          size: 20,
-          sort: 'name,asc',
-        });
-      } else if (debouncedSearchTerm) {
-        // Search by name only
-        return hateoasClient.search<Vehicle>('vehicles', 'findByNameContainingIgnoreCase', {
-          name: debouncedSearchTerm,
-          page,
-          size: 20,
-          sort: 'name,asc',
-        });
-      }
-      return { _embedded: {}, _links: {}, page: { size: 0, totalElements: 0, totalPages: 0, number: 0 } } as HATEOASCollection<Vehicle>;
-    },
-    enabled: shouldUseSearch,
-  });
-
-  // Fetch all vehicles when no filters
-  const allVehiclesQuery = useCollection<Vehicle>('vehicles', {
-    page,
-    size: 20,
-    sort: 'name,asc',
-  });
-
-  // Use appropriate query based on filter state
-  const { data, isLoading, error } = shouldUseSearch ? searchQuery : allVehiclesQuery;
-  const refetch = shouldUseSearch ? searchQuery.refetch : allVehiclesQuery.refetch;
-
-  const vehicles = data ? parseHalResource<Vehicle>(data, 'vehicles') : [];
-  const totalPages = data?.page?.totalPages || 0;
+  // Use vehicle search hook
+  const {
+    vehicles,
+    totalPages,
+    currentPage,
+    isLoading,
+    error,
+    search,
+    nextPage,
+    previousPage,
+    refetch,
+  } = useVehicleSearch();
 
   return (
     <div className="space-y-8">
@@ -108,46 +45,11 @@ export default function VehiclesPage() {
         </Link>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('vehicle.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('vehicle.searchByName')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <select
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">{t('vehicle.allStatuses')}</option>
-              <option value="AVAILABLE">{t('vehicle.available')}</option>
-              <option value="RENTED">{t('vehicle.rented')}</option>
-              <option value="MAINTENANCE">{t('vehicle.maintenance')}</option>
-              <option value="RETIRED">{t('vehicle.retired')}</option>
-            </select>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                setSearchTerm('');
-                setStatusFilter('');
-                setPage(0);
-              }}
-            >
-              {t('common.clearFilters')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search Filters */}
+      <VehicleSearchFilters
+        onSearch={search}
+        isLoading={isLoading}
+      />
 
       {/* Vehicles Grid */}
       {isLoading ? (
@@ -260,18 +162,18 @@ export default function VehiclesPage() {
             <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
+                onClick={previousPage}
+                disabled={currentPage === 0}
               >
                 {t('common.previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {t('common.page')} {page + 1} {t('common.of')} {totalPages}
+                {t('common.page')} {currentPage + 1} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
-                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                disabled={page >= totalPages - 1}
+                onClick={nextPage}
+                disabled={currentPage >= totalPages - 1}
               >
                 {t('common.next')}
               </Button>

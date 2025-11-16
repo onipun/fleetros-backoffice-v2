@@ -36,6 +36,23 @@ export enum VehicleStatus {
   RETIRED = 'RETIRED',
 }
 
+export enum CarType {
+  SEDAN = 'SEDAN',
+  SUV = 'SUV',
+  HATCHBACK = 'HATCHBACK',
+  COUPE = 'COUPE',
+  CONVERTIBLE = 'CONVERTIBLE',
+  WAGON = 'WAGON',
+  VAN = 'VAN',
+  PICKUP = 'PICKUP',
+  LUXURY = 'LUXURY',
+  SPORTS = 'SPORTS',
+  ELECTRIC = 'ELECTRIC',
+  HYBRID = 'HYBRID',
+  MOTORCYCLE = 'MOTORCYCLE',
+  OTHER = 'OTHER',
+}
+
 export enum BookingStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
@@ -84,6 +101,8 @@ export interface Vehicle {
   odometer: number;
   fuelType: string;
   transmissionType: string;
+  carType?: CarType;
+  seaterCount?: number;
   details?: string;
   status: VehicleStatus;
   bufferMinutes: number;

@@ -1,6 +1,7 @@
 'use client';
 
 import { BookingOfferingSelector, type BookingOfferingSelection } from '@/components/booking/booking-offering-selector';
+import { VehicleSelector } from '@/components/booking/vehicle-selector';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -713,12 +714,13 @@ export function BookingForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>{`${t('booking.form.fields.vehicle')} ${t('common.required')}`}</Label>
-              <EntitySelect
-                entityType="vehicle"
+              <VehicleSelector
+                label={t('booking.form.fields.vehicle')}
                 value={formState.vehicleId ?? undefined}
                 onChange={(id) => handleSelect('vehicleId')(id)}
-                className="w-full"
+                defaultStatus="AVAILABLE"
+                required
+                placeholder={t('booking.form.selectVehiclePlaceholder')}
               />
             </div>
 
