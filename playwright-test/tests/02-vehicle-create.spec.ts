@@ -29,18 +29,19 @@ test.describe('Vehicle Create Operations', () => {
     });
 
     await test.step('Verify vehicle creation success', async () => {
-      // Wait for redirect to vehicles list
-      await authenticatedPage.waitForURL('**/vehicles', { timeout: 15000 });
+      // Wait for redirect (could be to list or detail page)
+      await authenticatedPage.waitForLoadState('networkidle');
+      await TestHelpers.delay(1000);
       console.log('Redirected to:', authenticatedPage.url());
       
       // Verify success toast
       await TestHelpers.verifyToastMessage(authenticatedPage, /success|created/i);
       console.log('Success toast verified');
       
-      // Refresh page to ensure new vehicle appears in list
-      console.log('Refreshing page to load new vehicle...');
-      await authenticatedPage.reload({ waitUntil: 'networkidle' });
-      await TestHelpers.delay(1000);
+      // Navigate to vehicles list page explicitly
+      console.log('Navigating to vehicles list page...');
+      await vehiclesListPage.goto();
+      await TestHelpers.delay(1500);
       
       // Search for and verify vehicle (handles pagination)
       console.log('Looking for vehicle:', testVehicleData.name);
@@ -92,12 +93,13 @@ test.describe('Vehicle Create Operations', () => {
 
     await test.step('Submit and verify creation', async () => {
       await vehicleFormPage.clickSubmit();
-      await authenticatedPage.waitForURL('**/vehicles', { timeout: 15000 });
+      await authenticatedPage.waitForLoadState('networkidle');
+      await TestHelpers.delay(1000);
       await TestHelpers.verifyToastMessage(authenticatedPage, /success|created/i);
       
-      // Refresh page to ensure new vehicle appears in list
-      await authenticatedPage.reload({ waitUntil: 'networkidle' });
-      await TestHelpers.delay(1000);
+      // Navigate to vehicles list page explicitly
+      await vehiclesListPage.goto();
+      await TestHelpers.delay(1500);
       
       // Search for and verify vehicle (handles pagination)
       await vehiclesListPage.searchAndVerifyVehicle(testVehicleData.name);
@@ -167,7 +169,8 @@ test.describe('Vehicle Create Operations', () => {
 
   test('VEH-CREATE-004: Validation - Missing required fields', async ({
     authenticatedPage,
-    vehicleFormPage
+    vehicleFormPage,
+    testVehicleData
   }) => {
     await test.step('Navigate to create page', async () => {
       await authenticatedPage.goto('/vehicles/new');
@@ -201,20 +204,36 @@ test.describe('Vehicle Create Operations', () => {
       }
     });
 
-    await test.step('Fill name but leave licensePlate empty', async () => {
-      await vehicleFormPage.nameInput.clear();
-      await vehicleFormPage.nameInput.fill('Test Vehicle');
+    await test.step('Fill Step 1 and proceed to Step 2', async () => {
+      await vehicleFormPage.fillStep1({
+        name: testVehicleData.name,
+        licensePlate: testVehicleData.licensePlate,
+        status: testVehicleData.status,
+      });
+      
+      const hasNextButton = await vehicleFormPage.nextButton.isVisible({ timeout: 2000 }).catch(() => false);
+      if (hasNextButton) {
+        await vehicleFormPage.clickNext();
+      }
+    });
+
+    await test.step('Try to proceed without carType and seaterCount (required fields)', async () => {
+      // Fill other Step 2 fields but leave carType and seaterCount empty
+      await vehicleFormPage.makeInput.fill(testVehicleData.make);
+      await vehicleFormPage.modelInput.fill(testVehicleData.model);
+      await vehicleFormPage.yearInput.fill(String(testVehicleData.year));
       
       const hasNextButton = await vehicleFormPage.nextButton.isVisible({ timeout: 2000 }).catch(() => false);
       
       if (hasNextButton) {
+        // Try to proceed without selecting carType and seaterCount
         await vehicleFormPage.clickNext().catch(() => {
-          console.log('Next button click failed as expected');
+          console.log('Next button click failed as expected - carType and seaterCount are required');
         });
+        
+        // Should still be on Step 2
+        await TestHelpers.delay(500);
       }
-      
-      // Should still show validation error
-      await TestHelpers.delay(500);
     });
 
     await test.step('Verify validation error messages', async () => {
@@ -376,7 +395,8 @@ test.describe('Vehicle Create Operations', () => {
         await vehicleFormPage.clickSubmit();
         
         // Wait for successful creation
-        await authenticatedPage.waitForURL('**/vehicles', { timeout: 15000 });
+        await authenticatedPage.waitForLoadState('networkidle');
+        await TestHelpers.delay(1000);
         await TestHelpers.verifyToastMessage(authenticatedPage, /success|created/i);
         console.log(`Vehicle ${vehicleData.name} created successfully`);
         
@@ -387,10 +407,7 @@ test.describe('Vehicle Create Operations', () => {
     await test.step('Verify all vehicles exist', async () => {
       console.log('Verifying all created vehicles...');
       await vehiclesListPage.goto();
-      
-      // Refresh to ensure all vehicles are loaded
-      await authenticatedPage.reload({ waitUntil: 'networkidle' });
-      await TestHelpers.delay(1000);
+      await TestHelpers.delay(1500);
       
       for (const vehicleData of vehicles) {
         console.log(`Checking for vehicle: ${vehicleData.name}`);

@@ -11,7 +11,8 @@ test.describe('Vehicle Read Operations', () => {
 
   test.beforeAll(async ({ browser }) => {
     // Create a test vehicle for read operations using authenticated context
-    const context = await browser.newContext();
+    const baseURL = process.env.BASE_URL || 'http://localhost:3000';
+    const context = await browser.newContext({ baseURL });
     const page = await context.newPage();
     
     // Use LoginPage for proper Keycloak authentication
@@ -115,19 +116,32 @@ test.describe('Vehicle Read Operations', () => {
     });
   });
 
-  test('VEH-READ-003: Search vehicles by name', async ({ authenticatedPage, vehiclesListPage }) => {
+  test('VEH-READ-003: Search vehicles by name', async ({ authenticatedPage, vehiclesListPage, vehicleFormPage }) => {
+    // Create a test vehicle for this specific test
+    const testVehicleData = TestHelpers.generateVehicleData('SearchTest');
+    
+    await test.step('Create test vehicle', async () => {
+      await vehicleFormPage.gotoNew();
+      await vehicleFormPage.waitForFormLoad();
+      await vehicleFormPage.fillCompleteForm(testVehicleData);
+      await vehicleFormPage.clickSubmit();
+      
+      // Wait for creation and success message
+      await authenticatedPage.waitForLoadState('networkidle');
+      await TestHelpers.verifyToastMessage(authenticatedPage, /success|created/i);
+    });
+
     await test.step('Navigate to vehicles list', async () => {
       await vehiclesListPage.goto();
     });
 
     await test.step('Search for test vehicle', async () => {
-      await vehiclesListPage.searchVehicle('ReadTest');
-      await TestHelpers.delay(1000);
+      // Use searchAndVerifyVehicle which handles full search flow
+      await vehiclesListPage.searchAndVerifyVehicle(testVehicleData.name);
     });
 
     await test.step('Verify filtered results', async () => {
-      // Should show vehicles matching search term
-      await vehiclesListPage.verifyVehicleExists(testVehicleName);
+      // Vehicle already verified by searchAndVerifyVehicle above
       
       // Search for non-existent vehicle
       await vehiclesListPage.searchVehicle('NonExistentVehicle9999');
@@ -178,6 +192,110 @@ test.describe('Vehicle Read Operations', () => {
     await test.step('Verify pricing section exists', async () => {
       const pricingSection = authenticatedPage.locator('text=/pricing|price/i');
       await expect(pricingSection.first()).toBeVisible({ timeout: 5000 });
+    });
+  });
+
+  test('VEH-READ-007: Verify all vehicle details labels and values', async ({ authenticatedPage, vehicleDetailPage }) => {
+    await test.step('Navigate to vehicle detail', async () => {
+      await vehicleDetailPage.goto(testVehicleId);
+    });
+
+    await test.step('Verify Basic Information section', async () => {
+      // Verify section heading
+      await expect(authenticatedPage.locator('text=/basic info/i').first()).toBeVisible({ timeout: 5000 });
+      
+      // Status field
+      await expect(authenticatedPage.locator('text=/status/i').first()).toBeVisible();
+      await expect(authenticatedPage.locator('text=/available|rented|maintenance|retired/i').first()).toBeVisible();
+      
+      // License Plate field
+      await expect(authenticatedPage.locator('text=/license plate/i').first()).toBeVisible();
+      
+      // VIN field
+      await expect(authenticatedPage.locator('text=/vin|vin number/i').first()).toBeVisible();
+      
+      // Odometer field
+      await expect(authenticatedPage.locator('text=/odometer/i').first()).toBeVisible();
+      await expect(authenticatedPage.locator('text=/km|kilometers/i').first()).toBeVisible();
+    });
+
+    await test.step('Verify Specifications section', async () => {
+      // Verify section heading
+      await expect(authenticatedPage.locator('text=/specifications/i').first()).toBeVisible({ timeout: 5000 });
+      
+      // Make field
+      await expect(authenticatedPage.locator('text=/^make$/i').first()).toBeVisible();
+      
+      // Model field
+      await expect(authenticatedPage.locator('text=/^model$/i').first()).toBeVisible();
+      
+      // Year field
+      await expect(authenticatedPage.locator('text=/^year$/i').first()).toBeVisible();
+      
+      // Vehicle Category / Car Type field
+      await expect(authenticatedPage.locator('text=/vehicle category|car type/i').first()).toBeVisible();
+      
+      // Number of Seats / Seater Count field
+      await expect(authenticatedPage.locator('text=/seater count|number of seats/i').first()).toBeVisible();
+      await expect(authenticatedPage.locator('text=/seat|seats/i').first()).toBeVisible();
+      
+      // Fuel Type field
+      await expect(authenticatedPage.locator('text=/fuel type/i').first()).toBeVisible();
+      
+      // Transmission Type field
+      await expect(authenticatedPage.locator('text=/transmission type|transmission/i').first()).toBeVisible();
+    });
+
+    await test.step('Verify Rental Settings section', async () => {
+      // Verify section heading
+      await expect(authenticatedPage.locator('text=/rental settings/i').first()).toBeVisible({ timeout: 5000 });
+      
+      // Buffer Minutes field
+      await expect(authenticatedPage.locator('text=/buffer minutes|buffer/i').first()).toBeVisible();
+      
+      // Min Rental Hours field
+      await expect(authenticatedPage.locator('text=/min rental hours|minimum rental/i').first()).toBeVisible();
+      
+      // Max Rental Days field
+      await expect(authenticatedPage.locator('text=/max rental days|maximum rental/i').first()).toBeVisible();
+      
+      // Max Future Booking Days field
+      await expect(authenticatedPage.locator('text=/max future booking|future booking/i').first()).toBeVisible();
+    });
+
+    await test.step('Verify vehicle header information', async () => {
+      // Vehicle name in header (h1)
+      await expect(vehicleDetailPage.vehicleName).toBeVisible();
+      
+      // Make, Model, Year subtitle
+      await expect(authenticatedPage.locator('text=/toyota|camry|202/i').first()).toBeVisible();
+    });
+
+    await test.step('Verify action buttons are present', async () => {
+      // Back button
+      await expect(authenticatedPage.locator('button:has-text("Back"), a:has-text("Back")').first()).toBeVisible();
+      
+      // Edit button
+      await expect(vehicleDetailPage.editButton).toBeVisible();
+      
+      // Delete button
+      await expect(vehicleDetailPage.deleteButton).toBeVisible();
+    });
+
+    await test.step('Verify all field values are not empty or show fallback', async () => {
+      // Check that values are displayed (either actual values or "Not available" fallback)
+      const fieldsWithValues = await authenticatedPage.locator('p.font-medium, p.font-mono').all();
+      expect(fieldsWithValues.length).toBeGreaterThan(0);
+      
+      // Verify at least one value contains actual data (not all "Not available")
+      const fieldTexts = await Promise.all(fieldsWithValues.map(f => f.textContent()));
+      const hasActualData = fieldTexts.some(text => 
+        text && 
+        !text.includes('Not available') && 
+        !text.includes('notAvailable') &&
+        text.trim().length > 0
+      );
+      expect(hasActualData).toBe(true);
     });
   });
 });

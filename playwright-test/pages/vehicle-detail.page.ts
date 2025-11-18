@@ -45,12 +45,20 @@ export class VehicleDetailPage {
   }
 
   async confirmDelete() {
-    await this.page.locator('button:has-text("Delete"), button:has-text("Confirm")').click();
+    // Handle browser's native confirm dialog
+    this.page.once('dialog', async (dialog) => {
+      await dialog.accept();
+    });
+    await this.deleteButton.click();
     await this.page.waitForLoadState('networkidle');
   }
 
   async cancelDelete() {
-    await this.page.locator('button:has-text("Cancel")').click();
+    // Handle browser's native confirm dialog
+    this.page.once('dialog', async (dialog) => {
+      await dialog.dismiss();
+    });
+    await this.deleteButton.click();
   }
 
   async uploadImage(filePath: string, description?: string, isPrimary?: boolean) {

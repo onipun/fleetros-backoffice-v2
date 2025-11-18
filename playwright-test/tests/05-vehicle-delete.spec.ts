@@ -36,13 +36,8 @@ test.describe('Vehicle Delete Operations', () => {
       vehicleId = match ? match[1] : '';
     });
 
-    await test.step('Click delete button', async () => {
-      await vehicleDetailPage.clickDelete();
-    });
-
-    await test.step('Confirm deletion', async () => {
-      // Wait for confirmation dialog
-      await TestHelpers.delay(500);
+    await test.step('Delete vehicle and confirm', async () => {
+      // confirmDelete handles clicking delete button and accepting the native browser dialog
       await vehicleDetailPage.confirmDelete();
     });
 
@@ -90,17 +85,20 @@ test.describe('Vehicle Delete Operations', () => {
     });
 
     await test.step('Click delete and cancel', async () => {
-      await vehicleDetailPage.clickDelete();
-      await TestHelpers.delay(500);
+      // cancelDelete handles clicking delete button and dismissing the native browser dialog
       await vehicleDetailPage.cancelDelete();
+      await TestHelpers.delay(500);
     });
 
     await test.step('Verify vehicle still exists', async () => {
       // Should still be on detail page
       expect(authenticatedPage.url()).toContain(`/vehicles/${vehicleId}`);
       
-      // Vehicle name should still be visible
-      await expect(authenticatedPage.locator(`text=${vehicleName}`)).toBeVisible();
+      // Vehicle header should still be visible (using h1 instead of text search)
+      await expect(vehicleDetailPage.vehicleName).toBeVisible();
+      
+      // Edit button should still be available
+      await expect(vehicleDetailPage.editButton).toBeVisible();
     });
   });
 

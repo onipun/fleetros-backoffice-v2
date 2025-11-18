@@ -33,6 +33,8 @@ export class TestHelpers {
       odometer: Math.floor(Math.random() * 50000),
       fuelType: 'Gasoline',
       transmissionType: 'Automatic',
+      carType: 'SEDAN',
+      seaterCount: 5,
       status: 'AVAILABLE' as const,
       bufferMinutes: 30,
       minRentalHours: 24,

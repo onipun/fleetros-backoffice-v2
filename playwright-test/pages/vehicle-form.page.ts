@@ -16,6 +16,8 @@ export class VehicleFormPage {
   readonly odometerInput: Locator;
   readonly fuelTypeSelect: Locator;
   readonly transmissionSelect: Locator;
+  readonly carTypeSelect: Locator;
+  readonly seaterCountInput: Locator;
   readonly bufferMinutesInput: Locator;
   readonly minRentalHoursInput: Locator;
   readonly maxRentalDaysInput: Locator;
@@ -39,6 +41,8 @@ export class VehicleFormPage {
     this.odometerInput = page.locator('input[name="odometer"]');
     this.fuelTypeSelect = page.locator('select[name="fuelType"], [name="fuelType"]');
     this.transmissionSelect = page.locator('select[name="transmissionType"], [name="transmissionType"]');
+    this.carTypeSelect = page.locator('select[name="carType"], [name="carType"]');
+    this.seaterCountInput = page.locator('input[name="seaterCount"]');
     this.bufferMinutesInput = page.locator('input[name="bufferMinutes"]');
     this.minRentalHoursInput = page.locator('input[name="minRentalHours"]');
     this.maxRentalDaysInput = page.locator('input[name="maxRentalDays"]');
@@ -81,6 +85,8 @@ export class VehicleFormPage {
     odometer: number;
     fuelType: string;
     transmissionType: string;
+    carType: string;
+    seaterCount: number;
   }) {
     // Wait for step 2 to be visible
     await this.makeInput.waitFor({ state: 'visible', timeout: 10000 });
@@ -107,6 +113,16 @@ export class VehicleFormPage {
     // Handle transmission selection if field exists
     if (await this.transmissionSelect.first().isVisible({ timeout: 3000 }).catch(() => false)) {
       await this.selectDropdown(this.transmissionSelect, data.transmissionType);
+    }
+    
+    // Handle carType selection (required field)
+    if (await this.carTypeSelect.first().isVisible({ timeout: 3000 }).catch(() => false)) {
+      await this.selectDropdown(this.carTypeSelect, data.carType);
+    }
+    
+    // Handle seaterCount input (required field)
+    if (await this.seaterCountInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await this.seaterCountInput.fill(String(data.seaterCount));
     }
   }
 
@@ -207,6 +223,8 @@ export class VehicleFormPage {
       odometer: data.odometer,
       fuelType: data.fuelType,
       transmissionType: data.transmissionType,
+      carType: data.carType,
+      seaterCount: data.seaterCount,
     });
     
     if (hasNextButton && await this.nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
