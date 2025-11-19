@@ -3,19 +3,9 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { VehiclePricingList } from '@/components/vehicle/vehicle-pricing-list';
 import { VehicleDetailSkeleton } from '@/components/vehicle/vehicle-skeletons';
+import { VehicleImageUploadDialog } from '@/components/vehicle/vehicle-image-upload-dialog';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import type { Vehicle, VehicleImage } from '@/types';
@@ -33,11 +23,7 @@ export default function VehicleDetailPage() {
   const queryClient = useQueryClient();
   const vehicleId = params.id as string;
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [imageDescription, setImageDescription] = useState('');
-  const [isPrimaryImage, setIsPrimaryImage] = useState(false);
 
   // Fetch vehicle details
   const { data: vehicle, isLoading: vehicleLoading, error: vehicleError } = useQuery({
@@ -192,159 +178,10 @@ export default function VehicleDetailPage() {
     },
   });
 
-  // Handle image file selection
-  const handleImageFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    // Take the first file and validate it
-    const file = files[0];
-    
-    // Validate file type
-    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validImageTypes.includes(file.type)) {
-      toast({
-        title: t('vehicle.invalidImageTypeTitle'),
-        description: t('vehicle.invalidImageTypeDescription'),
-        variant: 'destructive',
-      });
-      event.target.value = '';
-      return;
-    }
-    
-    // Validate file size (max 10MB)
-    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSizeInBytes) {
-      const fileSizeMb = (file.size / 1024 / 1024).toFixed(2);
-      toast({
-        title: t('vehicle.fileTooLargeTitle'),
-        description: `${t('vehicle.fileTooLargeDescription')} ${fileSizeMb}MB.`,
-        variant: 'destructive',
-      });
-      event.target.value = '';
-      return;
-    }
-    
-    // File is valid, open dialog for metadata
-    setPendingFile(file);
-    setImageDescription('');
-    setIsPrimaryImage(images.length === 0); // Default to primary if no images
-    setUploadDialogOpen(true);
-    
-    // Clear the input
-    event.target.value = '';
-  };
-
-  // Handle image upload with metadata
-  const handleImageUpload = async () => {
-    if (!pendingFile) return;
-
-    setIsUploading(true);
-
-    try {
-      // Get access token from session
-      const sessionResponse = await fetch('/api/auth/session');
-      if (!sessionResponse.ok) {
-        throw new Error('Failed to get authentication token');
-      }
-      const session = await sessionResponse.json();
-      const token = session.accessToken;
-
-      if (!token) {
-        throw new Error('No access token available');
-      }
-
-      // Create FormData for multipart upload
-      const formData = new FormData();
-      formData.append('file', pendingFile);
-      
-      if (imageDescription.trim()) {
-        formData.append('description', imageDescription.trim());
-      }
-      
-      formData.append('isPrimary', String(isPrimaryImage));
-
-      // Upload to backend API using single image endpoint
-      const uploadResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082'}/api/vehicles/${vehicleId}/images/single`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      if (!uploadResponse.ok) {
-        // Try to parse JSON error response first
-        let errorMessage = `Upload failed with status ${uploadResponse.status}`;
-        
-        try {
-          const contentType = uploadResponse.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const errorData = await uploadResponse.json();
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          } else {
-            const errorText = await uploadResponse.text();
-            errorMessage = errorText || errorMessage;
-          }
-        } catch (parseError) {
-          // If parsing fails, use the status text
-          errorMessage = uploadResponse.statusText || errorMessage;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const result = await uploadResponse.json();
-
-      // Refresh images list - force refetch
-      await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
-      await queryClient.refetchQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
-      
-      toast({
-        title: t('common.success'),
-        description: result.message || t('vehicle.uploadSuccess'),
-      });
-
-      // Close dialog and reset state
-      setUploadDialogOpen(false);
-      setPendingFile(null);
-      setImageDescription('');
-      setIsPrimaryImage(false);
-    } catch (error) {
-      let errorMessage = t('vehicle.uploadError');
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      
-      // Handle common error scenarios
-      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-        errorMessage = t('vehicle.networkError');
-      } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-        errorMessage = t('vehicle.sessionExpired');
-      } else if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
-        errorMessage = t('vehicle.permissionError');
-      } else if (errorMessage.includes('404')) {
-        errorMessage = t('vehicle.vehicleNotFound');
-      } else if (errorMessage.includes('413') || errorMessage.includes('too large')) {
-        errorMessage = t('vehicle.imageTooLarge');
-      } else if (errorMessage.includes('415') || errorMessage.includes('Unsupported Media Type')) {
-        errorMessage = t('vehicle.invalidImageTypeDescription');
-      }
-      
-      toast({
-        title: t('vehicle.uploadFailedTitle'),
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploading(false);
-    }
+  // Handle upload complete callback
+  const handleUploadComplete = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
+    await queryClient.refetchQueries({ queryKey: ['vehicle', vehicleId, 'images'] });
   };
 
   if (vehicleLoading) {
@@ -418,24 +255,14 @@ export default function VehicleDetailPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{t('vehicle.images')}</CardTitle>
-                <label htmlFor="image-upload">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    disabled={isUploading}
-                    onClick={() => document.getElementById('image-upload')?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {isUploading ? t('common.uploading') : t('common.upload')}
-                  </Button>
-                </label>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageFileSelect}
-                />
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setUploadDialogOpen(true)}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  {t('common.upload')}
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -642,71 +469,14 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
-      {/* Upload Image Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('vehicle.uploadImageTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('vehicle.imageDialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="description">{t('vehicle.imageDescriptionLabel')}</Label>
-              <Textarea
-                id="description"
-                placeholder={t('vehicle.captionPlaceholder')}
-                value={imageDescription}
-                onChange={(e) => setImageDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isPrimary"
-                checked={isPrimaryImage}
-                onCheckedChange={(checked) => setIsPrimaryImage(checked as boolean)}
-              />
-              <Label
-                htmlFor="isPrimary"
-                className="text-sm font-normal cursor-pointer"
-              >
-                {t('vehicle.setPrimaryImage')}
-              </Label>
-            </div>
-
-            {pendingFile && (
-              <div className="text-sm text-muted-foreground">
-                {t('vehicle.selectedFileLabel')} {pendingFile.name} ({(pendingFile.size / 1024).toFixed(2)} KB)
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setUploadDialogOpen(false);
-                setPendingFile(null);
-                setImageDescription('');
-                setIsPrimaryImage(false);
-              }}
-              disabled={isUploading}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={handleImageUpload}
-              disabled={isUploading || !pendingFile}
-            >
-              {isUploading ? t('common.uploading') : t('common.upload')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Multi-Image Upload Dialog */}
+      <VehicleImageUploadDialog
+        vehicleId={vehicleId}
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onUploadComplete={handleUploadComplete}
+        existingImagesCount={images.length}
+      />
     </div>
   );
 }

@@ -1,20 +1,10 @@
 'use client';
 
+import { OfferingImageUploadDialog } from '@/components/offering/offering-image-upload-dialog';
 import { OfferingPricePanel } from '@/components/offering/offering-price-panel';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import type { Offering, OfferingImage } from '@/types';
@@ -32,11 +22,7 @@ export default function OfferingDetailPage() {
   const queryClient = useQueryClient();
   const offeringId = params.id as string;
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [imageDescription, setImageDescription] = useState('');
-  const [isPrimaryImage, setIsPrimaryImage] = useState(false);
 
   // Fetch offering details
   const { data: offering, isLoading: offeringLoading, error: offeringError } = useQuery({
@@ -191,161 +177,6 @@ export default function OfferingDetailPage() {
     },
   });
 
-  // Handle image file selection
-  const handleImageFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    // Take the first file and validate it
-    const file = files[0];
-    
-    // Validate file type
-    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validImageTypes.includes(file.type)) {
-      toast({
-        title: t('offering.invalidImageTypeTitle'),
-        description: t('offering.invalidImageTypeDescription'),
-        variant: 'destructive',
-      });
-      event.target.value = '';
-      return;
-    }
-    
-    // Validate file size (max 10MB)
-    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSizeInBytes) {
-      const fileSizeMb = (file.size / 1024 / 1024).toFixed(2);
-      toast({
-        title: t('offering.fileTooLargeTitle'),
-        description: `${t('offering.fileTooLargeDescription')} ${fileSizeMb}MB.`,
-        variant: 'destructive',
-      });
-      event.target.value = '';
-      return;
-    }
-    
-    // File is valid, open dialog for metadata
-    setPendingFile(file);
-    setImageDescription('');
-    setIsPrimaryImage(images.length === 0); // Default to primary if no images
-    setUploadDialogOpen(true);
-    
-    // Clear the input
-    event.target.value = '';
-  };
-
-  // Handle image upload with metadata
-  const handleImageUpload = async () => {
-    if (!pendingFile) return;
-
-    setIsUploading(true);
-
-    try {
-      // Get access token from session
-      const sessionResponse = await fetch('/api/auth/session');
-      if (!sessionResponse.ok) {
-        throw new Error('Failed to get authentication token');
-      }
-      const session = await sessionResponse.json();
-      const token = session.accessToken;
-
-      if (!token) {
-        throw new Error('No access token available');
-      }
-
-      // Create FormData for multipart upload
-      const formData = new FormData();
-      formData.append('file', pendingFile);
-      
-      if (imageDescription.trim()) {
-        formData.append('description', imageDescription.trim());
-      }
-      
-      formData.append('isPrimary', String(isPrimaryImage));
-
-      // Upload to backend API using single image endpoint
-      const uploadResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082'}/api/offerings/${offeringId}/images/single`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      if (!uploadResponse.ok) {
-        // Try to parse JSON error response first
-        let errorMessage = `Upload failed with status ${uploadResponse.status}`;
-        
-        try {
-          const contentType = uploadResponse.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const errorData = await uploadResponse.json();
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          } else {
-            const errorText = await uploadResponse.text();
-            errorMessage = errorText || errorMessage;
-          }
-        } catch (parseError) {
-          // If parsing fails, use the status text
-          errorMessage = uploadResponse.statusText || errorMessage;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const result = await uploadResponse.json();
-
-      // Refresh images list - force refetch
-      await queryClient.invalidateQueries({ queryKey: ['offering', offeringId, 'images'] });
-      await queryClient.refetchQueries({ queryKey: ['offering', offeringId, 'images'] });
-      
-      toast({
-        title: t('common.success'),
-        description: result.message || t('offering.uploadSuccess'),
-      });
-
-      // Close dialog and reset state
-      setUploadDialogOpen(false);
-      setPendingFile(null);
-      setImageDescription('');
-      setIsPrimaryImage(false);
-    } catch (error) {
-      let errorMessage = t('offering.uploadError');
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      
-      // Handle common error scenarios
-      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-        errorMessage = t('offering.networkError');
-      } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-        errorMessage = t('offering.sessionExpired');
-      } else if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
-        errorMessage = t('offering.permissionError');
-      } else if (errorMessage.includes('404')) {
-        errorMessage = t('offering.offeringNotFound');
-      } else if (errorMessage.includes('413') || errorMessage.includes('too large')) {
-        errorMessage = t('offering.imageTooLarge');
-      } else if (errorMessage.includes('415') || errorMessage.includes('Unsupported Media Type')) {
-        errorMessage = t('offering.invalidImageTypeDescription');
-      }
-      
-      toast({
-        title: t('offering.uploadFailedTitle'),
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   if (offeringLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -423,24 +254,14 @@ export default function OfferingDetailPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{t('offering.images')}</CardTitle>
-                <label htmlFor="image-upload">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    disabled={isUploading}
-                    onClick={() => document.getElementById('image-upload')?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {isUploading ? t('common.uploading') : t('common.upload')}
-                  </Button>
-                </label>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageFileSelect}
-                />
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setUploadDialogOpen(true)}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  {t('common.upload')}
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -571,71 +392,16 @@ export default function OfferingDetailPage() {
         </div>
       </div>
 
-      {/* Upload Image Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('offering.uploadImageTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('offering.imageDialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="description">{t('offering.imageDescriptionLabel')}</Label>
-              <Textarea
-                id="description"
-                placeholder={t('offering.captionPlaceholder')}
-                value={imageDescription}
-                onChange={(e) => setImageDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isPrimary"
-                checked={isPrimaryImage}
-                onCheckedChange={(checked) => setIsPrimaryImage(checked as boolean)}
-              />
-              <Label
-                htmlFor="isPrimary"
-                className="text-sm font-normal cursor-pointer"
-              >
-                {t('offering.setPrimaryImage')}
-              </Label>
-            </div>
-
-            {pendingFile && (
-              <div className="text-sm text-muted-foreground">
-                {t('offering.selectedFileLabel')} {pendingFile.name} ({(pendingFile.size / 1024).toFixed(2)} KB)
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setUploadDialogOpen(false);
-                setPendingFile(null);
-                setImageDescription('');
-                setIsPrimaryImage(false);
-              }}
-              disabled={isUploading}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={handleImageUpload}
-              disabled={isUploading || !pendingFile}
-            >
-              {isUploading ? t('common.uploading') : t('common.upload')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Multi-Image Upload Dialog */}
+      <OfferingImageUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        offeringId={offeringId}
+        hasExistingImages={images.length > 0}
+        onUploadSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['offering', offeringId, 'images'] });
+        }}
+      />
     </div>
   );
 }
