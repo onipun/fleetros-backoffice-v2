@@ -127,6 +127,18 @@ export interface VehicleImage {
   _links?: Links;
 }
 
+export interface OfferingImage {
+  id?: number;
+  imageUrl: string;
+  thumbnail?: string;
+  isPrimary: boolean;
+  description?: string;
+  caption?: string;
+  uploadedAt?: string;
+  createdAt?: string;
+  _links?: Links;
+}
+
 export interface Pricing {
   id?: number;
   vehicle?: string; // HATEOAS link to vehicle

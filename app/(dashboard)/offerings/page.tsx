@@ -235,6 +235,11 @@ export default function OfferingsPage() {
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <div className="flex items-center justify-center gap-2">
+                              <Link href={`/offerings/${offeringId}`}>
+                                <Button size="sm" variant="ghost">
+                                  {t('common.view')}
+                                </Button>
+                              </Link>
                               <Link href={`/offerings/${offeringId}/edit`}>
                                 <Button size="sm" variant="ghost">
                                   {t('common.edit')}
