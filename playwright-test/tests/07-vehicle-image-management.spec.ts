@@ -47,18 +47,14 @@ test.describe('Vehicle Image Management Operations', () => {
     
     await page.waitForURL('**/vehicles', { timeout: 15000 });
     
-    await page.reload({ waitUntil: 'networkidle' });
     await TestHelpers.delay(1000);
     
-    // Search for the vehicle to handle pagination
-    const searchInput = page.locator('input[type="search"], input[placeholder*="Search"]');
-    if (await searchInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await searchInput.clear();
-      await searchInput.fill(vehicleData.name);
-      await TestHelpers.delay(500); // Wait for search debounce
-    }
+    // Use VehiclesListPage for proper search
+    const { VehiclesListPage } = await import('../pages/vehicles-list.page');
+    const vehiclesListPage = new VehiclesListPage(page);
+    await vehiclesListPage.searchAndVerifyVehicle(vehicleData.name);
     
-    // Click the "View Details" button instead of the vehicle name
+    // Navigate to vehicle detail
     const viewDetailsButton = page.locator('button:has-text("View Details"), a:has-text("View Details")').first();
     await viewDetailsButton.click();
     await page.waitForURL('**/vehicles/*');
@@ -66,7 +62,9 @@ test.describe('Vehicle Image Management Operations', () => {
     const match = url.match(/\/vehicles\/(\d+)/);
     testVehicleId = match ? match[1] : '';
     
-    // Create test image
+    console.log('beforeAll: Created vehicle with ID:', testVehicleId);
+    
+    // Create test image file using TestHelpers
     const fixturesDir = path.join(__dirname, '../fixtures');
     if (!fs.existsSync(fixturesDir)) {
       fs.mkdirSync(fixturesDir, { recursive: true });
@@ -79,6 +77,7 @@ test.describe('Vehicle Image Management Operations', () => {
   });
 
   test.afterAll(async () => {
+    // Cleanup generated test image file
     if (fs.existsSync(testImagePath)) {
       fs.unlinkSync(testImagePath);
     }
@@ -86,16 +85,64 @@ test.describe('Vehicle Image Management Operations', () => {
 
   test('IMG-READ-001: View all vehicle images', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Upload multiple images', async () => {
+      console.log('IMG-READ-001: testVehicleId =', testVehicleId);
+      console.log('IMG-READ-001: testImagePath =', testImagePath);
+      
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
       
-      // Upload 3 images
+      const currentUrl = authenticatedPage.url();
+      console.log('IMG-READ-001: Current URL =', currentUrl);
+      
+      // Upload 3 images using API instead of UI (faster and more reliable)
+      const token = await TestHelpers.getAccessToken(authenticatedPage);
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
+      
       for (let i = 0; i < 3; i++) {
-        await vehicleDetailPage.uploadImage(testImagePath, `Image ${i + 1}`, i === 0);
-        await TestHelpers.delay(2000);
+        console.log(`IMG-READ-001: Uploading image ${i + 1} via API...`);
+        
+        // Read the image file
+        const imageBuffer = fs.readFileSync(testImagePath);
+        const formData = new FormData();
+        formData.append('image', new Blob([imageBuffer], { type: 'image/png' }), 'test-image.png');
+        formData.append('description', `Image ${i + 1}`);
+        formData.append('isPrimary', i === 0 ? 'true' : 'false');
+        
+        const response = await authenticatedPage.request.post(
+          `${apiBaseUrl}/api/vehicles/${testVehicleId}/images`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            multipart: {
+              files: {
+                name: 'test-image.png',
+                mimeType: 'image/png',
+                buffer: imageBuffer
+              },
+              description: `Image ${i + 1}`,
+              isPrimary: i === 0 ? 'true' : 'false'
+            }
+          }
+        );
+        
+        if (!response.ok()) {
+          const responseText = await response.text();
+          console.log(`IMG-READ-001: Upload failed with status ${response.status()}: ${responseText}`);
+          throw new Error(`Image upload failed: ${response.status()} - ${responseText}`);
+        }
+        console.log(`IMG-READ-001: Image ${i + 1} uploaded successfully`);
       }
+      
+      // Reload page to see uploaded images
+      await authenticatedPage.reload();
+      await TestHelpers.delay(1000);
     });
 
     await test.step('Reload page and verify all images displayed', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
       await TestHelpers.delay(1000);
       
@@ -115,6 +162,8 @@ test.describe('Vehicle Image Management Operations', () => {
 
   test('IMG-READ-002: View image in fullscreen', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle with images', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
@@ -144,107 +193,148 @@ test.describe('Vehicle Image Management Operations', () => {
     let emptyVehicleId: string;
     
     await test.step('Create vehicle without images', async () => {
-      const page = await browser.newPage();
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      
+      // Use LoginPage for proper authentication
+      const { LoginPage } = await import('../pages/login.page');
+      const loginPage = new LoginPage(page);
+      
+      // Use VehicleFormPage for proper form handling
+      const { VehicleFormPage } = await import('../pages/vehicle-form.page');
+      const vehicleFormPage = new VehicleFormPage(page);
+      
       await page.goto('/');
       
-      const username = process.env.TEST_USERNAME || 'john.admin';
-      const password = process.env.TEST_PASSWORD || 'SecurePassword123!';
-      const usernameInput = page.locator('input[name="username"], input[type="text"]').first();
+      // Check if already logged in
+      const isLoggedIn = await page.locator('[href="/vehicles"], nav, header').first().isVisible({ timeout: 2000 }).catch(() => false);
       
-      if (await usernameInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await usernameInput.fill(username);
-        await page.locator('input[type="password"]').fill(password);
-        await page.locator('button[type="submit"]').click();
-        await page.waitForLoadState('networkidle');
+      if (!isLoggedIn) {
+        const username = process.env.TEST_USERNAME || 'john.admin';
+        const password = process.env.TEST_PASSWORD || 'a123456A!';
+        await loginPage.login(username, password);
+        await page.waitForLoadState('domcontentloaded');
       }
       
       const vehicleData = TestHelpers.generateVehicleData('NoImages');
       
       await page.goto('/vehicles/new');
-      await page.locator('input[name="name"]').fill(vehicleData.name);
-      await page.locator('input[name="licensePlate"]').fill(vehicleData.licensePlate);
-      await page.locator('button:has-text("Next")').click();
-      await TestHelpers.delay(500);
-      
-      await page.locator('input[name="make"]').fill(vehicleData.make);
-      await page.locator('input[name="model"]').fill(vehicleData.model);
-      await page.locator('input[name="year"]').fill(String(vehicleData.year));
-      await page.locator('input[name="vin"]').fill(vehicleData.vin);
-      await page.locator('input[name="odometer"]').fill(String(vehicleData.odometer));
-      await page.locator('button:has-text("Next")').click();
-      await TestHelpers.delay(500);
-      
-      await page.locator('button:has-text("Next")').click();
-      await TestHelpers.delay(500);
-      await page.locator('button:has-text("Next")').click();
-      await TestHelpers.delay(500);
-      await page.locator('button[type="submit"]').click();
+      await vehicleFormPage.waitForFormLoad();
+      await vehicleFormPage.fillCompleteForm(vehicleData);
+      await vehicleFormPage.clickSubmit();
       await page.waitForURL('**/vehicles', { timeout: 15000 });
       
-      await page.locator(`text=${vehicleData.name}`).click();
+      await TestHelpers.delay(1000);
+      
+      // Use VehiclesListPage for proper search
+      const { VehiclesListPage } = await import('../pages/vehicles-list.page');
+      const vehiclesListPage = new VehiclesListPage(page);
+      await vehiclesListPage.searchAndVerifyVehicle(vehicleData.name);
+      
+      // Navigate to vehicle detail
+      const viewDetailsButton = page.locator('button:has-text("View Details"), a:has-text("View Details")').first();
+      await viewDetailsButton.click();
       await page.waitForURL('**/vehicles/*');
       const url = page.url();
       const match = url.match(/\/vehicles\/(\d+)/);
       emptyVehicleId = match ? match[1] : '';
       
       await page.close();
+      await context.close();
     });
 
     await test.step('Verify empty state', async () => {
-      const page = await browser.newPage();
-      await page.goto('/');
+      const context = await browser.newContext();
+      const page = await context.newPage();
       
-      const username = process.env.TEST_USERNAME || 'john.admin';
-      const password = process.env.TEST_PASSWORD || 'SecurePassword123!';
-      const usernameInput = page.locator('input[name="username"], input[type="text"]').first();
-      
-      if (await usernameInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await usernameInput.fill(username);
-        await page.locator('input[type="password"]').fill(password);
-        await page.locator('button[type="submit"]').click();
-        await page.waitForLoadState('networkidle');
-      }
-      
+      // Navigate directly - session should already exist from vehicle creation
       await page.goto(`/vehicles/${emptyVehicleId}`);
-      await TestHelpers.delay(1000);
+      await TestHelpers.delay(2000);
+      
+      // Check if we're on the vehicle detail page
+      const currentUrl = page.url();
+      if (!currentUrl.includes(`/vehicles/${emptyVehicleId}`)) {
+        // If redirected to login, authenticate
+        const { LoginPage } = await import('../pages/login.page');
+        const loginPage = new LoginPage(page);
+        
+        const username = process.env.TEST_USERNAME || 'john.admin';
+        const password = process.env.TEST_PASSWORD || 'a123456A!';
+        
+        await loginPage.login(username, password);
+        await page.waitForLoadState('domcontentloaded');
+        
+        // Navigate again after login
+        await page.goto(`/vehicles/${emptyVehicleId}`);
+        await TestHelpers.delay(2000);
+      }
       
       const uploadButton = page.locator('button:has-text("Upload")');
       await expect(uploadButton).toBeVisible();
       
       await page.close();
+      await context.close();
     });
   });
 
   test('IMG-DELETE-001: Delete vehicle image', async ({ authenticatedPage, vehicleDetailPage }) => {
+    await test.step('Ensure vehicle has images', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
+      await vehicleDetailPage.goto(testVehicleId);
+      
+      const currentCount = await vehicleDetailPage.getImageCount();
+      
+      // Upload at least 3 images if vehicle has none
+      if (currentCount < 3) {
+        const imagesToUpload = 3 - currentCount;
+        for (let i = 0; i < imagesToUpload; i++) {
+          await vehicleDetailPage.uploadImage(testImagePath, `Test Image ${i + 1}`, i === 0 && currentCount === 0);
+          await TestHelpers.delay(1500);
+        }
+      }
+    });
+
     await test.step('Navigate to vehicle with images', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
     const initialCount = await vehicleDetailPage.getImageCount();
 
     await test.step('Delete first image', async () => {
-      // Hover over image to show delete button
-      const firstImage = vehicleDetailPage.imageGallery.first();
-      await firstImage.hover();
-      await TestHelpers.delay(500);
+      // Set up native dialog handler to accept the browser confirm()
+      const dialogPromise = new Promise<void>((resolve) => {
+        authenticatedPage.once('dialog', async dialog => {
+          console.log(`Dialog detected: ${dialog.type()} - ${dialog.message()}`);
+          await dialog.accept();
+          resolve();
+        });
+      });
       
-      // Click delete button
+      // Click delete button on first image - this triggers the native confirm()
       await vehicleDetailPage.deleteImage(0);
-      await TestHelpers.delay(500);
       
-      // Confirm deletion
-      await vehicleDetailPage.confirmImageDelete();
+      // Wait for dialog to be handled
+      await dialogPromise;
+      
+      // Wait for the page to update after deletion
+      await authenticatedPage.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
       await TestHelpers.delay(2000);
     });
 
     await test.step('Verify image deleted', async () => {
       const finalCount = await vehicleDetailPage.getImageCount();
+      console.log(`Initial count: ${initialCount}, Final count: ${finalCount}`);
       expect(finalCount).toBe(initialCount - 1);
     });
   });
 
   test('IMG-DELETE-002: Delete primary image', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Ensure vehicle has a primary image', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
       
       const hasPrimary = await authenticatedPage.locator('text=/primary/i').first().isVisible({ timeout: 2000 }).catch(() => false);
@@ -256,7 +346,9 @@ test.describe('Vehicle Image Management Operations', () => {
       }
     });
 
-    await test.step('Delete the primary image', async () => {
+    await test.step('Delete primary image', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
       
       // Find primary image and delete it
@@ -282,6 +374,8 @@ test.describe('Vehicle Image Management Operations', () => {
 
   test('IMG-DELETE-003: Cancel image deletion', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle with images', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 

@@ -47,44 +47,41 @@ test.describe('Vehicle Image Upload Operations', () => {
     
     await page.waitForURL('**/vehicles', { timeout: 15000 });
     
-    await page.reload({ waitUntil: 'networkidle' });
     await TestHelpers.delay(1000);
     
-    // Search for the vehicle to handle pagination
-    const searchInput = page.locator('input[type="search"], input[placeholder*="Search"]');
-    if (await searchInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await searchInput.clear();
-      await searchInput.fill(vehicleData.name);
-      await TestHelpers.delay(500); // Wait for search debounce
-    }
+    // Use VehiclesListPage for proper search
+    const { VehiclesListPage } = await import('../pages/vehicles-list.page');
+    const vehiclesListPage = new VehiclesListPage(page);
+    await vehiclesListPage.searchAndVerifyVehicle(vehicleData.name);
     
-    // Click the "View Details" button instead of the vehicle name
+    // Click the "View Details" button
     const viewDetailsButton = page.locator('button:has-text("View Details"), a:has-text("View Details")').first();
     await viewDetailsButton.click();
     await page.waitForURL('**/vehicles/*');
     const url = page.url();
     const match = url.match(/\/vehicles\/(\d+)/);
     testVehicleId = match ? match[1] : '';
+    console.log('Created test vehicle with ID:', testVehicleId);
     
-    // Create test image files
+    // Create test image files using TestHelpers
     const fixturesDir = path.join(__dirname, '../fixtures');
     if (!fs.existsSync(fixturesDir)) {
       fs.mkdirSync(fixturesDir, { recursive: true });
     }
     
-    // Create PNG image
+    // Create PNG image (100KB - valid size)
     const pngPath = path.join(fixturesDir, 'test-image.png');
     fs.writeFileSync(pngPath, TestHelpers.createTestImageBuffer(100));
     testImagePaths['png'] = pngPath;
     
-    // Create JPEG image
+    // Create JPEG image (150KB - valid size)
     const jpegPath = path.join(fixturesDir, 'test-image.jpg');
     fs.writeFileSync(jpegPath, TestHelpers.createTestImageBuffer(150));
     testImagePaths['jpeg'] = jpegPath;
     
-    // Create large image
+    // Create large image (11MB - exceeds limit for validation tests)
     const largePath = path.join(fixturesDir, 'large-image.png');
-    fs.writeFileSync(largePath, TestHelpers.createTestImageBuffer(11 * 1024)); // 11MB
+    fs.writeFileSync(largePath, TestHelpers.createTestImageBuffer(11 * 1024));
     testImagePaths['large'] = largePath;
     
     await page.close();
@@ -92,7 +89,7 @@ test.describe('Vehicle Image Upload Operations', () => {
   });
 
   test.afterAll(async () => {
-    // Cleanup test image files
+    // Cleanup all generated test image files
     for (const imagePath of Object.values(testImagePaths)) {
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
@@ -102,8 +99,23 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-001: Upload single image with metadata', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      console.log('Navigating to vehicle ID:', testVehicleId);
+      // First navigate to vehicles list to ensure we're authenticated
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
+      
+      // Then navigate to the specific vehicle
       await vehicleDetailPage.goto(testVehicleId);
+      await TestHelpers.delay(1000);
+      
+      // Verify we're on the correct vehicle page
+      const currentUrl = authenticatedPage.url();
+      console.log('Current URL:', currentUrl);
+      expect(currentUrl).toContain(`/vehicles/${testVehicleId}`);
     });
+
+    const initialCount = await vehicleDetailPage.getImageCount();
+    console.log('Initial image count:', initialCount);
 
     await test.step('Upload image with description', async () => {
       await vehicleDetailPage.uploadImage(
@@ -111,14 +123,14 @@ test.describe('Vehicle Image Upload Operations', () => {
         'Front view of the vehicle',
         true
       );
+      // Wait for upload to complete before checking toast
+      await TestHelpers.delay(1000);
     });
 
     await test.step('Verify upload success', async () => {
-      await TestHelpers.verifyToastMessage(authenticatedPage, /success|uploaded/i);
-      
-      // Verify image appears in gallery
-      const imageCount = await vehicleDetailPage.getImageCount();
-      expect(imageCount).toBeGreaterThan(0);
+      // Verify image appears in gallery (more reliable than toast)
+      const finalCount = await vehicleDetailPage.getImageCount();
+      expect(finalCount).toBeGreaterThan(initialCount);
     });
 
     await test.step('Verify primary badge', async () => {
@@ -128,6 +140,8 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-002: Upload multiple images sequentially', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
@@ -151,6 +165,8 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-003: Validation - Upload oversized image', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
@@ -174,6 +190,8 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-004: Validation - Upload invalid file type', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
@@ -202,6 +220,8 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-005: Upload image without description', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
@@ -222,6 +242,8 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-006: Set uploaded image as primary', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
@@ -237,6 +259,8 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-007: Cancel upload dialog', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 
@@ -282,6 +306,8 @@ test.describe('Vehicle Image Upload Operations', () => {
 
   test('IMG-UPLOAD-009: Upload with special characters in description', async ({ authenticatedPage, vehicleDetailPage }) => {
     await test.step('Navigate to vehicle detail page', async () => {
+      await authenticatedPage.goto('/vehicles');
+      await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
     });
 

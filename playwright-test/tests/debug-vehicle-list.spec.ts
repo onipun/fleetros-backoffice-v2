@@ -1,12 +1,17 @@
 import { test } from '@playwright/test';
+import { LoginPage } from '../pages/login.page';
 
 test('Debug: Check what vehicles are shown', async ({ page }) => {
-  // Login
-  await page.goto('http://localhost:3000');
-  await page.fill('input[name="username"]', 'john.admin');
-  await page.fill('input[name="password"]', 'a123456A!');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/dashboard');
+  // Login using LoginPage with Keycloak flow
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  
+  const username = process.env.TEST_USERNAME || 'john.admin';
+  const password = process.env.TEST_PASSWORD || 'a123456A!';
+  await loginPage.login(username, password);
+  
+  // Wait for redirect to dashboard after successful login
+  await page.waitForURL('**/dashboard', { timeout: 15000 }).catch(() => {});
   
   // Go to vehicles page
   await page.goto('http://localhost:3000/vehicles');

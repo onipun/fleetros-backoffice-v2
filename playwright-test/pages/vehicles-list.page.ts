@@ -19,7 +19,8 @@ export class VehiclesListPage {
   constructor(page: Page) {
     this.page = page;
     this.addVehicleButton = page.locator('a[href="/vehicles/new"], button:has-text("Add Vehicle")').first();
-    this.searchInput = page.locator('input[type="search"], input[placeholder*="vehicle"], input[placeholder*="Search"]');
+    // Updated selector to match the search input in vehicle-search-filters component
+    this.searchInput = page.locator('input#searchValue, input[type="search"], input[placeholder*="vehicle"], input[placeholder*="Search"]');
     this.searchButton = page.locator('button:has-text("Search"), button[type="submit"]').first();
     this.searchModeSelect = page.locator('select[name="searchMode"]');
     this.carTypeFilter = page.locator('select[name="carType"]');
@@ -42,22 +43,19 @@ export class VehiclesListPage {
   }
 
   async searchVehicle(searchTerm: string) {
-    // Click "By Name" button to enable name search
-    const byNameButton = this.page.getByRole('button', { name: 'By Name' });
-    if (await byNameButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await byNameButton.click();
-      await TestHelpers.delay(1000); // Wait for React state update and input render
-    }
+    // Wait for search input to appear (search mode should already be selected)
+    await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
     
-    // Wait for search input to appear
-    await this.searchInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    // Additional delay to ensure input is fully interactive
+    await TestHelpers.delay(500);
     
-    // Fill search term
+    // Clear and fill search term
+    await this.searchInput.clear();
     await this.searchInput.fill(searchTerm);
     
     // Click search button to trigger search (exact match to avoid "Advanced Search")
     const searchButton = this.page.getByRole('button', { name: 'Search', exact: true });
-    await searchButton.waitFor({ state: 'visible', timeout: 3000 });
+    await searchButton.waitFor({ state: 'visible', timeout: 5000 });
     await searchButton.click();
     
     await TestHelpers.delay(1500); // Wait for search to complete
@@ -170,23 +168,109 @@ export class VehiclesListPage {
   }
 
   async selectSearchMode(mode: string) {
+    // Try select dropdown first
     if (await this.searchModeSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
       await this.searchModeSelect.selectOption(mode);
       await TestHelpers.delay(500);
+      return;
+    }
+    
+    // Otherwise use button-based mode selection
+    const modeButtons: Record<string, string> = {
+      'name': 'By Name',
+      'make': 'By Make',
+      'model': 'By Model',
+      'licensePlate': 'By License Plate',
+      'status': 'By Status',
+      'category': 'By Category',
+      'seating': 'By Seating',
+      'advanced': 'Advanced Search',
+      'all': 'All Vehicles'
+    };
+    
+    const buttonText = modeButtons[mode];
+    if (buttonText) {
+      const modeButton = this.page.getByRole('button', { name: buttonText, exact: true });
+      if (await modeButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await modeButton.click();
+        await TestHelpers.delay(1500); // Wait for mode to change and input to render
+      }
+    }
+  }
+
+  async selectStatus(status: string) {
+    // Status is selected via Select component with id="status"
+    const statusSelect = this.page.locator('#status');
+    if (await statusSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await statusSelect.click();
+      await TestHelpers.delay(500);
+      // Click the option in the dropdown (exact match to avoid "Available" matching "Unavailable")
+      const option = this.page.getByRole('option', { name: status, exact: true });
+      await option.click();
+      await TestHelpers.delay(500);
+      // Click Search button to apply filter
+      const searchButton = this.page.getByRole('button', { name: 'Search', exact: true });
+      if (await searchButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await searchButton.click();
+        await TestHelpers.delay(1500);
+        await this.page.waitForLoadState('networkidle');
+      }
     }
   }
 
   async filterByCarType(carType: string) {
-    if (await this.carTypeFilter.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await this.carTypeFilter.selectOption(carType);
+    // Car type is selected via Select component with id="carType"
+    // carType is the enum value like "SEDAN", but display text is "Sedan"
+    const carTypeSelect = this.page.locator('#carType');
+    if (await carTypeSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await carTypeSelect.click();
       await TestHelpers.delay(500);
+      // Map enum values to display text
+      const displayTextMap: Record<string, string> = {
+        'SEDAN': 'Sedan',
+        'SUV': 'SUV',
+        'VAN': 'Van',
+        'HATCHBACK': 'Hatchback',
+        'COUPE': 'Coupe',
+        'CONVERTIBLE': 'Convertible',
+        'WAGON': 'Wagon',
+        'PICKUP': 'Pickup',
+        'LUXURY': 'Luxury',
+        'SPORTS': 'Sports',
+        'ELECTRIC': 'Electric',
+        'HYBRID': 'Hybrid',
+        'MOTORCYCLE': 'Motorcycle',
+        'OTHER': 'Other'
+      };
+      const displayText = displayTextMap[carType] || carType;
+      // Click the option in the dropdown
+      const option = this.page.getByRole('option', { name: displayText, exact: true });
+      await option.click();
+      await TestHelpers.delay(500);
+      // Click Search button to apply filter
+      const searchButton = this.page.getByRole('button', { name: 'Search', exact: true });
+      if (await searchButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await searchButton.click();
+        await TestHelpers.delay(1500);
+        await this.page.waitForLoadState('networkidle');
+      }
     }
   }
 
   async filterBySeaterCount(count: number) {
-    if (await this.seaterCountInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await this.seaterCountInput.fill(String(count));
+    // Seater count input with id="seaterCount"
+    const seaterInput = this.page.locator('#seaterCount');
+    if (await seaterInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await seaterInput.clear();
+      await seaterInput.fill(String(count));
       await TestHelpers.delay(500);
+      // Click Search button to apply filter
+      const searchButton = this.page.getByRole('button', { name: 'Search', exact: true });
+      if (await searchButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await searchButton.click();
+        await TestHelpers.delay(1500);
+        await this.page.waitForLoadState('networkidle');
+      }
     }
   }
 
