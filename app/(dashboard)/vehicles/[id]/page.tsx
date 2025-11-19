@@ -3,9 +3,9 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { VehicleImageUploadDialog } from '@/components/vehicle/vehicle-image-upload-dialog';
 import { VehiclePricingList } from '@/components/vehicle/vehicle-pricing-list';
 import { VehicleDetailSkeleton } from '@/components/vehicle/vehicle-skeletons';
-import { VehicleImageUploadDialog } from '@/components/vehicle/vehicle-image-upload-dialog';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import type { Vehicle, VehicleImage } from '@/types';

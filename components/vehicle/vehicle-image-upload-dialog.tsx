@@ -1,24 +1,23 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useLocale } from '@/components/providers/locale-provider';
 import { toast } from '@/hooks/use-toast';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
-import { useState, useCallback, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { Image as ImageIcon, Upload, X } from 'lucide-react';
 import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 interface ImageWithMetadata {
   file: File;
