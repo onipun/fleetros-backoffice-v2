@@ -51,13 +51,15 @@
     "exportCSV": "Export CSV",
     "retry": "Retry",
     "refresh": "Refresh",
-  "saveChanges": "Save Changes",
+    "saveChanges": "Save Changes",
     "required": "*",
-  "optional": "Optional",
-  "notAvailable": "Not available",
-  "seconds": "seconds",
-  "yes": "Yes",
-  "no": "No"
+    "optional": "Optional",
+    "notAvailable": "Not available",
+    "seconds": "seconds",
+    "yes": "Yes",
+    "no": "No",
+    "characters": "characters",
+    "done": "Done"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -714,6 +716,7 @@
         "insurancePolicy": "Insurance Policy",
         "status": "Status"
       },
+      "discountDisabledByPackage": "This package does not allow discount codes to be applied",
       "placeholders": {
         "pickupLocation": "e.g., Airport Terminal",
         "dropoffLocation": "e.g., Downtown Office",
@@ -1067,16 +1070,76 @@
     "validityPeriod": "Validity Period",
     "pricingRequirements": "Pricing & Requirements",
     "priceModifierHelper": "Enter the factor used to adjust final pricing. 1.00 keeps the base price, values below 1 apply a discount.",
+    "pricingConfig": "Pricing Configuration",
+    "pricingConfigDescription": "Configure how this package modifies the base rental price",
+    "modifierType": "Modifier Type",
+    "priceModifier": "Price Modifier",
+    "allowDiscountOnModifier": "Allow Discount Codes",
+    "allowDiscountOnModifierDescription": "When enabled, customers can apply discount codes on top of this package modifier",
+    "allowDiscountOnModifierWarning": "⚠️ Discount codes cannot be applied with this package",
+    "noDiscounts": "No Discounts",
+    "discountsAllowed": "Discounts OK",
+    "noDiscountsWarning": "Additional discount codes cannot be applied when using this package",
+    "fixedAmount": "fixed",
+    "percentageModifier": "modifier",
+    "modifierType": {
+      "fixed": "Fixed Amount",
+      "percentage": "Percentage",
+      "fixedHelp": "Add or subtract a fixed dollar amount from the base price",
+      "percentageHelp": "Multiply the base price by a percentage (positive increases, negative decreases)"
+    },
+    "priceModifier": {
+      "fixedExample": "e.g., +$50 surcharge or -$20 discount",
+      "percentageExample": "e.g., 20 for 20% increase, -20 for 20% discount"
+    },
     "table": {
+      "banner": "Image",
       "name": "Name",
       "priceModifier": "Price Modifier",
+      "discountAllowed": "Discounts",
       "minRentalDays": "Min. Rental Days",
       "validFrom": "Valid From",
       "validTo": "Valid To",
       "offerings": "Included Offerings",
       "status": "Status",
       "actions": "Actions"
-    }
+    },
+    "banner": {
+      "title": "Banner Image",
+      "description": "Upload a banner image for this package (max 10MB, JPEG/PNG/GIF/WebP)",
+      "noImage": "No banner image uploaded",
+      "supportedFormats": "Supported: JPEG, PNG, GIF, WebP (max 10MB)",
+      "selectFile": "Select Image",
+      "upload": "Upload",
+      "uploading": "Uploading...",
+      "replace": "Replace Image",
+      "preview": "Preview",
+      "deleteConfirm": "Are you sure you want to delete this banner image?",
+      "error": "Image Error",
+      "uploadSuccess": "Banner image uploaded successfully",
+      "replacedSuccess": "Banner image replaced successfully",
+      "deleteSuccess": "Banner image deleted successfully",
+      "uploadFailed": "Failed to upload banner image",
+      "deleteFailed": "Failed to delete banner image",
+      "updateFailed": "Failed to update banner metadata",
+      "savePackageFirst": "Please save the package first before uploading a banner image",
+      "metadataUpdated": "Image metadata updated successfully",
+      "descriptionLabel": "Image Description",
+      "descriptionPlaceholder": "Describe this image...",
+      "altTextLabel": "Alt Text",
+      "altTextPlaceholder": "Alternative text for accessibility",
+      "altTextDefault": "Package banner image",
+      "uploadedAt": "Uploaded",
+      "editMetadata": "Edit Metadata"
+    },
+    "validation": {
+      "title": "Validation Error",
+      "requiredDates": "Valid From and Valid To dates are required",
+      "dateOrder": "Valid From must be before Valid To"
+    },
+    "createSuccess": "Package created successfully",
+    "updateSuccess": "Package updated successfully",
+    "errorTitle": "Package Error"
   },
   "payment": {
     "title": "Payments",

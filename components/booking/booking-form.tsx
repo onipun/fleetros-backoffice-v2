@@ -745,6 +745,32 @@ export function BookingForm({
                   </Button>
                 )}
               </div>
+              {selectedPackage && (
+                <div className="rounded-md border p-3 bg-muted/30 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{selectedPackage.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedPackage.modifierType === 'FIXED' 
+                          ? `${selectedPackage.priceModifier > 0 ? '+' : ''}${formatCurrency(selectedPackage.priceModifier)} ${t('package.fixedAmount')}`
+                          : `${selectedPackage.priceModifier > 0 ? '+' : ''}${selectedPackage.priceModifier}% ${t('package.percentageModifier')}`
+                        }
+                      </p>
+                    </div>
+                    {selectedPackage.allowDiscountOnModifier === false && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/50 px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber-300 shrink-0">
+                        <AlertTriangle className="h-3 w-3" />
+                        {t('package.noDiscounts')}
+                      </span>
+                    )}
+                  </div>
+                  {selectedPackage.allowDiscountOnModifier === false && (
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      {t('package.noDiscountsWarning')}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -755,6 +781,7 @@ export function BookingForm({
                   value={formState.discountId ?? undefined}
                   onChange={(id) => handleSelect('discountId')(id)}
                   className="w-full md:min-w-[300px]"
+                  disabled={selectedPackage?.allowDiscountOnModifier === false}
                 />
                 {formState.discountId && (
                   <Button
@@ -768,6 +795,11 @@ export function BookingForm({
                   </Button>
                 )}
               </div>
+              {selectedPackage?.allowDiscountOnModifier === false && (
+                <p className="text-xs text-muted-foreground">
+                  {t('booking.form.discountDisabledByPackage')}
+                </p>
+              )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

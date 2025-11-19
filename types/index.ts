@@ -436,14 +436,33 @@ export interface Offering {
   _links?: Links;
 }
 
+export type PackageModifierType = 'FIXED' | 'PERCENTAGE';
+
+export interface PackageImage {
+  id: number;
+  imageUrl: string;
+  description?: string;
+  altText?: string;
+  uploadedAt: string;
+}
+
+export interface PackageImageUploadResponse {
+  message: string;
+  image: PackageImage;
+  replaced: boolean;
+}
+
 export interface Package {
   id?: number;
   name: string;
   description?: string;
   priceModifier: number;
+  modifierType?: PackageModifierType;
+  allowDiscountOnModifier?: boolean;
   validFrom: string;
   validTo: string;
   minRentalDays: number;
+  bannerImage?: PackageImage;
   createdAt?: string;
   updatedAt?: string;
   offerings?: Offering[];
@@ -615,6 +634,8 @@ export interface PackageSummary {
   packageId: number;
   packageName: string;
   priceModifier: number;
+  modifierType?: PackageModifierType;
+  allowDiscountOnModifier?: boolean;
   discountPercentage: number;
   amountBeforePackage: number;
   packageDiscount: number;
@@ -694,6 +715,8 @@ export interface PackageSnapshot {
   packageId: number;
   packageName: string;
   priceModifier: number;
+  modifierType?: PackageModifierType;
+  allowDiscountOnModifier?: boolean;
   discountAmount: number;
 }
 

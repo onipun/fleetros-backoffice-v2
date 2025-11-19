@@ -7,10 +7,11 @@ import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { useCollection } from '@/lib/api/hooks';
+import { getImageUrl, getPackageImage } from '@/lib/api/package-image-api';
 import { formatDate, parseHalResource } from '@/lib/utils';
-import type { HATEOASCollection, Offering, Package } from '@/types';
+import type { HATEOASCollection, Offering, Package, PackageImage } from '@/types';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Download, Plus, Search } from 'lucide-react';
+import { Box, Download, Image as ImageIcon, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -74,6 +75,39 @@ export default function PackagesPage() {
           </span>
         )}
       </div>
+    );
+  };
+
+  // Component to fetch and display banner image for a single package
+  const PackageBannerThumbnail = ({ pkg }: { pkg: Package }) => {
+    const { data: bannerImage } = useQuery<PackageImage | null>({
+      queryKey: ['package', pkg.id, 'banner'],
+      queryFn: async () => {
+        if (!pkg.id) return null;
+        try {
+          return await getPackageImage(pkg.id);
+        } catch {
+          return null;
+        }
+      },
+      enabled: Boolean(pkg.id),
+      staleTime: 300000, // Cache for 5 minutes
+    });
+
+    if (!bannerImage) {
+      return (
+        <div className="flex items-center justify-center w-20 h-12 rounded border bg-muted">
+          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={getImageUrl(bannerImage.imageUrl)}
+        alt={bannerImage.altText || pkg.name || t('package.banner.altTextDefault')}
+        className="w-20 h-12 rounded border object-cover"
+      />
     );
   };
 
@@ -148,8 +182,10 @@ export default function PackagesPage() {
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium">{t('package.table.banner')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('package.table.name')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('package.table.priceModifier')}</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">{t('package.table.discountAllowed')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('package.table.minRentalDays')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('package.table.validFrom')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('package.table.validTo')}</th>
@@ -166,6 +202,9 @@ export default function PackagesPage() {
                       return (
                         <tr key={pkg.id} className="hover:bg-muted/30">
                           <td className="px-4 py-3 text-sm">
+                            <PackageBannerThumbnail pkg={pkg} />
+                          </td>
+                          <td className="px-4 py-3 text-sm">
                             <div className="flex items-center gap-2">
                               <Box className="h-4 w-4 text-primary shrink-0" />
                               <div className="flex flex-col">
@@ -178,9 +217,35 @@ export default function PackagesPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-sm font-semibold text-primary">
-                            {(pkg.priceModifier ?? 0) > 0 ? '+' : ''}
-                            {pkg.priceModifier ?? 0}%
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-semibold text-primary">
+                                {(pkg.priceModifier ?? 0) > 0 && pkg.modifierType !== 'FIXED' ? '+' : ''}
+                                {(pkg.priceModifier ?? 0) < 0 && pkg.modifierType !== 'FIXED' ? '' : ''}
+                                {pkg.priceModifier ?? 0}
+                                {pkg.modifierType === 'PERCENTAGE' ? '%' : ''}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {pkg.modifierType === 'FIXED' ? t('package.modifierType.fixed') : t('package.modifierType.percentage')}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            {pkg.allowDiscountOnModifier === false ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/50 px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber-300">
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                {t('package.noDiscounts')}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-950/50 px-2 py-1 text-xs font-medium text-green-800 dark:text-green-300">
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {t('package.discountsAllowed')}
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {pkg.minRentalDays ?? 0} {t('package.daysSuffix')}
