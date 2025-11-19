@@ -43,10 +43,25 @@ export class VehiclesListPage {
   }
 
   async searchVehicle(searchTerm: string) {
-    // Wait for search input to appear (search mode should already be selected)
-    await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
+    // Wait for page to be fully loaded
+    await this.page.waitForLoadState('networkidle');
+    await TestHelpers.delay(500);
     
-    // Additional delay to ensure input is fully interactive
+    // Check if search input is already visible (a search mode was already selected)
+    const inputAlreadyVisible = await this.searchInput.isVisible({ timeout: 1000 }).catch(() => false);
+    
+    if (!inputAlreadyVisible) {
+      // No input visible yet, need to select "By Name" mode
+      const byNameButton = this.page.getByRole('button', { name: 'By Name' });
+      if (await byNameButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+        console.log(`Clicking "By Name" button to enable name search`);
+        await byNameButton.click();
+        await TestHelpers.delay(1000); // Wait for React state update and input render
+      }
+    }
+    
+    // Wait for search input to appear
+    await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
     await TestHelpers.delay(500);
     
     // Clear and fill search term

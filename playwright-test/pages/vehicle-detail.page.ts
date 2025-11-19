@@ -32,8 +32,11 @@ export class VehicleDetailPage {
   }
 
   async goto(vehicleId: string | number) {
-    await this.page.goto(`/vehicles/${vehicleId}`);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto(`/vehicles/${vehicleId}`, { timeout: 30000 });
+    await this.page.waitForLoadState('domcontentloaded');
+    // Wait for the main content to be visible instead of networkidle
+    await this.vehicleName.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    await TestHelpers.delay(1000);
   }
 
   async clickEdit() {
