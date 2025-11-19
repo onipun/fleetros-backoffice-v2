@@ -279,6 +279,9 @@ test.describe('Vehicle Image Upload Operations', () => {
       // Click cancel if dialog is visible
       const cancelButton = authenticatedPage.locator('[role="dialog"] button:has-text("Cancel")');
       if (await cancelButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        // Scroll into view before clicking
+        await cancelButton.scrollIntoViewIfNeeded();
+        await TestHelpers.delay(300);
         await cancelButton.click();
       }
     });

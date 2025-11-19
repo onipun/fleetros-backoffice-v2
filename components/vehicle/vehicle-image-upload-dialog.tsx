@@ -247,7 +247,7 @@ export function VehicleImageUploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('vehicle.uploadImagesTitle')}</DialogTitle>
           <DialogDescription>

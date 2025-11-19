@@ -106,7 +106,11 @@ export class VehicleDetailPage {
       throw new Error('Upload button is disabled - check if file is selected and valid');
     }
     
-    // Click and wait briefly
+    // Scroll the upload button into view (dialog is now scrollable)
+    await uploadButton.scrollIntoViewIfNeeded();
+    await TestHelpers.delay(300);
+    
+    // Click the button
     await uploadButton.click();
     await TestHelpers.delay(500);
     
