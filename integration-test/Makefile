@@ -84,9 +84,9 @@ infra-start: ## Start infrastructure (PostgreSQL + Keycloak)
 	@echo "  - Password: admin"
 	@echo "  - Realm: backoffice"
 	@echo ""
-	@echo "$(YELLOW)⚠$(NC) Run your Next.js application to connect"
-	@echo "  Example: npm run dev (in the main directory)"
+	@echo "$(GREEN)ℹ$(NC) Starting Next.js application in dev mode..."
 	@echo ""
+	@cd .. && npm run dev
 
 infra-stop: ## Stop infrastructure
 	@echo "$(BLUE)═══════════════════════════════════════$(NC)"
