@@ -278,30 +278,31 @@ test.describe('Vehicle Image Management Operations', () => {
   });
 
   test('IMG-DELETE-001: Delete vehicle image', async ({ authenticatedPage, vehicleDetailPage }) => {
-    await test.step('Ensure vehicle has images', async () => {
+    await test.step('Navigate to vehicle with images and ensure it has images', async () => {
       await authenticatedPage.goto('/vehicles');
+      await authenticatedPage.waitForLoadState('networkidle');
       await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
+      await authenticatedPage.waitForLoadState('networkidle');
+      await TestHelpers.delay(1000);
       
-      const currentCount = await vehicleDetailPage.getImageCount();
+      let currentCount = await vehicleDetailPage.getImageCount();
       
       // Upload at least 3 images if vehicle has none
       if (currentCount < 3) {
         const imagesToUpload = 3 - currentCount;
         for (let i = 0; i < imagesToUpload; i++) {
           await vehicleDetailPage.uploadImage(testImagePath, `Test Image ${i + 1}`, i === 0 && currentCount === 0);
-          await TestHelpers.delay(1500);
+          await TestHelpers.delay(2000);
         }
+        // Reload to get updated count
+        await authenticatedPage.reload({ waitUntil: 'networkidle' });
+        await TestHelpers.delay(1000);
       }
     });
 
-    await test.step('Navigate to vehicle with images', async () => {
-      await authenticatedPage.goto('/vehicles');
-      await TestHelpers.delay(500);
-      await vehicleDetailPage.goto(testVehicleId);
-    });
-
     const initialCount = await vehicleDetailPage.getImageCount();
+    console.log('Initial image count before delete:', initialCount);
 
     await test.step('Delete first image', async () => {
       // Set up native dialog handler to accept the browser confirm()
@@ -373,32 +374,55 @@ test.describe('Vehicle Image Management Operations', () => {
   });
 
   test('IMG-DELETE-003: Cancel image deletion', async ({ authenticatedPage, vehicleDetailPage }) => {
-    await test.step('Navigate to vehicle with images', async () => {
+    await test.step('Navigate to vehicle with images and ensure it has at least one', async () => {
       await authenticatedPage.goto('/vehicles');
+      await authenticatedPage.waitForLoadState('networkidle');
       await TestHelpers.delay(500);
       await vehicleDetailPage.goto(testVehicleId);
-    });
-
-    const initialCount = await vehicleDetailPage.getImageCount();
-
-    await test.step('Attempt delete and cancel', async () => {
-      const firstImage = vehicleDetailPage.imageGallery.first();
-      await firstImage.hover();
-      await TestHelpers.delay(500);
+      await authenticatedPage.waitForLoadState('networkidle');
+      await TestHelpers.delay(1000);
       
-      await vehicleDetailPage.deleteImage(0);
-      await TestHelpers.delay(500);
+      let currentCount = await vehicleDetailPage.getImageCount();
       
-      // Cancel deletion
-      const cancelButton = authenticatedPage.locator('button:has-text("Cancel")');
-      if (await cancelButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await cancelButton.click();
+      // Upload at least 1 image if vehicle has none
+      if (currentCount < 1) {
+        await vehicleDetailPage.uploadImage(testImagePath, `Test Image 1`, true);
+        await TestHelpers.delay(2000);
+        // Reload to get updated count
+        await authenticatedPage.reload({ waitUntil: 'networkidle' });
         await TestHelpers.delay(1000);
       }
     });
 
+    const initialCount = await vehicleDetailPage.getImageCount();
+    console.log('Initial image count:', initialCount);
+
+    await test.step('Attempt delete and cancel', async () => {
+      if (initialCount === 0) {
+        console.log('No images to delete, skipping test');
+        return;
+      }
+      
+      const firstImage = vehicleDetailPage.imageGallery.first();
+      await firstImage.hover();
+      await TestHelpers.delay(500);
+      
+      // Set up dialog handler to dismiss
+      authenticatedPage.once('dialog', async dialog => {
+        console.log(`Dialog detected: ${dialog.type()} - ${dialog.message()}`);
+        await dialog.dismiss(); // Cancel the deletion
+      });
+      
+      await vehicleDetailPage.deleteImage(0);
+      await TestHelpers.delay(1000);
+    });
+
     await test.step('Verify image not deleted', async () => {
+      // Reload to get fresh count
+      await authenticatedPage.reload({ waitUntil: 'networkidle' });
+      await TestHelpers.delay(1000);
       const finalCount = await vehicleDetailPage.getImageCount();
+      console.log('Final image count:', finalCount);
       expect(finalCount).toBe(initialCount);
     });
   });

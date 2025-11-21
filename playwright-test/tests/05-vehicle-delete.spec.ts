@@ -48,11 +48,24 @@ test.describe('Vehicle Delete Operations', () => {
       // Verify success message
       await TestHelpers.verifyToastMessage(authenticatedPage, /success|deleted/i);
       
-      // Verify vehicle no longer exists in list
+      // Verify vehicle no longer exists by trying to navigate to it directly
       await TestHelpers.delay(1000);
-      const vehicleCard = authenticatedPage.locator(`text=${vehicleName}`);
-      const isVisible = await vehicleCard.isVisible({ timeout: 2000 }).catch(() => false);
-      expect(isVisible).toBe(false);
+      await authenticatedPage.goto(`/vehicles/${vehicleId}`);
+      await TestHelpers.delay(2000);
+      
+      // Should show error or redirect to list page
+      const currentUrl = authenticatedPage.url();
+      const isOnDetailPage = currentUrl.includes(`/vehicles/${vehicleId}`) && !currentUrl.includes('/vehicles/new');
+      
+      // If still on detail page, check for error message
+      if (isOnDetailPage) {
+        const errorMessage = authenticatedPage.locator('text=/not found|error/i');
+        const hasError = await errorMessage.isVisible({ timeout: 2000 }).catch(() => false);
+        expect(hasError || !isOnDetailPage).toBe(true);
+      } else {
+        // Redirected away from detail page - deletion successful
+        expect(isOnDetailPage).toBe(false);
+      }
     });
   });
 
