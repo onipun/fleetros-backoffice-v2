@@ -4,7 +4,9 @@ import { DiscountForm, type DiscountFormState } from '@/components/discount/disc
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { linkDiscountToOfferings, linkDiscountToPackages } from '@/lib/api/discount-api';
 import { hateoasClient } from '@/lib/api/hateoas-client';
+import type { Discount } from '@/types';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -22,19 +24,13 @@ function buildDiscountPayload(values: DiscountFormState) {
     applicableScope: values.applicableScope,
     description: values.description,
     status: values.status,
+    // New fields
+    priority: values.priority,
+    autoApply: values.autoApply,
+    requiresPromoCode: values.requiresPromoCode,
+    combinableWithOtherDiscounts: values.combinableWithOtherDiscounts,
+    firstTimeCustomerOnly: values.firstTimeCustomerOnly,
   };
-
-  if (values.applicableScope === 'PACKAGE' && values.targetEntityId) {
-    payload.package = `/api/packages/${values.targetEntityId}`;
-  }
-
-  if (values.applicableScope === 'OFFERING' && values.targetEntityId) {
-    payload.offering = `/api/offerings/${values.targetEntityId}`;
-  }
-
-  if (values.applicableScope === 'BOOKING' && values.targetEntityId) {
-    payload.booking = `/api/v1/bookings/${values.targetEntityId}`;
-  }
 
   return payload;
 }
@@ -45,8 +41,45 @@ export default function NewDiscountPage() {
 
   const createDiscount = useMutation({
     mutationFn: async (values: DiscountFormState) => {
+      // Step 1: Create the discount
       const payload = buildDiscountPayload(values);
-      return hateoasClient.create('discounts', payload);
+      const createdDiscount = await hateoasClient.create<Discount>('discounts', payload);
+
+      if (!createdDiscount.id) {
+        throw new Error('Discount created but no ID returned');
+      }
+
+      // Step 2: Link to packages if applicable
+      if (values.applicableScope === 'PACKAGE' && values.selectedPackageIds.length > 0) {
+        try {
+          await linkDiscountToPackages(createdDiscount.id, values.selectedPackageIds);
+        } catch (linkError: any) {
+          console.error('Failed to link packages:', linkError);
+          // Don't fail the whole operation, just log warning
+          toast({
+            title: 'Warning',
+            description: `Discount created but failed to link packages: ${linkError.message}`,
+            variant: 'default',
+          });
+        }
+      }
+
+      // Step 3: Link to offerings if applicable
+      if (values.applicableScope === 'OFFERING' && values.selectedOfferingIds.length > 0) {
+        try {
+          await linkDiscountToOfferings(createdDiscount.id, values.selectedOfferingIds);
+        } catch (linkError: any) {
+          console.error('Failed to link offerings:', linkError);
+          // Don't fail the whole operation, just log warning
+          toast({
+            title: 'Warning',
+            description: `Discount created but failed to link offerings: ${linkError.message}`,
+            variant: 'default',
+          });
+        }
+      }
+
+      return createdDiscount;
     },
     onSuccess: () => {
       toast({

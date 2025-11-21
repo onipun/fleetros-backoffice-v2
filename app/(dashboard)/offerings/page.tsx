@@ -36,13 +36,13 @@ export default function OfferingsPage() {
     mutationFn: async (offeringId: number | string) => {
       return hateoasClient.delete('offerings', offeringId);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['offerings'] });
       toast({
         title: t('common.success'),
         description: 'Offering deleted successfully',
       });
-      refetch();
+      await refetch();
     },
     onError: (error: Error) => {
       toast({

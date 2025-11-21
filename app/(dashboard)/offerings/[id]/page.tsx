@@ -86,12 +86,14 @@ export default function OfferingDetailPage() {
     mutationFn: async () => {
       await hateoasClient.delete('offerings', offeringId);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['offerings'] });
       toast({
         title: t('common.success'),
         description: t('offering.deleteSuccess'),
       });
       router.push('/offerings');
+      router.refresh();
     },
     onError: (error: Error) => {
       toast({
@@ -148,8 +150,8 @@ export default function OfferingDetailPage() {
         throw new Error(errorMessage);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offering', offeringId, 'images'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['offering', offeringId, 'images'] });
       toast({
         title: t('common.success'),
         description: t('offering.deleteImageSuccess'),

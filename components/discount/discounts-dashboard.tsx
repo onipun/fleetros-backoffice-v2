@@ -45,6 +45,14 @@ function resolveTargetEntity(discount: Discount, t: (key: string) => string) {
   const scope = discount.applicableScope ?? 'ALL';
 
   if (scope === 'PACKAGE') {
+    // Check for multiple packages (new API format)
+    const packageIds = discount.applicablePackageIds;
+    if (packageIds && packageIds.length > 0) {
+      return packageIds.length === 1 
+        ? `${t('discount.scope.package')} #${packageIds[0]}`
+        : `${packageIds.length} ${t('discount.scope.package')}s`;
+    }
+    // Fallback to single package ID (legacy format)
     const packageId = discount.packageId
       ?? (typeof discount.package === 'string' ? extractNumericId(discount.package) : undefined)
       ?? extractNumericId(discount._links?.package?.href);
@@ -52,6 +60,14 @@ function resolveTargetEntity(discount: Discount, t: (key: string) => string) {
   }
 
   if (scope === 'OFFERING') {
+    // Check for multiple offerings (new API format)
+    const offeringIds = discount.applicableOfferingIds;
+    if (offeringIds && offeringIds.length > 0) {
+      return offeringIds.length === 1
+        ? `${t('discount.scope.offering')} #${offeringIds[0]}`
+        : `${offeringIds.length} ${t('discount.scope.offering')}s`;
+    }
+    // Fallback to single offering ID (legacy format)
     const offeringId = discount.offeringId
       ?? (typeof discount.offering === 'string' ? extractNumericId(discount.offering) : undefined)
       ?? extractNumericId(discount._links?.offering?.href);
@@ -63,6 +79,10 @@ function resolveTargetEntity(discount: Discount, t: (key: string) => string) {
       ?? (typeof discount.booking === 'string' ? extractNumericId(discount.booking) : undefined)
       ?? extractNumericId(discount._links?.booking?.href);
     return bookingId ? `${t('discount.scope.booking')} #${bookingId}` : t('discount.scope.booking');
+  }
+
+  if (scope === 'VEHICLE') {
+    return t('discount.scope.vehicle');
   }
 
   return t('discount.scope.all');
@@ -102,6 +122,7 @@ export function DiscountsDashboard({
     () => ({
       PERCENTAGE: t('discount.type.percentage'),
       FIXED: t('discount.type.fixed'),
+      FIXED_AMOUNT: t('discount.type.fixed_amount'),
       FLAT: t('discount.type.fixed'),
       AMOUNT: t('discount.type.fixed'),
     }),
@@ -194,6 +215,7 @@ export function DiscountsDashboard({
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('discount.table.type')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('discount.table.scope')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('discount.table.status')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">Flags</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('discount.table.validFrom')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('discount.table.validTo')}</th>
                       <th className="px-4 py-3 text-right text-sm font-medium">{t('discount.table.minBooking')}</th>
@@ -237,6 +259,35 @@ export function DiscountsDashboard({
                             <span className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusBadgeClasses(discount.status)}`}>
                               {statusLabel ?? t('discount.status.unknown')}
                             </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {discount.autoApply && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" title="Auto-apply enabled">
+                                  Auto
+                                </span>
+                              )}
+                              {discount.requiresPromoCode && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" title="Requires promo code">
+                                  Code
+                                </span>
+                              )}
+                              {discount.combinableWithOtherDiscounts && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" title="Can be combined">
+                                  +
+                                </span>
+                              )}
+                              {discount.firstTimeCustomerOnly && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" title="First-time customers only">
+                                  1st
+                                </span>
+                              )}
+                              {discount.priority != null && discount.priority > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" title={`Priority: ${discount.priority}`}>
+                                  P{discount.priority}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {discount.validFrom

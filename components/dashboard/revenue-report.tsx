@@ -56,12 +56,20 @@ export function RevenueReport({
       setError(null);
 
       const dates = startDate && endDate ? { start: startDate, end: endDate } : getDefaultDates();
+      
+      console.log('Fetching revenue report:', {
+        accountId,
+        startDate: dates.start,
+        endDate: dates.end,
+      });
+      
       const data = await getRevenueReport(accountId, dates.start, dates.end);
 
       setReport(data);
     } catch (err: any) {
       console.error('Failed to fetch revenue report:', err);
-      setError(err.message || 'Failed to load revenue report');
+      const errorMessage = err?.message || err?.error || 'Failed to load revenue report. Please check if the reporting service is running.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -95,21 +103,42 @@ export function RevenueReport({
   }
 
   if (error) {
+    const isNetworkError = error.includes('Network error') || error.includes('Unable to connect');
+    
     return (
       <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <div className="text-center space-y-2">
+        <CardHeader>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Revenue Report Unavailable
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
             <p className="text-sm font-medium text-destructive">
               Failed to load revenue report
             </p>
             <p className="text-xs text-muted-foreground">{error}</p>
-            <button
-              onClick={fetchReport}
-              className="text-xs text-primary hover:underline"
-            >
-              Try again
-            </button>
           </div>
+          
+          {isNetworkError && (
+            <div className="rounded-md bg-muted p-3 space-y-2">
+              <p className="text-xs font-semibold">Troubleshooting Steps:</p>
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Ensure the reporting service is running on port 8084</li>
+                <li>Check the <code className="bg-background px-1 rounded">NEXT_PUBLIC_REPORTING_API_URL</code> environment variable</li>
+                <li>Verify network connectivity and CORS settings</li>
+                <li>Check the browser console for detailed error logs</li>
+              </ol>
+            </div>
+          )}
+          
+          <button
+            onClick={fetchReport}
+            className="text-sm px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
         </CardContent>
       </Card>
     );

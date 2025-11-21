@@ -80,6 +80,8 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
       }
       setError(null);
 
+      console.log('Fetching dashboard statistics:', { accountId, forceRefresh });
+
       const data = forceRefresh
         ? await refreshDashboardStatistics(accountId)
         : await getDashboardStatistics(accountId);
@@ -87,7 +89,8 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
       setStatistics(data);
     } catch (err: any) {
       console.error('Failed to fetch dashboard statistics:', err);
-      setError(err.message || 'Failed to load statistics');
+      const errorMessage = err?.message || err?.error || 'Failed to load statistics. Please check if the reporting service is running.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -119,21 +122,42 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
   }
 
   if (error) {
+    const isNetworkError = error.includes('Network error') || error.includes('Unable to connect');
+    
     return (
       <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <div className="text-center space-y-2">
+        <CardHeader>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Dashboard Statistics Unavailable
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
             <p className="text-sm font-medium text-destructive">
               Failed to load statistics
             </p>
             <p className="text-xs text-muted-foreground">{error}</p>
-            <button
-              onClick={() => fetchStatistics()}
-              className="text-xs text-primary hover:underline"
-            >
-              Try again
-            </button>
           </div>
+          
+          {isNetworkError && (
+            <div className="rounded-md bg-muted p-3 space-y-2">
+              <p className="text-xs font-semibold">Troubleshooting Steps:</p>
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Ensure the reporting service is running on port 8084</li>
+                <li>Check the <code className="bg-background px-1 rounded">NEXT_PUBLIC_REPORTING_API_URL</code> environment variable</li>
+                <li>Verify network connectivity and CORS settings</li>
+                <li>Check the browser console for detailed error logs</li>
+              </ol>
+            </div>
+          )}
+          
+          <button
+            onClick={() => fetchStatistics()}
+            className="text-sm px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
         </CardContent>
       </Card>
     );

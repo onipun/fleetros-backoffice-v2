@@ -4,6 +4,15 @@ import { DiscountForm, type DiscountFormState } from '@/components/discount/disc
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import {
+  fetchLinkedOfferings,
+  fetchLinkedPackages,
+  linkDiscountToOfferings,
+  linkDiscountToPackages,
+  parseApplicableIds,
+  unlinkAllOfferings,
+  unlinkAllPackages,
+} from '@/lib/api/discount-api';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import type { Discount } from '@/types';
 import { DiscountStatus as DiscountStatusEnum, DiscountType as DiscountTypeEnum } from '@/types';
@@ -43,7 +52,7 @@ function getTargetEntityId(discount: Discount) {
   }
 }
 
-function mapDiscountToFormState(discount: Discount): DiscountFormState {
+function mapDiscountToFormState(discount: Discount & { linkedPackageIds?: number[]; linkedOfferingIds?: number[] }): DiscountFormState {
   return {
     code: discount.code ?? '',
     type: discount.type ?? DiscountTypeEnum.PERCENTAGE,
@@ -56,6 +65,15 @@ function mapDiscountToFormState(discount: Discount): DiscountFormState {
     applicableScope: discount.applicableScope ?? 'ALL',
     description: discount.description ?? '',
     status: discount.status ?? DiscountStatusEnum.INACTIVE,
+    // New fields
+    priority: discount.priority ?? 10,
+    autoApply: discount.autoApply ?? false,
+    requiresPromoCode: discount.requiresPromoCode ?? true,
+    combinableWithOtherDiscounts: discount.combinableWithOtherDiscounts ?? true,
+    firstTimeCustomerOnly: discount.firstTimeCustomerOnly ?? false,
+    // Use fetched linked IDs, fallback to parsing from string fields if they exist
+    selectedPackageIds: discount.linkedPackageIds ?? parseApplicableIds(discount.applicablePackageIds),
+    selectedOfferingIds: discount.linkedOfferingIds ?? parseApplicableIds(discount.applicableOfferingIds),
     targetEntityId: getTargetEntityId(discount),
   };
 }
@@ -72,19 +90,13 @@ function buildDiscountPayload(values: DiscountFormState) {
     applicableScope: values.applicableScope,
     description: values.description,
     status: values.status,
+    // New fields
+    priority: values.priority,
+    autoApply: values.autoApply,
+    requiresPromoCode: values.requiresPromoCode,
+    combinableWithOtherDiscounts: values.combinableWithOtherDiscounts,
+    firstTimeCustomerOnly: values.firstTimeCustomerOnly,
   };
-
-  if (values.applicableScope === 'PACKAGE' && values.targetEntityId) {
-    payload.package = `/api/packages/${values.targetEntityId}`;
-  }
-
-  if (values.applicableScope === 'OFFERING' && values.targetEntityId) {
-    payload.offering = `/api/offerings/${values.targetEntityId}`;
-  }
-
-  if (values.applicableScope === 'BOOKING' && values.targetEntityId) {
-    payload.booking = `/api/v1/bookings/${values.targetEntityId}`;
-  }
 
   return payload;
 }
@@ -102,15 +114,74 @@ export default function EditDiscountPage() {
     error,
   } = useQuery({
     queryKey: ['discount', discountId],
-    queryFn: async () => hateoasClient.getResource<Discount>('discounts', discountId),
+    queryFn: async () => {
+      const discountData = await hateoasClient.getResource<Discount>('discounts', discountId);
+      
+      // Fetch linked packages and offerings
+      const numericId = parseInt(discountId, 10);
+      const [linkedPackages, linkedOfferings] = await Promise.all([
+        fetchLinkedPackages(numericId),
+        fetchLinkedOfferings(numericId),
+      ]);
+      
+      // Attach the fetched IDs to the discount object
+      return {
+        ...discountData,
+        linkedPackageIds: linkedPackages,
+        linkedOfferingIds: linkedOfferings,
+      };
+    },
   });
 
   const initialData = useMemo(() => (discount ? mapDiscountToFormState(discount) : undefined), [discount]);
 
   const updateDiscount = useMutation({
     mutationFn: async (values: DiscountFormState) => {
+      // Step 1: Update the discount
       const payload = buildDiscountPayload(values);
-      return hateoasClient.update('discounts', discountId, payload);
+      const updatedDiscount = await hateoasClient.update<Discount>('discounts', discountId, payload);
+
+      const numericId = parseInt(discountId, 10);
+
+      // Step 2: Update package associations
+      if (values.applicableScope === 'PACKAGE') {
+        try {
+          if (values.selectedPackageIds.length > 0) {
+            await linkDiscountToPackages(numericId, values.selectedPackageIds);
+          } else {
+            // Remove all package links if none selected
+            await unlinkAllPackages(numericId);
+          }
+        } catch (linkError: any) {
+          console.error('Failed to update package associations:', linkError);
+          toast({
+            title: 'Warning',
+            description: `Discount updated but failed to update package associations: ${linkError.message}`,
+            variant: 'default',
+          });
+        }
+      }
+
+      // Step 3: Update offering associations
+      if (values.applicableScope === 'OFFERING') {
+        try {
+          if (values.selectedOfferingIds.length > 0) {
+            await linkDiscountToOfferings(numericId, values.selectedOfferingIds);
+          } else {
+            // Remove all offering links if none selected
+            await unlinkAllOfferings(numericId);
+          }
+        } catch (linkError: any) {
+          console.error('Failed to update offering associations:', linkError);
+          toast({
+            title: 'Warning',
+            description: `Discount updated but failed to update offering associations: ${linkError.message}`,
+            variant: 'default',
+          });
+        }
+      }
+
+      return updatedDiscount;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discounts'] });

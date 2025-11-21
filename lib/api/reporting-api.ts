@@ -33,12 +33,22 @@ async function getAuthToken(): Promise<string | null> {
  * Handle API errors consistently
  */
 function handleApiError(error: unknown): never {
+  console.error('API Error:', error);
+  
   if (error instanceof Response) {
     throw {
       message: error.statusText || 'Request failed',
       status: error.status,
     } as ReportingError;
   }
+  
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    throw {
+      message: `Network error: Unable to connect to reporting service at ${REPORTING_API_BASE_URL}. Please check if the service is running.`,
+      status: 0,
+    } as ReportingError;
+  }
+  
   throw {
     message: error instanceof Error ? error.message : 'Unknown error occurred',
     status: 500,

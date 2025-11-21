@@ -1201,12 +1201,14 @@
     "type": {
       "percentage": "Percentage",
       "fixed": "Fixed Amount",
+      "fixed_amount": "Fixed Amount",
       "unknown": "Unknown"
     },
     "scope": {
       "package": "Package",
       "offering": "Offering",
       "booking": "Booking",
+      "vehicle": "Vehicle",
       "all": "All entities"
     },
     "toast": {
@@ -1225,7 +1227,12 @@
       "amountHelper": "Enter the fixed discount amount.",
       "selectPackageLabel": "Target Package",
       "selectOfferingLabel": "Target Offering",
+      "selectPackagesLabel": "Select Packages",
+      "selectPackagesDescription": "Choose which packages this discount applies to. Leave empty to apply to all packages.",
+      "selectOfferingsLabel": "Select Offerings",
+      "selectOfferingsDescription": "Choose which offerings this discount applies to. Leave empty to apply to all offerings.",
       "bookingScopeHint": "Discount will be applied to all bookings.",
+      "vehicleScopeHint": "Discount will be applied to all vehicles.",
       "detailsTitle": "Discount Details",
       "codeLabel": "Discount Code",
       "codePlaceholder": "e.g., SAVE10",
@@ -1242,6 +1249,19 @@
       "validToLabel": "Valid To",
       "descriptionTitle": "Description",
       "descriptionPlaceholder": "Describe how and when this discount should be used...",
+      "advancedTitle": "Advanced Settings",
+      "advancedDescription": "Configure priority, auto-apply, and combination rules",
+      "priorityLabel": "Priority",
+      "priorityHelper": "Higher priority discounts are applied first when multiple discounts are applicable (0-100).",
+      "autoApplyLabel": "Auto-Apply",
+      "autoApplyDescription": "Automatically apply this discount without requiring a promo code.",
+      "requiresPromoCodeLabel": "Requires Promo Code",
+      "requiresPromoCodeDescription": "Customers must enter the discount code to use this discount.",
+      "combinableLabel": "Combinable with Other Discounts",
+      "combinableDescription": "This discount can be combined with other discounts.",
+      "firstTimeOnlyLabel": "First-Time Customers Only",
+      "firstTimeOnlyDescription": "This discount is only available for first-time customers.",
+      "autoApplyConflictWarning": "Auto-apply and requires promo code cannot both be enabled.",
       "errors": {
         "codeRequired": "Please enter a discount code.",
         "validRangeRequired": "Valid from and valid to dates are required.",
@@ -1251,7 +1271,11 @@
         "minBookingNegative": "Minimum booking amount cannot be negative.",
         "maxUsesMinimum": "Maximum uses must be at least 1.",
         "packageRequired": "Select a package for this scope.",
-        "offeringRequired": "Select an offering for this scope."
+        "offeringRequired": "Select an offering for this scope.",
+        "autoApplyConflict": "A discount cannot both auto-apply and require a promo code. Please disable one option.",
+        "priorityRange": "Priority must be between 0 and 100.",
+        "packagesRequired": "Select at least one package for this scope.",
+        "offeringsRequired": "Select at least one offering for this scope."
       }
     },
     "table": {

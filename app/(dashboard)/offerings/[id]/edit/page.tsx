@@ -122,13 +122,14 @@ export default function EditOfferingPage() {
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ['offerings'] });
-      queryClient.invalidateQueries({ queryKey: ['offering', offeringId] });
+      await queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      await queryClient.invalidateQueries({ queryKey: ['offering', offeringId] });
       toast({
         title: t('common.success'),
         description: t('toast.updateSuccess'),
       });
       router.push('/offerings');
+      router.refresh();
     },
     onError: (error: Error) => {
       toast({
@@ -144,13 +145,14 @@ export default function EditOfferingPage() {
     mutationFn: async () => {
       return hateoasClient.delete('offerings', offeringId);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['offerings'] });
       toast({
         title: t('common.success'),
         description: 'Offering deleted successfully',
       });
       router.push('/offerings');
+      router.refresh();
     },
     onError: (error: Error) => {
       toast({

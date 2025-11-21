@@ -96,8 +96,9 @@ export default function NewOfferingPage() {
         title: t('common.success'),
         description: t('toast.createSuccess'),
       });
-      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      await queryClient.invalidateQueries({ queryKey: ['offerings'] });
       router.push('/offerings');
+      router.refresh();
     },
     onError: (error: Error) => {
       toast({

@@ -70,7 +70,7 @@ export enum PaymentStatus {
 
 export enum DiscountType {
   PERCENTAGE = 'PERCENTAGE',
-  FIXED = 'FIXED',
+  FIXED_AMOUNT = 'FIXED_AMOUNT',
 }
 
 export enum DiscountStatus {
@@ -79,7 +79,7 @@ export enum DiscountStatus {
   EXPIRED = 'EXPIRED',
 }
 
-export type DiscountScope = 'ALL' | 'PACKAGE' | 'OFFERING' | 'BOOKING';
+export type DiscountScope = 'ALL' | 'PACKAGE' | 'OFFERING' | 'BOOKING' | 'VEHICLE';
 
 export enum OfferingType {
   GPS = 'GPS',
@@ -483,6 +483,15 @@ export interface Discount {
   applicableScope: DiscountScope;
   description?: string;
   status: DiscountStatus;
+  // New fields from API
+  priority?: number;
+  autoApply?: boolean;
+  requiresPromoCode?: boolean;
+  combinableWithOtherDiscounts?: boolean;
+  firstTimeCustomerOnly?: boolean;
+  applicablePackageIds?: string; // Comma-separated IDs: "5,7,9"
+  applicableOfferingIds?: string; // Comma-separated IDs: "12,15"
+  // Legacy single entity fields (kept for backward compatibility)
   package?: string;
   packageId?: number;
   offering?: string;

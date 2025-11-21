@@ -3,15 +3,17 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
-import { EntitySelect } from '@/components/ui/entity-select';
+import { EntityMultiSelect } from '@/components/ui/entity-multi-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import type { DiscountScope, DiscountStatus, DiscountType } from '@/types';
 import { DiscountStatus as DiscountStatusEnum, DiscountType as DiscountTypeEnum } from '@/types';
+import { AlertCircle, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 
@@ -27,6 +29,16 @@ export type DiscountFormState = {
   applicableScope: DiscountScope;
   description: string;
   status: DiscountStatus;
+  // New fields
+  priority: number;
+  autoApply: boolean;
+  requiresPromoCode: boolean;
+  combinableWithOtherDiscounts: boolean;
+  firstTimeCustomerOnly: boolean;
+  // Multi-select support
+  selectedPackageIds: number[];
+  selectedOfferingIds: number[];
+  // Legacy field for backward compatibility
   targetEntityId?: number;
 };
 
@@ -50,10 +62,17 @@ const defaultValues: DiscountFormState = {
   applicableScope: 'ALL',
   description: '',
   status: DiscountStatusEnum.ACTIVE,
+  priority: 10,
+  autoApply: false,
+  requiresPromoCode: true,
+  combinableWithOtherDiscounts: true,
+  firstTimeCustomerOnly: false,
+  selectedPackageIds: [],
+  selectedOfferingIds: [],
   targetEntityId: undefined,
 };
 
-const scopeOptions: DiscountScope[] = ['ALL', 'PACKAGE', 'OFFERING', 'BOOKING'];
+const scopeOptions: DiscountScope[] = ['ALL', 'PACKAGE', 'OFFERING', 'BOOKING', 'VEHICLE'];
 
 export function DiscountForm({
   initialData,
@@ -117,6 +136,8 @@ export function DiscountForm({
     handleChange({
       applicableScope: scope,
       targetEntityId: undefined,
+      selectedPackageIds: [],
+      selectedOfferingIds: [],
     });
   };
 
@@ -158,12 +179,18 @@ export function DiscountForm({
       return;
     }
 
-    if ((formState.applicableScope === 'PACKAGE' || formState.applicableScope === 'OFFERING') && !formState.targetEntityId) {
-      showValidationError(
-        formState.applicableScope === 'PACKAGE'
-          ? 'discount.form.errors.packageRequired'
-          : 'discount.form.errors.offeringRequired',
-      );
+    if (formState.applicableScope === 'PACKAGE' && formState.selectedPackageIds.length === 0) {
+      showValidationError('discount.form.errors.packageRequired');
+      return;
+    }
+
+    if (formState.applicableScope === 'OFFERING' && formState.selectedOfferingIds.length === 0) {
+      showValidationError('discount.form.errors.offeringRequired');
+      return;
+    }
+
+    if (formState.autoApply && formState.requiresPromoCode) {
+      showValidationError('discount.form.errors.autoApplyConflict');
       return;
     }
 
@@ -212,36 +239,44 @@ export function DiscountForm({
   const renderTargetSelector = () => {
     if (formState.applicableScope === 'PACKAGE') {
       return (
-        <div className="space-y-2">
-          <Label>
-            {t('discount.form.selectPackageLabel')} {t('common.required')}
-          </Label>
-          <EntitySelect
-            entityType="package"
-            value={formState.targetEntityId}
-            onChange={(id) => handleChange({ targetEntityId: id })}
-          />
-        </div>
+        <EntityMultiSelect
+          entityType="package"
+          selectedIds={formState.selectedPackageIds}
+          onChange={(ids) => handleChange({ selectedPackageIds: ids })}
+          label={`${t('discount.form.selectPackagesLabel')} ${t('common.required')}`}
+          description={t('discount.form.selectPackagesDescription')}
+        />
       );
     }
 
     if (formState.applicableScope === 'OFFERING') {
       return (
-        <div className="space-y-2">
-          <Label>
-            {t('discount.form.selectOfferingLabel')} {t('common.required')}
-          </Label>
-          <EntitySelect
-            entityType="offering"
-            value={formState.targetEntityId}
-            onChange={(id) => handleChange({ targetEntityId: id })}
-          />
-        </div>
+        <EntityMultiSelect
+          entityType="offering"
+          selectedIds={formState.selectedOfferingIds}
+          onChange={(ids) => handleChange({ selectedOfferingIds: ids })}
+          label={`${t('discount.form.selectOfferingsLabel')} ${t('common.required')}`}
+          description={t('discount.form.selectOfferingsDescription')}
+        />
       );
     }
 
     if (formState.applicableScope === 'BOOKING') {
-      return <p className="text-xs text-muted-foreground">{t('discount.form.bookingScopeHint')}</p>;
+      return (
+        <div className="flex items-start gap-2 rounded-md bg-blue-50 dark:bg-blue-950/20 p-4 border border-blue-200 dark:border-blue-900">
+          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-900 dark:text-blue-100">{t('discount.form.bookingScopeHint')}</p>
+        </div>
+      );
+    }
+
+    if (formState.applicableScope === 'VEHICLE') {
+      return (
+        <div className="flex items-start gap-2 rounded-md bg-blue-50 dark:bg-blue-950/20 p-4 border border-blue-200 dark:border-blue-900">
+          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-900 dark:text-blue-100">{t('discount.form.vehicleScopeHint')}</p>
+        </div>
+      );
     }
 
     return null;
@@ -411,6 +446,115 @@ export function DiscountForm({
             placeholder={t('discount.form.descriptionPlaceholder')}
             rows={4}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('discount.form.advancedTitle')}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t('discount.form.advancedDescription')}</p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Priority */}
+          <div className="space-y-2">
+            <Label htmlFor="priority">{t('discount.form.priorityLabel')}</Label>
+            <Input
+              id="priority"
+              type="number"
+              min="0"
+              value={formState.priority}
+              onChange={(event) => handleChange({ priority: Number(event.target.value) || 0 })}
+            />
+            <p className="text-xs text-muted-foreground">{t('discount.form.priorityHelper')}</p>
+          </div>
+
+          {/* Auto-Apply */}
+          <div className="flex items-start space-x-3 rounded-lg border p-4">
+            <Checkbox
+              id="autoApply"
+              checked={formState.autoApply}
+              onCheckedChange={(checked) => handleChange({ autoApply: checked === true })}
+            />
+            <div className="flex-1 space-y-1">
+              <Label
+                htmlFor="autoApply"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                {t('discount.form.autoApplyLabel')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('discount.form.autoApplyDescription')}
+              </p>
+            </div>
+          </div>
+
+          {/* Requires Promo Code */}
+          <div className="flex items-start space-x-3 rounded-lg border p-4">
+            <Checkbox
+              id="requiresPromoCode"
+              checked={formState.requiresPromoCode}
+              onCheckedChange={(checked) => handleChange({ requiresPromoCode: checked === true })}
+            />
+            <div className="flex-1 space-y-1">
+              <Label
+                htmlFor="requiresPromoCode"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                {t('discount.form.requiresPromoCodeLabel')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('discount.form.requiresPromoCodeDescription')}
+              </p>
+              {formState.autoApply && formState.requiresPromoCode && (
+                <div className="flex items-start gap-2 mt-2 rounded-md bg-amber-50 dark:bg-amber-950/20 p-3 border border-amber-200 dark:border-amber-900">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 dark:text-amber-100">
+                    {t('discount.form.autoApplyConflictWarning')}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Combinable With Other Discounts */}
+          <div className="flex items-start space-x-3 rounded-lg border p-4">
+            <Checkbox
+              id="combinableWithOtherDiscounts"
+              checked={formState.combinableWithOtherDiscounts}
+              onCheckedChange={(checked) => handleChange({ combinableWithOtherDiscounts: checked === true })}
+            />
+            <div className="flex-1 space-y-1">
+              <Label
+                htmlFor="combinableWithOtherDiscounts"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                {t('discount.form.combinableLabel')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('discount.form.combinableDescription')}
+              </p>
+            </div>
+          </div>
+
+          {/* First Time Customer Only */}
+          <div className="flex items-start space-x-3 rounded-lg border p-4">
+            <Checkbox
+              id="firstTimeCustomerOnly"
+              checked={formState.firstTimeCustomerOnly}
+              onCheckedChange={(checked) => handleChange({ firstTimeCustomerOnly: checked === true })}
+            />
+            <div className="flex-1 space-y-1">
+              <Label
+                htmlFor="firstTimeCustomerOnly"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                {t('discount.form.firstTimeOnlyLabel')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('discount.form.firstTimeOnlyDescription')}
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
