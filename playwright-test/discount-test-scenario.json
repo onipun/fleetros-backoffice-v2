@@ -1,0 +1,518 @@
+{
+  "testSuite": "Discount CRUD Operations",
+  "version": "1.0.0",
+  "description": "Comprehensive test scenarios for discount CRUD operations including scope and validity management",
+  "baseUrl": "http://localhost:3000",
+  "apiBaseUrl": "http://localhost:8082",
+  "testCategories": [
+    {
+      "category": "Authentication & Setup",
+      "scenarios": [
+        {
+          "id": "AUTH-001",
+          "title": "Login with valid credentials",
+          "priority": "Critical",
+          "preconditions": [
+            "User account exists with MERCHANT_ADMIN role",
+            "Keycloak server is running",
+            "Backend API is accessible"
+          ],
+          "steps": [
+            "Navigate to login page",
+            "Enter valid username",
+            "Enter valid password",
+            "Click login button",
+            "Wait for Keycloak authentication",
+            "Verify redirect to dashboard"
+          ],
+          "expectedResults": [
+            "User is authenticated successfully",
+            "JWT token is stored in session",
+            "User is redirected to dashboard",
+            "User info is displayed in header"
+          ],
+          "testData": {
+            "username": "john.admin",
+            "password": "SecurePassword123!"
+          }
+        },
+        {
+          "id": "AUTH-002",
+          "title": "Verify user has discount permissions",
+          "priority": "Critical",
+          "preconditions": [
+            "User is logged in",
+            "User has MERCHANT_ADMIN or MERCHANT_MANAGER role"
+          ],
+          "steps": [
+            "Fetch current user info from /api/auth/me",
+            "Verify user role includes discount permissions",
+            "Check for DISCOUNT_READ and DISCOUNT_WRITE permissions"
+          ],
+          "expectedResults": [
+            "User has DISCOUNT_READ permission",
+            "User has DISCOUNT_WRITE permission",
+            "User can access /discounts page"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Discount Create (C)",
+      "scenarios": [
+        {
+          "id": "DISC-CREATE-001",
+          "title": "Create percentage discount (Global Scope)",
+          "priority": "Critical",
+          "preconditions": [
+            "User is authenticated with DISCOUNT_WRITE permission",
+            "Navigate to /discounts/new page"
+          ],
+          "steps": [
+            "Fill in discount code (e.g., SUMMER2024)",
+            "Select status ACTIVE",
+            "Select type PERCENTAGE",
+            "Enter value (e.g., 15.00)",
+            "Select scope ALL",
+            "Set max uses (e.g., 100)",
+            "Set valid from date (Today)",
+            "Set valid to date (Next Month)",
+            "Enter description",
+            "Click Create Discount button"
+          ],
+          "expectedResults": [
+            "Discount is created successfully",
+            "Success toast notification appears",
+            "User is redirected to /discounts page",
+            "New discount appears in the list",
+            "Discount has correct code and percentage value"
+          ],
+          "testData": {
+            "code": "SUMMER2024",
+            "status": "ACTIVE",
+            "type": "PERCENTAGE",
+            "value": 15.00,
+            "applicableScope": "ALL",
+            "maxUses": 100,
+            "description": "Summer sale discount"
+          },
+          "apiEndpoint": "POST /api/discounts",
+          "validation": {
+            "code": "string, required",
+            "value": "number, 0-100 for percentage"
+          }
+        },
+        {
+          "id": "DISC-CREATE-002",
+          "title": "Create fixed amount discount (Package Scope)",
+          "priority": "High",
+          "preconditions": [
+            "At least one package exists",
+            "User is at /discounts/new"
+          ],
+          "steps": [
+            "Fill in discount code (e.g., PACK50OFF)",
+            "Select type FIXED_AMOUNT",
+            "Enter value (e.g., 50.00)",
+            "Select scope PACKAGE",
+            "Select at least one package from multi-select",
+            "Set valid dates",
+            "Click Create Discount"
+          ],
+          "expectedResults": [
+            "Discount is created successfully",
+            "Discount is linked to selected package(s)",
+            "Success toast appears",
+            "List view shows 'Package' scope"
+          ],
+          "testData": {
+            "code": "PACK50OFF",
+            "type": "FIXED_AMOUNT",
+            "value": 50.00,
+            "applicableScope": "PACKAGE",
+            "selectedPackageIds": [1]
+          }
+        },
+        {
+          "id": "DISC-CREATE-003",
+          "title": "Create discount with advanced options",
+          "priority": "Medium",
+          "preconditions": [
+            "User is at /discounts/new"
+          ],
+          "steps": [
+            "Fill basic required fields",
+            "Set priority to 5",
+            "Enable 'Auto Apply'",
+            "Disable 'Requires Promo Code'",
+            "Enable 'Combinable with other discounts'",
+            "Enable 'First time customer only'",
+            "Click Create Discount"
+          ],
+          "expectedResults": [
+            "Discount created with all flags set correctly",
+            "Auto-apply badge appears in list",
+            "Priority is saved as 5"
+          ],
+          "testData": {
+            "priority": 5,
+            "autoApply": true,
+            "requiresPromoCode": false,
+            "combinableWithOtherDiscounts": true,
+            "firstTimeCustomerOnly": true
+          }
+        },
+        {
+          "id": "DISC-CREATE-004",
+          "title": "Create offering-scoped discount",
+          "priority": "High",
+          "preconditions": [
+            "At least one offering exists"
+          ],
+          "steps": [
+            "Fill required fields",
+            "Select scope OFFERING",
+            "Select multiple offerings from list",
+            "Set min booking amount (e.g., 100.00)",
+            "Click Create Discount"
+          ],
+          "expectedResults": [
+            "Discount created successfully",
+            "Linked to multiple offerings",
+            "Min booking amount is saved"
+          ],
+          "testData": {
+            "applicableScope": "OFFERING",
+            "selectedOfferingIds": [1, 2],
+            "minBookingAmount": 100.00
+          }
+        }
+      ]
+    },
+    {
+      "category": "Discount Read (R)",
+      "scenarios": [
+        {
+          "id": "DISC-READ-001",
+          "title": "View all discounts list",
+          "priority": "Critical",
+          "preconditions": [
+            "User is authenticated",
+            "Discounts exist in database"
+          ],
+          "steps": [
+            "Navigate to /discounts page",
+            "Verify table headers",
+            "Check discount rows"
+          ],
+          "expectedResults": [
+            "List loads successfully",
+            "Columns displayed: Code, Type, Scope, Status, Flags, Valid From, Valid To, Usage, Actions",
+            "Pagination controls visible if needed"
+          ],
+          "apiEndpoint": "GET /api/discounts"
+        },
+        {
+          "id": "DISC-READ-002",
+          "title": "Filter discounts by status",
+          "priority": "Medium",
+          "preconditions": [
+            "Discounts with different statuses exist"
+          ],
+          "steps": [
+            "Select 'Active' from status filter",
+            "Click Apply Filters",
+            "Verify only active discounts shown",
+            "Select 'Expired' from status filter",
+            "Click Apply Filters",
+            "Verify only expired discounts shown"
+          ],
+          "expectedResults": [
+            "List filters correctly based on status",
+            "URL parameters update correctly"
+          ]
+        },
+        {
+          "id": "DISC-READ-003",
+          "title": "Search discount by code",
+          "priority": "High",
+          "preconditions": [
+            "Specific discount code exists (e.g., 'SUMMER2024')"
+          ],
+          "steps": [
+            "Enter 'SUMMER' in search box",
+            "Click Apply Filters",
+            "Verify 'SUMMER2024' appears in results"
+          ],
+          "expectedResults": [
+            "Search filters list by code",
+            "Partial match works"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Discount Update (U)",
+      "scenarios": [
+        {
+          "id": "DISC-UPDATE-001",
+          "title": "Update discount value and validity",
+          "priority": "Critical",
+          "preconditions": [
+            "Discount exists",
+            "User is on edit page"
+          ],
+          "steps": [
+            "Change value from 15 to 20",
+            "Extend validTo date by one month",
+            "Update description",
+            "Click Save Changes"
+          ],
+          "expectedResults": [
+            "Changes saved successfully",
+            "Success toast appears",
+            "Redirected to list or stays on edit (depending on implementation)",
+            "Updated values reflected in list"
+          ],
+          "apiEndpoint": "PUT /api/discounts/{id}"
+        },
+        {
+          "id": "DISC-UPDATE-002",
+          "title": "Deactivate a discount",
+          "priority": "High",
+          "preconditions": [
+            "Active discount exists"
+          ],
+          "steps": [
+            "Navigate to edit page",
+            "Change status to INACTIVE",
+            "Click Save Changes"
+          ],
+          "expectedResults": [
+            "Status updates to INACTIVE",
+            "Discount no longer usable (backend logic)",
+            "Status badge in list shows Inactive"
+          ]
+        },
+        {
+          "id": "DISC-UPDATE-003",
+          "title": "Update discount scope (Add/Remove items)",
+          "priority": "High",
+          "preconditions": [
+            "Package-scoped discount exists with 1 package"
+          ],
+          "steps": [
+            "Navigate to edit page",
+            "Add another package to selection",
+            "Click Save Changes"
+          ],
+          "expectedResults": [
+            "Discount is now linked to both packages",
+            "API call updates associations"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Discount Delete (D)",
+      "scenarios": [
+        {
+          "id": "DISC-DELETE-001",
+          "title": "Delete discount successfully",
+          "priority": "Critical",
+          "preconditions": [
+            "Discount exists",
+            "User has DISCOUNT_WRITE permission"
+          ],
+          "steps": [
+            "Click Delete button on a discount row",
+            "Confirm deletion in dialog",
+            "Wait for completion"
+          ],
+          "expectedResults": [
+            "Discount is removed from database",
+            "Removed from list view",
+            "Success toast appears"
+          ],
+          "apiEndpoint": "DELETE /api/discounts/{id}"
+        },
+        {
+          "id": "DISC-DELETE-002",
+          "title": "Cancel discount deletion",
+          "priority": "Medium",
+          "steps": [
+            "Click Delete button",
+            "Click Cancel in dialog"
+          ],
+          "expectedResults": [
+            "Dialog closes",
+            "Discount remains in list",
+            "No API call made"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Discount Validation & Edge Cases",
+      "scenarios": [
+        {
+          "id": "DISC-VAL-001",
+          "title": "Validation - Required fields",
+          "priority": "High",
+          "steps": [
+            "Leave code empty",
+            "Leave dates empty",
+            "Try to submit"
+          ],
+          "expectedResults": [
+            "Validation error: Code required",
+            "Validation error: Valid range required",
+            "Form not submitted"
+          ]
+        },
+        {
+          "id": "DISC-VAL-002",
+          "title": "Validation - Invalid date range",
+          "priority": "High",
+          "steps": [
+            "Set validFrom to tomorrow",
+            "Set validTo to today (before validFrom)",
+            "Try to submit"
+          ],
+          "expectedResults": [
+            "Validation error: Valid range order",
+            "Form not submitted"
+          ]
+        },
+        {
+          "id": "DISC-VAL-003",
+          "title": "Validation - Invalid percentage",
+          "priority": "Medium",
+          "steps": [
+            "Select type PERCENTAGE",
+            "Enter value 101",
+            "Try to submit",
+            "Enter value -5",
+            "Try to submit"
+          ],
+          "expectedResults": [
+            "Validation error: Percentage range (0-100)",
+            "Form not submitted"
+          ]
+        },
+        {
+          "id": "DISC-VAL-004",
+          "title": "Validation - Negative amounts",
+          "priority": "Medium",
+          "steps": [
+            "Select type FIXED_AMOUNT",
+            "Enter value -10",
+            "Set min booking amount -5",
+            "Try to submit"
+          ],
+          "expectedResults": [
+            "Validation error: Amount negative",
+            "Validation error: Min booking negative",
+            "Form not submitted"
+          ]
+        },
+        {
+          "id": "DISC-VAL-005",
+          "title": "Validation - Scope requirements",
+          "priority": "High",
+          "steps": [
+            "Select scope PACKAGE",
+            "Deselect all packages (empty selection)",
+            "Try to submit"
+          ],
+          "expectedResults": [
+            "Validation error: Package required",
+            "Form not submitted"
+          ]
+        },
+        {
+          "id": "DISC-VAL-006",
+          "title": "Validation - Auto-apply conflict",
+          "priority": "Medium",
+          "steps": [
+            "Enable 'Auto Apply'",
+            "Enable 'Requires Promo Code'",
+            "Try to submit"
+          ],
+          "expectedResults": [
+            "Validation error: Auto-apply conflict",
+            "Form not submitted"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Integration & Edge Cases",
+      "scenarios": [
+        {
+          "id": "DISC-INT-001",
+          "title": "Concurrent updates",
+          "priority": "Low",
+          "steps": [
+            "User A opens edit page",
+            "User B opens edit page",
+            "User A updates value",
+            "User B updates description",
+            "Check persistence"
+          ],
+          "expectedResults": [
+            "Last write wins (standard behavior)",
+            "No data corruption"
+          ]
+        },
+        {
+          "id": "DISC-INT-002",
+          "title": "Large number of linked entities",
+          "priority": "Low",
+          "preconditions": [
+            "50+ packages exist"
+          ],
+          "steps": [
+            "Create discount",
+            "Select all 50 packages",
+            "Save"
+          ],
+          "expectedResults": [
+            "Save successful",
+            "Performance remains acceptable",
+            "All links created"
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalScenarios": 20,
+    "byCategory": {
+      "Authentication & Setup": 2,
+      "Discount Create": 4,
+      "Discount Read": 3,
+      "Discount Update": 3,
+      "Discount Delete": 2,
+      "Discount Validation & Edge Cases": 6,
+      "Integration & Edge Cases": 2
+    },
+    "byPriority": {
+      "Critical": 5,
+      "High": 9,
+      "Medium": 4,
+      "Low": 2
+    }
+  },
+  "executionNotes": {
+    "setupRequirements": [
+      "Backend API running",
+      "Test merchant account",
+      "Existing packages and offerings for scope tests"
+    ],
+    "testDataManagement": [
+      "Use unique codes for each test run to avoid conflicts",
+      "Clean up created discounts after tests"
+    ]
+  }
+}

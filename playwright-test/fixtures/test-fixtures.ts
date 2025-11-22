@@ -1,6 +1,8 @@
 import { test as base, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { DiscountFormPage } from '../pages/discount-form.page';
+import { DiscountsListPage } from '../pages/discounts-list.page';
 import { LoginPage } from '../pages/login.page';
 import { VehicleDetailPage } from '../pages/vehicle-detail.page';
 import { VehicleFormPage } from '../pages/vehicle-form.page';
@@ -15,6 +17,8 @@ type VehicleFixtures = {
   vehiclesListPage: VehiclesListPage;
   vehicleDetailPage: VehicleDetailPage;
   vehicleFormPage: VehicleFormPage;
+  discountFormPage: DiscountFormPage;
+  discountsListPage: DiscountsListPage;
   authenticatedPage: Page;
   testImagePath: string;
   testVehicleData: ReturnType<typeof TestHelpers.generateVehicleData>;
@@ -39,6 +43,16 @@ export const test = base.extend<VehicleFixtures>({
   vehicleFormPage: async ({ page }, use) => {
     const vehicleFormPage = new VehicleFormPage(page);
     await use(vehicleFormPage);
+  },
+
+  discountFormPage: async ({ page }, use) => {
+    const discountFormPage = new DiscountFormPage(page);
+    await use(discountFormPage);
+  },
+
+  discountsListPage: async ({ page }, use) => {
+    const discountsListPage = new DiscountsListPage(page);
+    await use(discountsListPage);
   },
 
   authenticatedPage: async ({ page }, use) => {
