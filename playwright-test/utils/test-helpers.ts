@@ -45,6 +45,47 @@ export class TestHelpers {
   }
 
   /**
+   * Generate unique registration data
+   */
+  static generateRegistrationData(prefix = 'Test') {
+    const uniqueId = this.generateUniqueId();
+    const timestamp = Date.now();
+    return {
+      accountName: `${prefix} Account ${uniqueId}`,
+      accountDescription: `Test account created at ${new Date().toISOString()}`,
+      companyName: `${prefix} Company ${uniqueId}`,
+      country: 'MY', // Malaysia
+      firstName: `First${timestamp}`,
+      lastName: `Last${timestamp}`,
+      phoneNumber: `+60${Math.floor(100000000 + Math.random() * 900000000)}`,
+      username: `user_${uniqueId}`,
+      email: `test_${uniqueId}@example.com`,
+      password: 'Test@1234',
+      confirmPassword: 'Test@1234',
+    };
+  }
+
+  /**
+   * Generate invalid registration data for edge case testing
+   */
+  static generateInvalidRegistrationData() {
+    return {
+      weakPassword: 'weak',
+      noUppercase: 'password123!',
+      noLowercase: 'PASSWORD123!',
+      noDigit: 'Password!',
+      noSpecialChar: 'Password123',
+      shortPassword: 'Pa1!',
+      mismatchPassword: 'Test@1234',
+      mismatchConfirm: 'Different@1234',
+      invalidEmail: 'notanemail',
+      emptyEmail: '',
+      invalidPhoneShort: '+601234',
+      invalidPhoneLetters: '+60abc123456',
+    };
+  }
+
+  /**
    * Wait for toast notification
    */
   static async waitForToast(page: Page, text: string, timeout = 5000) {

@@ -4,6 +4,7 @@ import * as path from 'path';
 import { DiscountFormPage } from '../pages/discount-form.page';
 import { DiscountsListPage } from '../pages/discounts-list.page';
 import { LoginPage } from '../pages/login.page';
+import { RegisterPage } from '../pages/register.page';
 import { VehicleDetailPage } from '../pages/vehicle-detail.page';
 import { VehicleFormPage } from '../pages/vehicle-form.page';
 import { VehiclesListPage } from '../pages/vehicles-list.page';
@@ -14,6 +15,7 @@ import { TestHelpers } from '../utils/test-helpers';
  */
 type VehicleFixtures = {
   loginPage: LoginPage;
+  registerPage: RegisterPage;
   vehiclesListPage: VehiclesListPage;
   vehicleDetailPage: VehicleDetailPage;
   vehicleFormPage: VehicleFormPage;
@@ -28,6 +30,11 @@ export const test = base.extend<VehicleFixtures>({
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
     await use(loginPage);
+  },
+
+  registerPage: async ({ page }, use) => {
+    const registerPage = new RegisterPage(page);
+    await use(registerPage);
   },
 
   vehiclesListPage: async ({ page }, use) => {
