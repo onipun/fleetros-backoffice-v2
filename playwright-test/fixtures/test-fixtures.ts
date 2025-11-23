@@ -4,6 +4,11 @@ import * as path from 'path';
 import { DiscountFormPage } from '../pages/discount-form.page';
 import { DiscountsListPage } from '../pages/discounts-list.page';
 import { LoginPage } from '../pages/login.page';
+import { OfferingDetailPage } from '../pages/offering-detail.page';
+import { OfferingFormPage } from '../pages/offering-form.page';
+import { OfferingsListPage } from '../pages/offerings-list.page';
+import { PackageFormPage } from '../pages/package-form.page';
+import { PackagesListPage } from '../pages/packages-list.page';
 import { RegisterPage } from '../pages/register.page';
 import { VehicleDetailPage } from '../pages/vehicle-detail.page';
 import { VehicleFormPage } from '../pages/vehicle-form.page';
@@ -21,9 +26,16 @@ type VehicleFixtures = {
   vehicleFormPage: VehicleFormPage;
   discountFormPage: DiscountFormPage;
   discountsListPage: DiscountsListPage;
+  offeringsListPage: OfferingsListPage;
+  offeringFormPage: OfferingFormPage;
+  offeringDetailPage: OfferingDetailPage;
+  packagesListPage: PackagesListPage;
+  packageFormPage: PackageFormPage;
   authenticatedPage: Page;
   testImagePath: string;
   testVehicleData: ReturnType<typeof TestHelpers.generateVehicleData>;
+  testOfferingData: ReturnType<typeof TestHelpers.generateOfferingData>;
+  testPackageData: ReturnType<typeof TestHelpers.generatePackageData>;
 };
 
 export const test = base.extend<VehicleFixtures>({
@@ -60,6 +72,31 @@ export const test = base.extend<VehicleFixtures>({
   discountsListPage: async ({ page }, use) => {
     const discountsListPage = new DiscountsListPage(page);
     await use(discountsListPage);
+  },
+
+  offeringsListPage: async ({ page }, use) => {
+    const offeringsListPage = new OfferingsListPage(page);
+    await use(offeringsListPage);
+  },
+
+  offeringFormPage: async ({ page }, use) => {
+    const offeringFormPage = new OfferingFormPage(page);
+    await use(offeringFormPage);
+  },
+
+  offeringDetailPage: async ({ page }, use) => {
+    const offeringDetailPage = new OfferingDetailPage(page);
+    await use(offeringDetailPage);
+  },
+
+  packagesListPage: async ({ page }, use) => {
+    const packagesListPage = new PackagesListPage(page);
+    await use(packagesListPage);
+  },
+
+  packageFormPage: async ({ page }, use) => {
+    const packageFormPage = new PackageFormPage(page);
+    await use(packageFormPage);
   },
 
   authenticatedPage: async ({ page }, use) => {
@@ -124,6 +161,16 @@ export const test = base.extend<VehicleFixtures>({
 
   testVehicleData: async ({}, use) => {
     const data = TestHelpers.generateVehicleData('Playwright');
+    await use(data);
+  },
+
+  testOfferingData: async ({}, use) => {
+    const data = TestHelpers.generateOfferingData('Playwright');
+    await use(data);
+  },
+
+  testPackageData: async ({}, use) => {
+    const data = TestHelpers.generatePackageData('Playwright');
     await use(data);
   },
 });

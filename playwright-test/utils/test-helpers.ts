@@ -86,6 +86,157 @@ export class TestHelpers {
   }
 
   /**
+   * Generate unique offering data
+   */
+  static generateOfferingData(prefix = 'Test') {
+    const uniqueId = this.generateUniqueId();
+    return {
+      name: `${prefix} Offering ${uniqueId}`,
+      offeringType: 'GPS' as const,
+      availability: 100,
+      price: 50.00,
+      maxQuantityPerBooking: 1,
+      isMandatory: false,
+      description: `Test offering created at ${new Date().toISOString()}`,
+    };
+  }
+
+  /**
+   * Generate offering data with minimum values
+   */
+  static generateMinimumOfferingData(prefix = 'Min') {
+    const uniqueId = this.generateUniqueId();
+    return {
+      name: `${prefix} ${uniqueId}`,
+      offeringType: 'OTHER' as const,
+      availability: 0,
+      price: 0.01,
+      maxQuantityPerBooking: 1,
+      isMandatory: false,
+      description: '',
+    };
+  }
+
+  /**
+   * Generate offering data with maximum values
+   */
+  static generateMaximumOfferingData(prefix = 'Max') {
+    const uniqueId = this.generateUniqueId();
+    const maxName = `${prefix} ${'A'.repeat(245)} ${uniqueId}`.substring(0, 255);
+    const maxDescription = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(100);
+    
+    return {
+      name: maxName,
+      offeringType: 'ADDITIONAL_DRIVER' as const,
+      availability: 999999,
+      price: 999999.99,
+      maxQuantityPerBooking: 100,
+      isMandatory: true,
+      description: maxDescription,
+    };
+  }
+
+  /**
+   * Get all offering types for testing
+   */
+  static getAllOfferingTypes() {
+    return ['GPS', 'INSURANCE', 'CHILD_SEAT', 'WIFI', 'ADDITIONAL_DRIVER', 'OTHER'];
+  }
+
+  /**
+   * Generate unique package data
+   * Using '000' prefix to ensure it sorts first alphabetically on the list page
+   */
+  static generatePackageData(prefix = '000-Test') {
+    const uniqueId = this.generateUniqueId();
+    
+    return {
+      name: `${prefix} Package ${uniqueId}`,
+      description: `Test package created at ${new Date().toISOString()}`,
+      priceModifier: 100.00,
+      modifierType: 'FIXED' as const,
+      allowDiscountOnModifier: true,
+      validFrom: 'Today', // Use quick select option
+      validTo: 'End of Month', // Use quick select option
+      minRentalDays: 2,
+    };
+  }
+
+  /**
+   * Generate package data with minimum values
+   */
+  static generateMinimumPackageData(prefix = 'AAA-Min') {
+    const uniqueId = this.generateUniqueId();
+    
+    return {
+      name: `${prefix} ${uniqueId}`,
+      description: '',
+      priceModifier: 0,
+      modifierType: 'FIXED' as const,
+      allowDiscountOnModifier: false,
+      validFrom: 'Today',
+      validTo: 'End of Month',
+      minRentalDays: 1,
+    };
+  }
+
+  /**
+   * Generate package data with maximum/large values
+   */
+  static generateMaximumPackageData(prefix = 'AAA-Max') {
+    const uniqueId = this.generateUniqueId();
+    const maxName = `${prefix} ${'A'.repeat(245)} ${uniqueId}`.substring(0, 255);
+    const maxDescription = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(100);
+    
+    return {
+      name: maxName,
+      description: maxDescription,
+      priceModifier: 999999.99,
+      modifierType: 'PERCENTAGE' as const,
+      allowDiscountOnModifier: true,
+      validFrom: 'Start of Month',
+      validTo: 'End of Year',
+      minRentalDays: 365,
+    };
+  }
+
+  /**
+   * Generate package data with negative price modifier
+   */
+  static generateDiscountPackageData(prefix = 'AAA-Discount') {
+    const uniqueId = this.generateUniqueId();
+    
+    return {
+      name: `${prefix} Package ${uniqueId}`,
+      description: 'Package with negative price modifier (discount)',
+      priceModifier: -50.00,
+      modifierType: 'FIXED' as const,
+      allowDiscountOnModifier: false,
+      validFrom: 'Today',
+      validTo: 'End of Month',
+      minRentalDays: 3,
+    };
+  }
+
+  /**
+   * Generate package data with percentage modifier
+   */
+  static generatePercentagePackageData(prefix = 'AAA-Percent') {
+    const uniqueId = this.generateUniqueId();
+    
+    return {
+      name: `${prefix} Package ${uniqueId}`,
+      description: 'Package with percentage price modifier',
+      priceModifier: 15.00,
+      modifierType: 'PERCENTAGE' as const,
+      allowDiscountOnModifier: true,
+      validFrom: 'Today',
+      validTo: 'End of Year',
+      minRentalDays: 5,
+    };
+  }
+
+  /**
    * Wait for toast notification
    */
   static async waitForToast(page: Page, text: string, timeout = 5000) {
