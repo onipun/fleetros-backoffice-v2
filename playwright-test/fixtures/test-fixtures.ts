@@ -4,6 +4,10 @@ import * as path from 'path';
 import { DiscountFormPage } from '../pages/discount-form.page';
 import { DiscountsListPage } from '../pages/discounts-list.page';
 import { LoginPage } from '../pages/login.page';
+import { LoyaltyConfigurationFormPage } from '../pages/loyalty-configuration-form.page';
+import { LoyaltyConfigurationsListPage } from '../pages/loyalty-configurations-list.page';
+import { ModificationPoliciesListPage } from '../pages/modification-policies-list.page';
+import { ModificationPolicyFormPage } from '../pages/modification-policy-form.page';
 import { OfferingDetailPage } from '../pages/offering-detail.page';
 import { OfferingFormPage } from '../pages/offering-form.page';
 import { OfferingsListPage } from '../pages/offerings-list.page';
@@ -31,6 +35,10 @@ type VehicleFixtures = {
   offeringDetailPage: OfferingDetailPage;
   packagesListPage: PackagesListPage;
   packageFormPage: PackageFormPage;
+  modificationPoliciesListPage: ModificationPoliciesListPage;
+  modificationPolicyFormPage: ModificationPolicyFormPage;
+  loyaltyConfigurationsListPage: LoyaltyConfigurationsListPage;
+  loyaltyConfigurationFormPage: LoyaltyConfigurationFormPage;
   authenticatedPage: Page;
   testImagePath: string;
   testVehicleData: ReturnType<typeof TestHelpers.generateVehicleData>;
@@ -97,6 +105,26 @@ export const test = base.extend<VehicleFixtures>({
   packageFormPage: async ({ page }, use) => {
     const packageFormPage = new PackageFormPage(page);
     await use(packageFormPage);
+  },
+
+  modificationPoliciesListPage: async ({ page }, use) => {
+    const modificationPoliciesListPage = new ModificationPoliciesListPage(page);
+    await use(modificationPoliciesListPage);
+  },
+
+  modificationPolicyFormPage: async ({ page }, use) => {
+    const modificationPolicyFormPage = new ModificationPolicyFormPage(page);
+    await use(modificationPolicyFormPage);
+  },
+
+  loyaltyConfigurationsListPage: async ({ page }, use) => {
+    const loyaltyConfigurationsListPage = new LoyaltyConfigurationsListPage(page);
+    await use(loyaltyConfigurationsListPage);
+  },
+
+  loyaltyConfigurationFormPage: async ({ page }, use) => {
+    const loyaltyConfigurationFormPage = new LoyaltyConfigurationFormPage(page);
+    await use(loyaltyConfigurationFormPage);
   },
 
   authenticatedPage: async ({ page }, use) => {
