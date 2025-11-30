@@ -5,7 +5,7 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Check, CreditCard, DollarSign, Globe, Palette } from 'lucide-react';
+import { ArrowRight, Award, Check, CreditCard, DollarSign, Globe, Palette, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -63,27 +63,74 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 max-w-4xl">
-        {/* Payment Account Settings - Quick Access */}
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-              <CardTitle>{t('settings.paymentAccount.title') || 'Payment Account'}</CardTitle>
-            </div>
-            <CardDescription>
-              {t('settings.paymentAccount.description') || 'Manage your Stripe payment processing account and accept payments from customers'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/settings/payment-account">
-              <Button className="w-full sm:w-auto">
-                <CreditCard className="mr-2 h-4 w-4" />
-                {t('settings.paymentAccount.manage') || 'Manage Payment Account'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        {/* Quick Access Cards */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Payment Account Settings - Quick Access */}
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <CardTitle>{t('settings.paymentAccount.title') || 'Payment Account'}</CardTitle>
+              </div>
+              <CardDescription>
+                {t('settings.paymentAccount.description') || 'Manage Stripe payment processing'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/settings/payment-account">
+                <Button className="w-full">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  {t('settings.paymentAccount.manage') || 'Manage'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Modification Policies - Quick Access */}
+          <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-500" />
+                <CardTitle>Modification Policies</CardTitle>
+              </div>
+              <CardDescription>
+                Configure booking modification rules and fees
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/settings/modification-policies">
+                <Button className="w-full" variant="outline">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Manage Policies
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Loyalty Program - Quick Access */}
+          <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent md:col-span-2">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-amber-500" />
+                <CardTitle>Loyalty Program</CardTitle>
+              </div>
+              <CardDescription>
+                Configure loyalty tiers, rewards, and customer benefits
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/settings/loyalty">
+                <Button className="w-full sm:w-auto" variant="outline">
+                  <Award className="mr-2 h-4 w-4" />
+                  Manage Loyalty Tiers
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Language Settings */}
         <Card>
