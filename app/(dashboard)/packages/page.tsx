@@ -1,33 +1,34 @@
 'use client';
 
+import { PackageSearchFilters } from '@/components/package/package-search-filters';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
-import { Input } from '@/components/ui/input';
+import { usePackageSearch } from '@/hooks/use-package-search';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import { useCollection } from '@/lib/api/hooks';
 import { getImageUrl, getPackageImage } from '@/lib/api/package-image-api';
 import { formatDate, parseHalResource } from '@/lib/utils';
 import type { HATEOASCollection, Offering, Package, PackageImage } from '@/types';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Download, Image as ImageIcon, Plus, Search } from 'lucide-react';
+import { Box, Image as ImageIcon, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
 
 export default function PackagesPage() {
   const { t, locale } = useLocale();
-  const [page, setPage] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading, error, refetch } = useCollection<Package>('packages', {
-    page,
-    size: 20,
-    sort: 'name,asc',
-  });
-
-  const packages = data ? parseHalResource<Package>(data, 'packages') : [];
-  const totalPages = data?.page?.totalPages || 0;
+  // Use package search hook
+  const {
+    packages,
+    totalPages,
+    currentPage,
+    isLoading,
+    error,
+    search,
+    nextPage,
+    previousPage,
+    refetch,
+  } = usePackageSearch();
 
   const isPackageActive = (pkg: Package) => {
     if (!pkg.validFrom || !pkg.validTo) return false;
@@ -127,29 +128,11 @@ export default function PackagesPage() {
         </Link>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('package.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('package.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              {t('common.exportCSV')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search Filters */}
+      <PackageSearchFilters
+        onSearch={search}
+        isLoading={isLoading}
+      />
 
       {/* Packages Table */}
       {isLoading ? (
@@ -293,18 +276,18 @@ export default function PackagesPage() {
             <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
+                onClick={previousPage}
+                disabled={currentPage === 0}
               >
                 {t('common.previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {t('common.page')} {page + 1} {t('common.of')} {totalPages}
+                {t('common.page')} {currentPage + 1} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
-                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                disabled={page >= totalPages - 1}
+                onClick={nextPage}
+                disabled={currentPage >= totalPages - 1}
               >
                 {t('common.next')}
               </Button>
