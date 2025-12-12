@@ -3,11 +3,10 @@
 import { DeleteDiscountButton } from '@/components/discount/delete-discount-button';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
 import type { Discount } from '@/types';
-import { Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
@@ -15,8 +14,6 @@ interface DiscountsDashboardProps {
   discounts: Discount[];
   currentPage: number;
   totalPages: number;
-  searchTerm: string;
-  statusFilter: string;
 }
 
 function extractNumericId(link?: string | null) {
@@ -104,8 +101,6 @@ export function DiscountsDashboard({
   discounts,
   currentPage,
   totalPages,
-  searchTerm,
-  statusFilter,
 }: DiscountsDashboardProps) {
   const { t, formatCurrency, locale } = useLocale();
 
@@ -131,12 +126,8 @@ export function DiscountsDashboard({
 
   const percentageSuffix = t('discount.percentageSuffix');
 
-  const hasFilters = Boolean(searchTerm || statusFilter);
-
   const buildPageLink = (page: number) => {
     const params = new URLSearchParams();
-    if (searchTerm) params.set('q', searchTerm);
-    if (statusFilter) params.set('status', statusFilter);
     params.set('page', String(page));
     return `/discounts?${params.toString()}`;
   };
@@ -155,43 +146,6 @@ export function DiscountsDashboard({
           </Button>
         </Link>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('discount.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-4 md:grid-cols-4" method="get">
-            <div className="relative md:col-span-2">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                name="q"
-                placeholder={t('discount.searchPlaceholder')}
-                defaultValue={searchTerm}
-                className="pl-8"
-              />
-            </div>
-            <select
-              name="status"
-              defaultValue={statusFilter}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t('common.allStatuses')}</option>
-              <option value="ACTIVE">{statusLabels.ACTIVE}</option>
-              <option value="INACTIVE">{statusLabels.INACTIVE}</option>
-              <option value="EXPIRED">{statusLabels.EXPIRED}</option>
-            </select>
-            <div className="flex items-center gap-2">
-              <Button type="submit" variant="outline">
-                {t('discount.applyFilters')}
-              </Button>
-              <Button asChild variant="ghost" disabled={!hasFilters}>
-                <Link href="/discounts">{t('common.clear')}</Link>
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
 
       {discounts.length === 0 ? (
         <div className="text-center py-12">

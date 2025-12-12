@@ -101,8 +101,6 @@ export default function DiscountsPage() {
             discounts={discounts}
             currentPage={currentPage + 1}
             totalPages={totalPages}
-            searchTerm=""
-            statusFilter=""
           />
 
           {/* Pagination Controls */}
