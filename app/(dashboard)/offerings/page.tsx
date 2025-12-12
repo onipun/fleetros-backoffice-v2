@@ -1,35 +1,34 @@
 'use client';
 
+import { OfferingSearchFilters } from '@/components/offering/offering-search-filters';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
-import { Input } from '@/components/ui/input';
+import { useOfferingSearch } from '@/hooks/use-offering-search';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import { useCollection } from '@/lib/api/hooks';
-import { parseHalResource } from '@/lib/utils';
-import type { Offering } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Download, Plus, Search, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 export default function OfferingsPage() {
   const { t, formatCurrency } = useLocale();
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
 
-  const { data, isLoading, error, refetch } = useCollection<Offering>('offerings', {
-    page,
-    size: 20,
-    sort: 'name,asc',
-  });
-
-  const offerings = data ? parseHalResource<Offering>(data, 'offerings') : [];
-  const totalPages = data?.page?.totalPages || 0;
+  // Use offering search hook
+  const {
+    offerings,
+    totalPages,
+    currentPage,
+    isLoading,
+    error,
+    search,
+    nextPage,
+    previousPage,
+    refetch,
+  } = useOfferingSearch();
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -99,42 +98,11 @@ export default function OfferingsPage() {
         </Link>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('offering.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('offering.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <select
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
-              <option value="">{t('offering.allTypes')}</option>
-              <option value="GPS">{typeLabels.GPS}</option>
-              <option value="INSURANCE">{typeLabels.INSURANCE}</option>
-              <option value="CHILD_SEAT">{typeLabels.CHILD_SEAT}</option>
-              <option value="WIFI">{typeLabels.WIFI}</option>
-              <option value="ADDITIONAL_DRIVER">{typeLabels.ADDITIONAL_DRIVER}</option>
-              <option value="OTHER">{typeLabels.OTHER}</option>
-            </select>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              {t('common.exportCSV')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search Filters */}
+      <OfferingSearchFilters
+        onSearch={search}
+        isLoading={isLoading}
+      />
 
       {/* Offerings Table */}
       {isLoading ? (
@@ -270,18 +238,18 @@ export default function OfferingsPage() {
             <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
+                onClick={previousPage}
+                disabled={currentPage === 0}
               >
                 {t('common.previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {t('common.page')} {page + 1} {t('common.of')} {totalPages}
+                {t('common.page')} {currentPage + 1} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
-                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                disabled={page >= totalPages - 1}
+                onClick={nextPage}
+                disabled={currentPage >= totalPages - 1}
               >
                 {t('common.next')}
               </Button>
