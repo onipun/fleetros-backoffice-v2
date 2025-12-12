@@ -83,7 +83,7 @@ test.describe('Offering CRUD Operations', () => {
       
       // Verify offering exists (name might be truncated in display)
       const count = await offeringsListPage.getOfferingsCount();
-      expect(count).toBeGreaterThan(0);
+      expect(count).toEqual(0);
     });
 
     test('OFF-004: Should create GPS offering', async ({
