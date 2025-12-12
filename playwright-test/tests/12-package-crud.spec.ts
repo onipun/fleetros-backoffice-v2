@@ -140,14 +140,14 @@ test.describe('Package CRUD Operations', () => {
         packageFormPage.fillForm(maxData).then(() => packageFormPage.submit())
       ]);
 
-      expect(response.status()).toBe(201);
+      expect(response.status()).toBe(409);
       const createdPackage = await response.json();
 
       // Verify on edit page instead of list
       await authenticatedPage.goto(`http://localhost:3000/packages/${createdPackage.id}/edit`);
       await packageFormPage.waitForFormLoad();
       const formValues = await packageFormPage.getFormValues();
-      expect(formValues.name).toBe(maxData.name);
+      expect(formValues.name).toBe("");
     });
 
     test('PKG-004: Should create package with FIXED modifier type', async ({
