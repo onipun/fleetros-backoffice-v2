@@ -5,7 +5,7 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Award, Check, CreditCard, DollarSign, Globe, Palette, Shield } from 'lucide-react';
+import { ArrowRight, Award, Check, CreditCard, DollarSign, Globe, Palette, Settings as SettingsIcon, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -65,11 +65,33 @@ export default function SettingsPage() {
       <div className="grid gap-6 max-w-4xl">
         {/* Quick Access Cards */}
         <div className="grid gap-4 md:grid-cols-2">
-          {/* Payment Account Settings - Quick Access */}
+          {/* Account Settings - Quick Access */}
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
+                <SettingsIcon className="h-5 w-5 text-primary" />
+                <CardTitle>Account Settings</CardTitle>
+              </div>
+              <CardDescription>
+                Manage account-specific configuration settings like tax rates and fees
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/settings/account-settings">
+                <Button className="w-full">
+                  <SettingsIcon className="mr-2 h-4 w-4" />
+                  Manage Settings
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Payment Account Settings - Quick Access */}
+          <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-green-500" />
                 <CardTitle>{t('settings.paymentAccount.title') || 'Payment Account'}</CardTitle>
               </div>
               <CardDescription>
@@ -78,7 +100,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <Link href="/settings/payment-account">
-                <Button className="w-full">
+                <Button className="w-full" variant="outline">
                   <CreditCard className="mr-2 h-4 w-4" />
                   {t('settings.paymentAccount.manage') || 'Manage'}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -110,7 +132,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Loyalty Program - Quick Access */}
-          <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent md:col-span-2">
+          <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Award className="h-5 w-5 text-amber-500" />
@@ -122,7 +144,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <Link href="/settings/loyalty">
-                <Button className="w-full sm:w-auto" variant="outline">
+                <Button className="w-full" variant="outline">
                   <Award className="mr-2 h-4 w-4" />
                   Manage Loyalty Tiers
                   <ArrowRight className="ml-2 h-4 w-4" />

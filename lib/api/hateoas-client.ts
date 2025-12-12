@@ -1,6 +1,10 @@
 import type {
+    AccountSetting,
+    AccountSettingRequest,
+    AccountSettingUpdateRequest,
     BookingPricingSummaryDetailed,
     BookingResponse,
+    CommonSettings,
     CreateBookingRequest,
     DetailedPricingSnapshots,
     Discount,
@@ -471,6 +475,58 @@ export class HATEOASClient {
   async getApplicableDiscounts(criteria: DiscountCriteria): Promise<Discount[]> {
     const queryParams = this.buildQueryParams(criteria);
     return this.request<Discount[]>(`${this.baseUrl}/api/v1/discounts/applicable${queryParams}`);
+  }
+
+  // ==================== Account Settings Methods ====================
+
+  /**
+   * Get all account settings
+   */
+  async getAllAccountSettings(): Promise<HATEOASCollection<AccountSetting>> {
+    return this.request<HATEOASCollection<AccountSetting>>(`${this.baseUrl}/api/v1/account-settings`);
+  }
+
+  /**
+   * Get a specific account setting by key
+   */
+  async getAccountSetting(key: string): Promise<AccountSetting> {
+    return this.request<AccountSetting>(`${this.baseUrl}/api/v1/account-settings/${key}`);
+  }
+
+  /**
+   * Get common account settings as key-value map
+   */
+  async getCommonAccountSettings(): Promise<CommonSettings> {
+    return this.request<CommonSettings>(`${this.baseUrl}/api/v1/account-settings/common`);
+  }
+
+  /**
+   * Create a new account setting
+   */
+  async createAccountSetting(data: AccountSettingRequest): Promise<AccountSetting> {
+    return this.request<AccountSetting>(`${this.baseUrl}/api/v1/account-settings`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Update an existing account setting
+   */
+  async updateAccountSetting(key: string, data: AccountSettingUpdateRequest): Promise<AccountSetting> {
+    return this.request<AccountSetting>(`${this.baseUrl}/api/v1/account-settings/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Delete an account setting
+   */
+  async deleteAccountSetting(key: string): Promise<void> {
+    await this.request<void>(`${this.baseUrl}/api/v1/account-settings/${key}`, {
+      method: 'DELETE',
+    });
   }
 }
 

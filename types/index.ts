@@ -90,6 +90,33 @@ export enum OfferingType {
   OTHER = 'OTHER',
 }
 
+// Account Settings Types
+export interface AccountSetting {
+  id: number;
+  settingKey: string;
+  settingValue: string;
+  description?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _links?: Links;
+}
+
+export interface AccountSettingRequest {
+  settingKey: string;
+  settingValue: string;
+  description?: string;
+}
+
+export interface AccountSettingUpdateRequest {
+  settingValue: string;
+  description?: string;
+}
+
+export interface CommonSettings {
+  [key: string]: string;
+}
+
 export interface Vehicle {
   id?: number;
   name: string;
