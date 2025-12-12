@@ -50,7 +50,7 @@ export class OfferingFormPage {
    * Fill complete offering form
    */
   async fillForm(data: {
-    name: string;
+    name?: string;
     offeringType?: string;
     availability?: number;
     price?: number;
@@ -58,7 +58,9 @@ export class OfferingFormPage {
     isMandatory?: boolean;
     description?: string;
   }) {
-    await this.nameInput.fill(data.name);
+    if (data.name) {
+      await this.nameInput.fill(data.name);
+    }
     
     if (data.offeringType) {
       await this.offeringTypeSelect.selectOption(data.offeringType);

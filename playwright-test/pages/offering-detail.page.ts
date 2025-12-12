@@ -29,14 +29,15 @@ export class OfferingDetailPage {
     
     // Navigation
     this.backButton = page.locator('button:has-text("Back"), a:has-text("Back")').first();
-    this.editButton = page.locator('button:has-text("Edit"), a:has-text("Edit")');
+    this.editButton = page.locator('a[href*="/edit"]:has-text("Edit")').first();
     this.deleteButton = page.locator('button:has-text("Delete")');
     
     // Detail Sections
     this.offeringName = page.locator('h1');
     this.offeringType = page.locator('h1 + p, .text-muted-foreground').first();
-    this.basicInfoCard = page.locator('text=/Basic Info/i').locator('..');
-    this.descriptionCard = page.locator('text=/Description/i').locator('..');
+    // Find the card by looking for one that contains grid with Type/Price/Availability
+    this.basicInfoCard = page.locator('div:has(span.text-muted-foreground:has-text("Type"))').locator('..').locator('..').first();
+    this.descriptionCard = page.locator('div:has(span.text-muted-foreground:has-text("Description"))').locator('..').first();
     this.imagesSection = page.locator('text=/Images/i').locator('..');
     this.pricingSection = page.locator('text=/Pricing/i').locator('..');
     
@@ -69,10 +70,18 @@ export class OfferingDetailPage {
    * Get basic info details
    */
   async getBasicInfo() {
-    const card = this.basicInfoCard;
-    const getText = async (label: string) => {
-      const element = card.locator(`text=${label}`).locator('..').locator('p, span').last();
-      return (await element.textContent())?.trim() || '';
+    // Simple approach: find the label span, go up to parent div, then find the p sibling
+    const getText = async (labelText: string) => {
+      try {
+        const labelSpan = this.page.locator(`span.text-muted-foreground:has-text("${labelText}")`).first();
+        await labelSpan.waitFor({ state: 'visible', timeout: 5000 });
+        const parentDiv = labelSpan.locator('..');
+        const value = await parentDiv.locator('p.font-medium').textContent();
+        return value?.trim() || '';
+      } catch (error) {
+        console.warn(`Failed to find ${labelText}:`, error);
+        return '';
+      }
     };
     
     return {
@@ -88,9 +97,15 @@ export class OfferingDetailPage {
    * Get description text
    */
   async getDescription(): Promise<string> {
-    const descCard = this.descriptionCard;
-    const descText = descCard.locator('p');
-    return (await descText.textContent())?.trim() || '';
+    try {
+      // The description is in a p tag with specific classes
+      const descText = this.page.locator('p.text-sm.text-muted-foreground.whitespace-pre-wrap').first();
+      await descText.waitFor({ state: 'visible', timeout: 5000 });
+      return (await descText.textContent())?.trim() || '';
+    } catch (error) {
+      console.warn('Failed to find description:', error);
+      return '';
+    }
   }
 
   /**
