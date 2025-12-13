@@ -180,6 +180,38 @@ export function BookingForm({
     enabled: Boolean(formState.packageId),
   });
 
+  // Fetch offerings for selected package via HATEOAS link
+  const packageOfferingsLink = selectedPackage?._links?.offerings?.href;
+  const { data: packageOfferingsData } = useQuery({
+    queryKey: ['package', formState.packageId, 'offerings', packageOfferingsLink],
+    queryFn: async () => {
+      if (!packageOfferingsLink) return null;
+      return hateoasClient.followLink<any>(packageOfferingsLink);
+    },
+    enabled: Boolean(packageOfferingsLink),
+  });
+
+  // Parse and merge offerings with package
+  const selectedPackageWithOfferings = useMemo(() => {
+    if (!selectedPackage) return null;
+    
+    // If package already has offerings, use it as is
+    if (selectedPackage.offerings && selectedPackage.offerings.length > 0) {
+      return selectedPackage;
+    }
+    
+    // Otherwise, fetch from HATEOAS link and merge
+    if (packageOfferingsData) {
+      const offerings = parseHalResource<Offering>(packageOfferingsData, 'offerings');
+      return {
+        ...selectedPackage,
+        offerings,
+      };
+    }
+    
+    return selectedPackage;
+  }, [selectedPackage, packageOfferingsData]);
+
   const { data: selectedDiscount } = useQuery({
     queryKey: ['discount', formState.discountId],
     queryFn: async () => {
@@ -271,11 +303,11 @@ export function BookingForm({
   }, [offeringById]);
 
   const packageIncludedIds = useMemo(() => {
-    if (!selectedPackage?.offerings) return [] as number[];
-    return selectedPackage.offerings
+    if (!selectedPackageWithOfferings?.offerings) return [] as number[];
+    return selectedPackageWithOfferings.offerings
       .map((item) => item.id)
       .filter((id): id is number => id != null);
-  }, [selectedPackage?.offerings]);
+  }, [selectedPackageWithOfferings?.offerings]);
 
   const packageIncludedIdSet = useMemo(() => new Set(packageIncludedIds), [packageIncludedIds]);
 
