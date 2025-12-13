@@ -1,13 +1,22 @@
 'use client';
 
 import { useLocale } from '@/components/providers/locale-provider';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useOfferingSearch } from '@/hooks/use-offering-search';
 import { cn } from '@/lib/utils';
-import type { Offering } from '@/types';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { OfferingType, type Offering } from '@/types';
+import { AlertCircle, ChevronDown, ChevronUp, DollarSign, Filter, Loader2, Package, Search, Tag, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 export interface BookingOfferingSelection {
   offering: Offering;
@@ -26,18 +35,37 @@ interface BookingOfferingSelectorProps {
   errorMessage?: string;
 }
 
+type SearchMode = 'simple' | 'name' | 'type' | 'price' | 'mandatory' | 'advanced';
+
 export function BookingOfferingSelector({
-  offerings,
+  offerings: _passedOfferings,
   selections,
   onToggle,
   onQuantityChange,
   packageIncludedIds,
   mandatoryOfferingIds,
-  isLoading = false,
-  errorMessage,
+  isLoading: _passedIsLoading = false,
+  errorMessage: _passedErrorMessage,
 }: BookingOfferingSelectorProps) {
-  const [searchTerm, setSearchTerm] = useState('');
   const { t, formatCurrency } = useLocale();
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [searchMode, setSearchMode] = useState<SearchMode>('simple');
+  
+  // Search criteria state
+  const [searchValue, setSearchValue] = useState('');
+  const [offeringType, setOfferingType] = useState<OfferingType | ''>('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [isMandatory, setIsMandatory] = useState<'true' | 'false' | ''>('');
+
+  // Use offering search hook for backend API integration
+  const { offerings: searchedOfferings, isLoading: searchLoading, search, reset: resetSearch } = useOfferingSearch();
+
+  // Use searched offerings if advanced mode is active, otherwise use passed offerings
+  const offerings = showAdvanced ? searchedOfferings : _passedOfferings;
+  const isLoading = showAdvanced ? searchLoading : _passedIsLoading;
+  const errorMessage = showAdvanced ? undefined : _passedErrorMessage;
+
   const typeLabelMap = useMemo(
     () => ({
       GPS: t('offering.types.gps'),
@@ -50,16 +78,102 @@ export function BookingOfferingSelector({
     [t]
   );
 
+  // Simple client-side filtering for non-advanced mode
   const filteredOfferings = useMemo(() => {
-    if (!searchTerm.trim()) return offerings;
-    const lowered = searchTerm.toLowerCase();
+    if (showAdvanced) return offerings;
+    if (!searchValue.trim()) return offerings;
+    const lowered = searchValue.toLowerCase();
     return offerings.filter((offering) => {
       const name = offering.name?.toLowerCase() ?? '';
       const description = offering.description?.toLowerCase() ?? '';
       const type = offering.offeringType?.toLowerCase() ?? '';
       return name.includes(lowered) || description.includes(lowered) || type.includes(lowered);
     });
-  }, [offerings, searchTerm]);
+  }, [offerings, searchValue, showAdvanced]);
+
+  /**
+   * Execute backend search
+   */
+  const executeSearch = () => {
+    const params: any = {
+      page: 0,
+      size: 100,
+      sort: 'name,asc',
+    };
+
+    if (searchMode === 'simple' && searchValue.trim()) {
+      params.name = searchValue.trim();
+    } else if (searchMode === 'name' && searchValue.trim()) {
+      params.name = searchValue.trim();
+    } else if (searchMode === 'type' && offeringType) {
+      params.offeringType = offeringType;
+    } else if (searchMode === 'price') {
+      if (minPrice) params.minPrice = parseFloat(minPrice);
+      if (maxPrice) params.maxPrice = parseFloat(maxPrice);
+    } else if (searchMode === 'mandatory' && isMandatory) {
+      params.isMandatory = isMandatory === 'true';
+    } else if (searchMode === 'advanced') {
+      if (searchValue.trim()) params.name = searchValue.trim();
+      if (offeringType) params.offeringType = offeringType;
+      if (minPrice) params.minPrice = parseFloat(minPrice);
+      if (maxPrice) params.maxPrice = parseFloat(maxPrice);
+      if (isMandatory) params.isMandatory = isMandatory === 'true';
+    }
+
+    search(params);
+  };
+
+  /**
+   * Handle mode change
+   */
+  const handleModeChange = (mode: SearchMode) => {
+    setSearchMode(mode);
+    if (mode !== 'name' && mode !== 'simple' && mode !== 'advanced') setSearchValue('');
+    if (mode !== 'type' && mode !== 'advanced') setOfferingType('');
+    if (mode !== 'price' && mode !== 'advanced') {
+      setMinPrice('');
+      setMaxPrice('');
+    }
+    if (mode !== 'mandatory' && mode !== 'advanced') setIsMandatory('');
+  };
+
+  /**
+   * Handle reset
+   */
+  const handleReset = () => {
+    setSearchValue('');
+    setOfferingType('');
+    setMinPrice('');
+    setMaxPrice('');
+    setIsMandatory('');
+    setSearchMode('simple');
+    if (showAdvanced) {
+      resetSearch();
+    }
+  };
+
+  /**
+   * Toggle advanced search mode
+   */
+  const toggleAdvanced = () => {
+    const newShowAdvanced = !showAdvanced;
+    setShowAdvanced(newShowAdvanced);
+    if (newShowAdvanced) {
+      // Switching to advanced: execute initial search
+      executeSearch();
+    } else {
+      // Switching back to simple: reset search state
+      handleReset();
+    }
+  };
+
+  // Auto-execute search when advanced mode becomes active
+  useEffect(() => {
+    if (showAdvanced) {
+      executeSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAdvanced]);
 
   if (isLoading) {
     return (
@@ -166,16 +280,214 @@ export function BookingOfferingSelector({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="offeringSearch">{t('booking.form.sections.offerings')}</Label>
-        <Input
-          id="offeringSearch"
-          placeholder={t('booking.form.offerings.searchPlaceholder')}
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-        />
-        <p className="text-xs text-muted-foreground">
-          {t('booking.form.offerings.helper')}
-        </p>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="offeringSearch">{t('booking.form.sections.offerings')}</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={toggleAdvanced}
+            className="h-8 text-xs"
+          >
+            {showAdvanced ? (
+              <>
+                <ChevronUp className="h-3 w-3 mr-1" />
+                {t('offering.search.hideAdvanced') || 'Hide Advanced'}
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3 w-3 mr-1" />
+                {t('offering.search.showAdvanced') || 'Show Advanced'}
+              </>
+            )}
+          </Button>
+        </div>
+
+        {!showAdvanced ? (
+          // Simple search mode
+          <>
+            <Input
+              id="offeringSearch"
+              placeholder={t('booking.form.offerings.searchPlaceholder')}
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('booking.form.offerings.helper')}
+            </p>
+          </>
+        ) : (
+          // Advanced search mode
+          <div className="border rounded-lg p-4 bg-card space-y-4">
+            {/* Search Mode Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant={searchMode === 'simple' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleModeChange('simple')}
+              >
+                <Search className="h-3 w-3 mr-1" />
+                {t('offering.search.simple') || 'Simple'}
+              </Button>
+              <Button
+                type="button"
+                variant={searchMode === 'name' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleModeChange('name')}
+              >
+                <Filter className="h-3 w-3 mr-1" />
+                {t('offering.search.byName') || 'By Name'}
+              </Button>
+              <Button
+                type="button"
+                variant={searchMode === 'type' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleModeChange('type')}
+              >
+                <Package className="h-3 w-3 mr-1" />
+                {t('offering.search.byType') || 'By Type'}
+              </Button>
+              <Button
+                type="button"
+                variant={searchMode === 'price' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleModeChange('price')}
+              >
+                <DollarSign className="h-3 w-3 mr-1" />
+                {t('offering.search.byPrice') || 'By Price'}
+              </Button>
+              <Button
+                type="button"
+                variant={searchMode === 'mandatory' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleModeChange('mandatory')}
+              >
+                <Tag className="h-3 w-3 mr-1" />
+                {t('offering.search.byMandatory') || 'By Status'}
+              </Button>
+              <Button
+                type="button"
+                variant={searchMode === 'advanced' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleModeChange('advanced')}
+              >
+                {t('offering.search.advanced') || 'Advanced'}
+              </Button>
+            </div>
+
+            {/* Search Criteria */}
+            <div className="space-y-3">
+              {/* Text Search */}
+              {(searchMode === 'simple' || searchMode === 'name' || searchMode === 'advanced') && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">
+                    {searchMode === 'simple' ? t('offering.search.searchLabel') || 'Search' : t('offering.search.nameLabel') || 'Offering Name'}
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder={t('offering.searchPlaceholders.name') || 'e.g., GPS Navigation'}
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+              )}
+
+              {/* Type Filter */}
+              {(searchMode === 'type' || searchMode === 'advanced') && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t('offering.search.typeLabel') || 'Offering Type'}</Label>
+                  <Select value={offeringType} onValueChange={(value) => setOfferingType(value as OfferingType | '')}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder={t('offering.search.selectType') || 'Select type'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GPS">{t('offering.type.gps') || 'GPS Navigation'}</SelectItem>
+                      <SelectItem value="INSURANCE">{t('offering.type.insurance') || 'Insurance'}</SelectItem>
+                      <SelectItem value="CHILD_SEAT">{t('offering.type.childSeat') || 'Child Seat'}</SelectItem>
+                      <SelectItem value="WIFI">{t('offering.type.wifi') || 'WiFi Hotspot'}</SelectItem>
+                      <SelectItem value="ADDITIONAL_DRIVER">{t('offering.type.additionalDriver') || 'Additional Driver'}</SelectItem>
+                      <SelectItem value="OTHER">{t('offering.type.other') || 'Other'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Price Range */}
+              {(searchMode === 'price' || searchMode === 'advanced') && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">{t('offering.search.priceRange') || 'Price Range'}</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">{t('offering.search.minPrice') || 'Min'}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">{t('offering.search.maxPrice') || 'Max'}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="999.99"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Mandatory Status */}
+              {(searchMode === 'mandatory' || searchMode === 'advanced') && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t('offering.search.mandatoryLabel') || 'Status'}</Label>
+                  <Select value={isMandatory} onValueChange={(value) => setIsMandatory(value as 'true' | 'false' | '')}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder={t('offering.search.selectMandatory') || 'Select status'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">{t('offering.search.mandatory') || 'Mandatory'}</SelectItem>
+                      <SelectItem value="false">{t('offering.search.optional') || 'Optional'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                onClick={executeSearch}
+                disabled={isLoading}
+                size="sm"
+                className="flex-1"
+              >
+                <Search className="h-3 w-3 mr-1" />
+                {isLoading ? t('common.searching') || 'Searching...' : t('common.search') || 'Search'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
+                size="sm"
+              >
+                <X className="h-3 w-3 mr-1" />
+                {t('common.reset') || 'Reset'}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {filteredOfferings.length === 0 ? (

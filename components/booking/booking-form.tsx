@@ -1,12 +1,13 @@
 'use client';
 
 import { BookingOfferingSelector, type BookingOfferingSelection } from '@/components/booking/booking-offering-selector';
+import { DiscountSelectorAdvanced } from '@/components/booking/discount-selector-advanced';
+import { PackageSelectorAdvanced } from '@/components/booking/package-selector-advanced';
 import { VehicleSelectorAdvanced } from '@/components/booking/vehicle-selector-advanced';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
-import { EntitySelect } from '@/components/ui/entity-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -725,26 +726,12 @@ export function BookingForm({
             </div>
 
             <div className="space-y-2">
-              <Label>{t('booking.form.fields.packageOptional')}</Label>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <EntitySelect
-                  entityType="package"
-                  value={formState.packageId ?? undefined}
-                  onChange={(id) => handleSelect('packageId')(id)}
-                  className="w-full md:min-w-[300px]"
-                />
-                {formState.packageId && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => clearSelection('packageId')}
-                  >
-                    {t('common.clear')}
-                  </Button>
-                )}
-              </div>
+              <PackageSelectorAdvanced
+                label={t('booking.form.fields.packageOptional')}
+                value={formState.packageId ?? undefined}
+                onChange={(id) => handleSelect('packageId')(id)}
+                placeholder={t('booking.form.selectPackagePlaceholder')}
+              />
               {selectedPackage && (
                 <div className="rounded-md border p-3 bg-muted/30 space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -774,27 +761,13 @@ export function BookingForm({
             </div>
 
             <div className="space-y-2">
-              <Label>{t('booking.form.fields.discountOptional')}</Label>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <EntitySelect
-                  entityType="discount"
-                  value={formState.discountId ?? undefined}
-                  onChange={(id) => handleSelect('discountId')(id)}
-                  className="w-full md:min-w-[300px]"
-                  disabled={selectedPackage?.allowDiscountOnModifier === false}
-                />
-                {formState.discountId && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => clearSelection('discountId')}
-                  >
-                    {t('common.clear')}
-                  </Button>
-                )}
-              </div>
+              <DiscountSelectorAdvanced
+                label={t('booking.form.fields.discountOptional')}
+                value={formState.discountId ?? undefined}
+                onChange={(id) => handleSelect('discountId')(id)}
+                placeholder={t('booking.form.selectDiscountPlaceholder')}
+                disabled={selectedPackage?.allowDiscountOnModifier === false}
+              />
               {selectedPackage?.allowDiscountOnModifier === false && (
                 <p className="text-xs text-muted-foreground">
                   {t('booking.form.discountDisabledByPackage')}

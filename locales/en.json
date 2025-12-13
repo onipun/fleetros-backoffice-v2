@@ -952,6 +952,9 @@
       "other": "Other"
     },
     "search": {
+      "simple": "Simple",
+      "showAdvanced": "Show Advanced Search",
+      "hideAdvanced": "Hide Advanced Search",
       "allOfferings": "All Offerings",
       "byName": "By Name",
       "byType": "By Type",
@@ -989,6 +992,9 @@
       "search": "Search",
       "searching": "Searching...",
       "reset": "Reset"
+    },
+    "searchPlaceholders": {
+      "name": "e.g., GPS Navigation"
     },
     "basicInfo": "Basic Information",
     "name": "Offering Name",
@@ -1142,7 +1148,16 @@
       "fixedHelp": "Add or subtract a fixed dollar amount from the base price",
       "percentageHelp": "Multiply the base price by a percentage (positive increases, negative decreases)"
     },
+    "searchByName": "Search by name...",
+    "noPackagesFound": "No packages found",
+    "unnamedPackage": "Unnamed Package",
+    "daysMin": "days min",
+    "searchPlaceholders": {
+      "name": "e.g., Weekend Special",
+      "code": "e.g., WEEKEND20"
+    },
     "search": {
+      "simple": "Simple",
       "allPackages": "All Packages",
       "byName": "By Name",
       "byType": "By Type",
@@ -1150,6 +1165,10 @@
       "validNow": "Valid Now",
       "byDiscount": "By Discount",
       "advanced": "Advanced Search",
+      "showAdvanced": "Show Advanced Search",
+      "hideAdvanced": "Hide Advanced Search",
+      "allowDiscount": "Allow Additional Discounts",
+      "selectAllowDiscount": "Select discount allowance",
       "nameLabel": "Package Name",
       "typeLabel": "Modifier Type",
       "discountLabel": "Allow Additional Discounts",
@@ -1388,7 +1407,14 @@
       "usage": "Usage",
       "actions": "Actions"
     },
+    "searchByCode": "Search by code...",
+    "noDiscountsFound": "No discounts found",
+    "selectDiscount": "Select a discount",
+    "searchPlaceholders": {
+      "code": "e.g., SAVE10, SUMMER2025"
+    },
     "search": {
+      "simple": "Simple",
       "allDiscounts": "All Discounts",
       "byCode": "By Code",
       "byType": "By Type",
@@ -1398,6 +1424,19 @@
       "validNow": "Valid Now",
       "byFeatures": "By Features",
       "advanced": "Advanced",
+      "showAdvanced": "Show Advanced Search",
+      "hideAdvanced": "Hide Advanced Search",
+      "codeLabel": "Discount Code",
+      "typeLabel": "Discount Type",
+      "statusLabel": "Status",
+      "scopeLabel": "Applicable Scope",
+      "minValue": "Minimum Value",
+      "maxValue": "Maximum Value",
+      "autoApply": "Auto-Apply",
+      "selectAutoApply": "Select auto-apply",
+      "selectType": "Select type",
+      "selectStatus": "Select status",
+      "selectScope": "Select scope",
       "codeLabel": "Discount Code",
       "codePlaceholder": "e.g., SUMMER2025",
       "codeHint": "Search by discount code (partial match)",
