@@ -1,6 +1,7 @@
 'use client';
 
 import { BookingOfferingSelector, type BookingOfferingSelection } from '@/components/booking/booking-offering-selector';
+import { VehicleSelectorAdvanced } from '@/components/booking/vehicle-selector-advanced';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,13 +15,13 @@ import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { parseHalResource } from '@/lib/utils';
 import {
-  BookingStatus,
-  DiscountType,
-  type Discount,
-  type Offering,
-  type Package,
-  type PreviewPricingResponse,
-  type Pricing
+    BookingStatus,
+    DiscountType,
+    type Discount,
+    type Offering,
+    type Package,
+    type PreviewPricingResponse,
+    type Pricing
 } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
@@ -953,12 +954,13 @@ export default function NewBookingPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>{`${t('booking.form.fields.vehicle')} ${t('common.required')}`}</Label>
-                    <EntitySelect
-                      entityType="vehicle"
+                    <VehicleSelectorAdvanced
+                      label={t('booking.form.fields.vehicle')}
                       value={formState.vehicleId ?? undefined}
                       onChange={(id) => handleSelect('vehicleId')(id)}
-                      className="w-full"
+                      defaultStatus="AVAILABLE"
+                      required
+                      placeholder={t('booking.form.selectVehiclePlaceholder')}
                     />
                   </div>
 

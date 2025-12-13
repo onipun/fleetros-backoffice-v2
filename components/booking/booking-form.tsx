@@ -1,7 +1,7 @@
 'use client';
 
 import { BookingOfferingSelector, type BookingOfferingSelection } from '@/components/booking/booking-offering-selector';
-import { VehicleSelector } from '@/components/booking/vehicle-selector';
+import { VehicleSelectorAdvanced } from '@/components/booking/vehicle-selector-advanced';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -714,7 +714,7 @@ export function BookingForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <VehicleSelector
+              <VehicleSelectorAdvanced
                 label={t('booking.form.fields.vehicle')}
                 value={formState.vehicleId ?? undefined}
                 onChange={(id) => handleSelect('vehicleId')(id)}
