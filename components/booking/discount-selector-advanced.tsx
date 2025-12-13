@@ -434,9 +434,9 @@ export function DiscountSelectorAdvanced({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="ALL">{t('discount.scope.all')}</SelectItem>
-                          <SelectItem value="VEHICLE">{t('discount.scope.vehicle')}</SelectItem>
                           <SelectItem value="PACKAGE">{t('discount.scope.package')}</SelectItem>
                           <SelectItem value="OFFERING">{t('discount.scope.offering')}</SelectItem>
+                          <SelectItem value="BOOKING">{t('discount.scope.booking') || 'Booking'}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

@@ -463,7 +463,6 @@ export function DiscountSearchFilters({ onSearch, isLoading = false }: DiscountS
                     <SelectItem value="ALL">{t('discount.scope.all') || 'All'}</SelectItem>
                     <SelectItem value="PACKAGE">{t('discount.scope.package') || 'Package'}</SelectItem>
                     <SelectItem value="OFFERING">{t('discount.scope.offering') || 'Offering'}</SelectItem>
-                    <SelectItem value="VEHICLE">{t('discount.scope.vehicle') || 'Vehicle'}</SelectItem>
                     <SelectItem value="BOOKING">{t('discount.scope.booking') || 'Booking'}</SelectItem>
                   </SelectContent>
                 </Select>

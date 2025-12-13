@@ -72,7 +72,7 @@ const defaultValues: DiscountFormState = {
   targetEntityId: undefined,
 };
 
-const scopeOptions: DiscountScope[] = ['ALL', 'PACKAGE', 'OFFERING', 'BOOKING', 'VEHICLE'];
+const scopeOptions: DiscountScope[] = ['ALL', 'PACKAGE', 'OFFERING', 'BOOKING'];
 
 export function DiscountForm({
   initialData,
