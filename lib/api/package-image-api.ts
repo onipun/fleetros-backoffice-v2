@@ -8,12 +8,19 @@ import type { PackageImage, PackageImageUploadResponse } from '@/types';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
 
 /**
- * Get authentication token from storage
+ * Get authentication token from session
  */
-const getAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('accessToken');
-};
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const response = await fetch('/api/auth/session');
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.accessToken || null;
+  } catch (error) {
+    console.error('Failed to get auth token:', error);
+    return null;
+  }
+}
 
 /**
  * Upload or replace a package banner image
@@ -24,7 +31,7 @@ export async function uploadPackageImage(
   description?: string,
   altText?: string
 ): Promise<PackageImageUploadResponse> {
-  const token = getAuthToken();
+  const token = await getAuthToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -54,8 +61,16 @@ export async function uploadPackageImage(
  * Get the banner image for a package
  */
 export async function getPackageImage(packageId: number): Promise<PackageImage | null> {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/packages/${packageId}/image`, {
     method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
   });
 
   if (response.status === 404) {
@@ -74,8 +89,16 @@ export async function getPackageImage(packageId: number): Promise<PackageImage |
  * Check if a package has a banner image
  */
 export async function checkPackageImageExists(packageId: number): Promise<boolean> {
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/packages/${packageId}/image/exists`, {
     method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
   });
 
   if (!response.ok) {
@@ -94,7 +117,7 @@ export async function updatePackageImageMetadata(
   description?: string,
   altText?: string
 ): Promise<PackageImage> {
-  const token = getAuthToken();
+  const token = await getAuthToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -126,7 +149,7 @@ export async function updatePackageImageMetadata(
  * Delete a package banner image
  */
 export async function deletePackageImage(packageId: number): Promise<void> {
-  const token = getAuthToken();
+  const token = await getAuthToken();
   if (!token) {
     throw new Error('Authentication required');
   }

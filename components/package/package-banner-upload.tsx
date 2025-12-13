@@ -275,7 +275,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={handleUpdateMetadata} size="sm">
+                  <Button onClick={handleUpdateMetadata} size="sm" type="button">
                     <Check className="h-4 w-4 mr-2" />
                     {t('common.save')}
                   </Button>
@@ -287,6 +287,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
                     }} 
                     variant="outline" 
                     size="sm"
+                    type="button"
                   >
                     {t('common.cancel')}
                   </Button>
@@ -313,6 +314,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
                     onClick={() => setEditingMetadata(true)}
                     variant="outline"
                     size="sm"
+                    type="button"
                   >
                     {t('package.banner.editMetadata')}
                   </Button>
@@ -320,6 +322,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
                     onClick={() => fileInputRef.current?.click()}
                     variant="outline"
                     size="sm"
+                    type="button"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     {t('package.banner.replace')}
@@ -329,6 +332,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
                     variant="outline"
                     size="sm"
                     className="text-destructive hover:text-destructive"
+                    type="button"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     {t('common.delete')}
@@ -372,7 +376,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={handleUpload} disabled={uploading || !packageId}>
+                <Button onClick={handleUpload} disabled={uploading || !packageId} type="button">
                   {uploading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -385,7 +389,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
                     </>
                   )}
                 </Button>
-                <Button onClick={handleCancelSelection} variant="outline">
+                <Button onClick={handleCancelSelection} variant="outline" type="button">
                   <X className="h-4 w-4 mr-2" />
                   {t('common.cancel')}
                 </Button>
@@ -403,6 +407,7 @@ export function PackageBannerUpload({ packageId, onImageChange, className }: Pac
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!packageId}
+                type="button"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {t('package.banner.selectFile')}
