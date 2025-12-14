@@ -572,11 +572,27 @@ export default function EditBookingPage() {
       pricingPreview.pricingSummary.offerings.forEach((offering, index) => {
         const amount = offering.amount || offering.totalPrice || 0;
         const unitPrice = offering.unitPrice || offering.pricePerUnit || 0;
+        
+        // Build helper text based on pricing basis
+        let helper: string | undefined;
+        if (offering.pricingBasis === 'PER_DAY') {
+          // For per-day offerings, show: quantity × days × unitPrice
+          const days = computedTotalDays;
+          if (offering.quantity > 1) {
+            helper = `${offering.quantity} × ${days} ${days === 1 ? 'day' : 'days'} × ${formatCurrency(unitPrice)}`;
+          } else {
+            helper = `${days} ${days === 1 ? 'day' : 'days'} × ${formatCurrency(unitPrice)}`;
+          }
+        } else if (offering.quantity > 1) {
+          // For other pricing bases, just show: quantity × unitPrice
+          helper = `${offering.quantity} × ${formatCurrency(unitPrice)}`;
+        }
+        
         items.push({
           id: `offering-${index}`,
           label: offering.offeringName,
           amount: roundToTwo(amount),
-          helper: offering.quantity > 1 ? `${offering.quantity} × ${formatCurrency(unitPrice)}` : undefined,
+          helper,
         });
       });
     }
@@ -1270,14 +1286,31 @@ export default function EditBookingPage() {
                             <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">
                               Add-ons:
                             </p>
-                            {pricingPreview.pricingSummary.offerings.map((offering, idx) => (
-                              <div key={idx} className="flex justify-between text-sm">
-                                <span className="text-green-700 dark:text-green-300">
-                                  {offering.offeringName} × {offering.quantity}
-                                </span>
-                                <span>{formatCurrency(offering.amount || offering.totalPrice || 0)}</span>
-                              </div>
-                            ))}
+                            {pricingPreview.pricingSummary.offerings.map((offering, idx) => {
+                              const days = computedTotalDays;
+                              const unitPrice = offering.unitPrice || offering.pricePerUnit || 0;
+                              
+                              // Build display text based on pricing basis
+                              let displayText = offering.offeringName;
+                              if (offering.pricingBasis === 'PER_DAY') {
+                                if (offering.quantity > 1) {
+                                  displayText += ` (${offering.quantity} × ${days} ${days === 1 ? 'day' : 'days'} × ${formatCurrency(unitPrice)})`;
+                                } else {
+                                  displayText += ` (${days} ${days === 1 ? 'day' : 'days'} × ${formatCurrency(unitPrice)})`;
+                                }
+                              } else if (offering.quantity > 1) {
+                                displayText += ` (${offering.quantity} × ${formatCurrency(unitPrice)})`;
+                              }
+                              
+                              return (
+                                <div key={idx} className="flex justify-between text-sm">
+                                  <span className="text-green-700 dark:text-green-300">
+                                    {displayText}
+                                  </span>
+                                  <span>{formatCurrency(offering.amount || offering.totalPrice || 0)}</span>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
 
@@ -1289,11 +1322,30 @@ export default function EditBookingPage() {
                           </div>
                           
                           {pricingPreview.pricingSummary.totalDiscountAmount > 0 && (
-                            <div className="flex justify-between text-sm text-green-600">
-                              <span>Total Savings:</span>
-                              <span className="font-semibold">
-                                -{formatCurrency(pricingPreview.pricingSummary.totalDiscountAmount)}
-                              </span>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-sm text-green-600 font-medium">
+                                <span>Total Savings:</span>
+                                <span className="font-semibold">
+                                  -{formatCurrency(pricingPreview.pricingSummary.totalDiscountAmount)}
+                                </span>
+                              </div>
+                              {pricingPreview.pricingSummary.discounts && pricingPreview.pricingSummary.discounts.length > 0 && (
+                                <div className="ml-4 space-y-0.5">
+                                  {pricingPreview.pricingSummary.discounts.map((discount, idx) => (
+                                    <div key={idx} className="space-y-0.5">
+                                      <div className="flex justify-between text-xs text-green-600">
+                                        <span>• {discount.discountCode} ({discount.description || 'Discount'})</span>
+                                        <span>-{formatCurrency(discount.discountAmount)}</span>
+                                      </div>
+                                      {discount.applicableScope && (
+                                        <div className="ml-3 text-[10px] text-green-600/70 italic">
+                                          Scope: {discount.applicableScope}{discount.scopeDetails ? ` - ${discount.scopeDetails}` : ''}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
 

@@ -697,6 +697,8 @@ export interface DiscountSummary {
   amountBeforeDiscount: number;
   discountAmount: number;
   amountAfterDiscount: number;
+  applicableScope?: string;
+  scopeDetails?: string;
 }
 
 export interface LoyaltyDiscount {
