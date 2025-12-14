@@ -452,11 +452,16 @@ export function BookingForm({
     setOfferingSelections((prev) => {
       const current = prev[offeringId];
       if (!current || current.quantity === quantity) return prev;
+      
+      // Enforce maxQuantityPerBooking limit
+      const maxQuantity = current.offering.maxQuantityPerBooking;
+      const constrainedQuantity = Math.min(quantity, maxQuantity);
+      
       return {
         ...prev,
         [offeringId]: {
           ...current,
-          quantity,
+          quantity: constrainedQuantity,
         },
       };
     });

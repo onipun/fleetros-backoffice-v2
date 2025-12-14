@@ -577,6 +577,8 @@
         "unitPriceLabel": "Harga seunit",
         "quantity": "Kuantiti",
         "packageHint": "Unit pertama ditanggung oleh pakej. Unit tambahan dikenakan kadar biasa.",
+        "maxQuantityLabel": "Kuantiti maksimum: {{max}}",
+        "maxQuantityHint": "Maks: {{max}}",
         "billableLabel": "dikenakan caj",
         "noCharge": "Tiada caj tambahan",
         "addAction": "Tambah perkhidmatan"

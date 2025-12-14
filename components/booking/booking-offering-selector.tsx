@@ -6,11 +6,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
 import { useOfferingSearch } from '@/hooks/use-offering-search';
 import { cn } from '@/lib/utils';
@@ -555,9 +555,14 @@ export function BookingOfferingSelector({
                       {offering.description && (
                         <p className="text-sm text-muted-foreground">{offering.description}</p>
                       )}
-                      <p className="text-xs text-muted-foreground">
-                        {`${t('booking.form.offerings.unitPriceLabel')}: ${formatCurrency(unitPrice)}`}
-                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-xs text-muted-foreground">
+                          {`${t('booking.form.offerings.unitPriceLabel')}: ${formatCurrency(unitPrice)}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {`Max quantity: ${offering.maxQuantityPerBooking}`}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -568,18 +573,26 @@ export function BookingOfferingSelector({
                         <Input
                           type="number"
                           min={selection?.included ? 1 : 1}
+                          max={offering.maxQuantityPerBooking}
                           value={quantity}
                           onChange={(event) => {
                             const nextQuantity = Number.parseInt(event.target.value, 10);
+                            const minQuantity = selection?.included ? 1 : 1;
+                            const maxQuantity = offering.maxQuantityPerBooking;
                             const safeQuantity = Number.isNaN(nextQuantity)
-                              ? (selection?.included ? 1 : 1)
-                              : Math.max(nextQuantity, selection?.included ? 1 : 1);
+                              ? minQuantity
+                              : Math.max(minQuantity, Math.min(nextQuantity, maxQuantity));
                             onQuantityChange(id, safeQuantity);
                           }}
                         />
                         {selection?.included && (
                           <p className="text-xs text-muted-foreground">
                             {t('booking.form.offerings.packageHint')}
+                          </p>
+                        )}
+                        {offering.maxQuantityPerBooking > 1 && (
+                          <p className="text-xs text-muted-foreground">
+                            {`Max: ${offering.maxQuantityPerBooking}`}
                           </p>
                         )}
                       </div>

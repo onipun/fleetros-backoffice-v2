@@ -756,6 +756,8 @@
         "unitPriceLabel": "Unit price",
         "quantity": "Quantity",
         "packageHint": "First unit covered by package. Extra units billed at standard rate.",
+        "maxQuantityLabel": "Max quantity: {{max}}",
+        "maxQuantityHint": "Max: {{max}}",
         "billableLabel": "billable",
         "noCharge": "No additional charge",
         "addAction": "Add offering"

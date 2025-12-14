@@ -585,6 +585,8 @@
         "unitPriceLabel": "单价",
         "quantity": "数量",
         "packageHint": "首个单位由套餐覆盖，额外单位按标准价计费。",
+        "maxQuantityLabel": "最大数量：{{max}}",
+        "maxQuantityHint": "最大：{{max}}",
         "billableLabel": "计费",
         "noCharge": "无需额外费用",
         "addAction": "添加服务"
