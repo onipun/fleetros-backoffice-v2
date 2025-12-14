@@ -473,7 +473,14 @@ export function DiscountForm({
             <Checkbox
               id="autoApply"
               checked={formState.autoApply}
-              onCheckedChange={(checked) => handleChange({ autoApply: checked === true })}
+              onCheckedChange={(checked) => {
+                if (checked === true) {
+                  // Auto-uncheck requiresPromoCode when auto-apply is enabled
+                  handleChange({ autoApply: true, requiresPromoCode: false });
+                } else {
+                  handleChange({ autoApply: false });
+                }
+              }}
             />
             <div className="flex-1 space-y-1">
               <Label
@@ -493,7 +500,14 @@ export function DiscountForm({
             <Checkbox
               id="requiresPromoCode"
               checked={formState.requiresPromoCode}
-              onCheckedChange={(checked) => handleChange({ requiresPromoCode: checked === true })}
+              onCheckedChange={(checked) => {
+                if (checked === true) {
+                  // Auto-uncheck autoApply when promo code is required
+                  handleChange({ requiresPromoCode: true, autoApply: false });
+                } else {
+                  handleChange({ requiresPromoCode: false });
+                }
+              }}
             />
             <div className="flex-1 space-y-1">
               <Label
