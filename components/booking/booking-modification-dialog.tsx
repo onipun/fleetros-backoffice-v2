@@ -520,7 +520,7 @@ export function BookingModificationDialog({
                 
                 {/* Pricing Comparison */}
                 <div className="rounded-lg border p-4 space-y-3">
-                  <h4 className="font-semibold">Pricing Changes</h4>
+                  <h4 className="font-semibold">Pricing Summary</h4>
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -556,6 +556,205 @@ export function BookingModificationDialog({
                     </div>
                   </div>
                 </div>
+
+                {/* Detailed Price Breakdown */}
+                {previewData.priceChangeBreakdown && (
+                  <div className="rounded-lg border p-4 space-y-4">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Info className="h-4 w-4" />
+                      Detailed Price Breakdown
+                    </h4>
+                    
+                    {/* Vehicle Changes */}
+                    {previewData.priceChangeBreakdown.vehicleChanges && previewData.priceChangeBreakdown.vehicleChanges.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-muted-foreground">Vehicle Rentals</h5>
+                        {previewData.priceChangeBreakdown.vehicleChanges.map((change, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm bg-muted/30 rounded-md px-3 py-2">
+                            <div className="flex-1">
+                              <span className="font-medium">{change.vehicleName}</span>
+                              {change.reason && (
+                                <p className="text-xs text-muted-foreground">{change.reason}</p>
+                              )}
+                              {change.previousDays !== undefined && change.newDays !== undefined && change.previousDays !== change.newDays && (
+                                <p className="text-xs text-muted-foreground">
+                                  {change.previousDays} days → {change.newDays} days
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground line-through text-xs">{formatCurrency(change.previousAmount)}</span>
+                                <span className="font-medium">{formatCurrency(change.newAmount)}</span>
+                              </div>
+                              <span className={cn(
+                                "text-xs font-medium",
+                                change.difference > 0 ? "text-orange-600" : change.difference < 0 ? "text-green-600" : "text-muted-foreground"
+                              )}>
+                                {change.difference > 0 ? '+' : ''}{formatCurrency(change.difference)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-sm border-t pt-2">
+                          <span className="text-muted-foreground">Vehicle Total:</span>
+                          <div className="text-right">
+                            <span className="text-muted-foreground text-xs mr-2">{formatCurrency(previewData.priceChangeBreakdown.previousVehicleTotal)}</span>
+                            <span className="font-medium">{formatCurrency(previewData.priceChangeBreakdown.newVehicleTotal)}</span>
+                            <span className={cn(
+                              "ml-2 text-xs",
+                              previewData.priceChangeBreakdown.vehicleDifference > 0 ? "text-orange-600" : 
+                              previewData.priceChangeBreakdown.vehicleDifference < 0 ? "text-green-600" : ""
+                            )}>
+                              ({previewData.priceChangeBreakdown.vehicleDifference > 0 ? '+' : ''}{formatCurrency(previewData.priceChangeBreakdown.vehicleDifference)})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Offering Changes */}
+                    {previewData.priceChangeBreakdown.offeringChanges && previewData.priceChangeBreakdown.offeringChanges.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-muted-foreground">Add-ons & Services</h5>
+                        {previewData.priceChangeBreakdown.offeringChanges.map((change, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm bg-muted/30 rounded-md px-3 py-2">
+                            <div className="flex-1">
+                              <span className="font-medium">{change.offeringName}</span>
+                              {change.previousQuantity !== undefined && change.newQuantity !== undefined && (
+                                <p className="text-xs text-muted-foreground">
+                                  Qty: {change.previousQuantity} → {change.newQuantity}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground line-through text-xs">{formatCurrency(change.previousAmount)}</span>
+                                <span className="font-medium">{formatCurrency(change.newAmount)}</span>
+                              </div>
+                              <span className={cn(
+                                "text-xs font-medium",
+                                change.difference > 0 ? "text-orange-600" : change.difference < 0 ? "text-green-600" : "text-muted-foreground"
+                              )}>
+                                {change.difference > 0 ? '+' : ''}{formatCurrency(change.difference)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-sm border-t pt-2">
+                          <span className="text-muted-foreground">Add-ons Total:</span>
+                          <div className="text-right">
+                            <span className="text-muted-foreground text-xs mr-2">{formatCurrency(previewData.priceChangeBreakdown.previousOfferingsTotal)}</span>
+                            <span className="font-medium">{formatCurrency(previewData.priceChangeBreakdown.newOfferingsTotal)}</span>
+                            <span className={cn(
+                              "ml-2 text-xs",
+                              previewData.priceChangeBreakdown.offeringsDifference > 0 ? "text-orange-600" : 
+                              previewData.priceChangeBreakdown.offeringsDifference < 0 ? "text-green-600" : ""
+                            )}>
+                              ({previewData.priceChangeBreakdown.offeringsDifference > 0 ? '+' : ''}{formatCurrency(previewData.priceChangeBreakdown.offeringsDifference)})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Discount Changes */}
+                    {previewData.priceChangeBreakdown.discountChanges && previewData.priceChangeBreakdown.discountChanges.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-muted-foreground">Discounts Applied</h5>
+                        {previewData.priceChangeBreakdown.discountChanges.map((change, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm bg-green-50 dark:bg-green-950/20 rounded-md px-3 py-2">
+                            <div className="flex-1">
+                              <span className="font-medium">{change.discountCode}</span>
+                              {change.discountName && (
+                                <p className="text-xs text-muted-foreground">{change.discountName}</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground line-through text-xs">-{formatCurrency(change.previousAmount)}</span>
+                                <span className="font-medium text-green-600">-{formatCurrency(change.newAmount)}</span>
+                              </div>
+                              <span className={cn(
+                                "text-xs font-medium",
+                                change.difference > 0 ? "text-orange-600" : change.difference < 0 ? "text-green-600" : "text-muted-foreground"
+                              )}>
+                                {change.difference > 0 ? '+' : ''}{formatCurrency(change.difference)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Subtotal */}
+                    <div className="flex items-center justify-between text-sm border-t pt-2">
+                      <span className="font-medium">Subtotal:</span>
+                      <div className="text-right">
+                        <span className="text-muted-foreground text-xs mr-2">{formatCurrency(previewData.priceChangeBreakdown.previousSubtotal)}</span>
+                        <span className="font-medium">{formatCurrency(previewData.priceChangeBreakdown.newSubtotal)}</span>
+                        <span className={cn(
+                          "ml-2 text-xs",
+                          previewData.priceChangeBreakdown.subtotalDifference > 0 ? "text-orange-600" : 
+                          previewData.priceChangeBreakdown.subtotalDifference < 0 ? "text-green-600" : ""
+                        )}>
+                          ({previewData.priceChangeBreakdown.subtotalDifference > 0 ? '+' : ''}{formatCurrency(previewData.priceChangeBreakdown.subtotalDifference)})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Taxes & Fees */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Taxes:</span>
+                        <div className="text-right">
+                          <span className="text-muted-foreground text-xs mr-2">{formatCurrency(previewData.priceChangeBreakdown.previousTaxAmount)}</span>
+                          <span>{formatCurrency(previewData.priceChangeBreakdown.newTaxAmount)}</span>
+                          <span className={cn(
+                            "ml-2 text-xs",
+                            previewData.priceChangeBreakdown.taxDifference > 0 ? "text-orange-600" : 
+                            previewData.priceChangeBreakdown.taxDifference < 0 ? "text-green-600" : ""
+                          )}>
+                            ({previewData.priceChangeBreakdown.taxDifference > 0 ? '+' : ''}{formatCurrency(previewData.priceChangeBreakdown.taxDifference)})
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Service Fees:</span>
+                        <div className="text-right">
+                          <span className="text-muted-foreground text-xs mr-2">{formatCurrency(previewData.priceChangeBreakdown.previousServiceFee)}</span>
+                          <span>{formatCurrency(previewData.priceChangeBreakdown.newServiceFee)}</span>
+                          <span className={cn(
+                            "ml-2 text-xs",
+                            previewData.priceChangeBreakdown.serviceFeeDifference > 0 ? "text-orange-600" : 
+                            previewData.priceChangeBreakdown.serviceFeeDifference < 0 ? "text-green-600" : ""
+                          )}>
+                            ({previewData.priceChangeBreakdown.serviceFeeDifference > 0 ? '+' : ''}{formatCurrency(previewData.priceChangeBreakdown.serviceFeeDifference)})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Deposit Changes */}
+                    {(previewData.priceChangeBreakdown.previousDepositAmount > 0 || previewData.priceChangeBreakdown.newDepositAmount > 0) && (
+                      <div className="flex items-center justify-between text-sm border-t pt-2">
+                        <span className="text-muted-foreground">Deposit (Refundable):</span>
+                        <div className="text-right">
+                          <span className="text-muted-foreground text-xs mr-2">{formatCurrency(previewData.priceChangeBreakdown.previousDepositAmount)}</span>
+                          <span>{formatCurrency(previewData.priceChangeBreakdown.newDepositAmount)}</span>
+                          {previewData.priceChangeBreakdown.depositDifference !== 0 && (
+                            <span className={cn(
+                              "ml-2 text-xs",
+                              previewData.priceChangeBreakdown.depositDifference > 0 ? "text-orange-600" : "text-green-600"
+                            )}>
+                              ({previewData.priceChangeBreakdown.depositDifference > 0 ? '+' : ''}{formatCurrency(previewData.priceChangeBreakdown.depositDifference)})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 {/* Payment Action */}
                 {previewData.paymentAdjustment && previewData.paymentAdjustment.adjustmentType !== 'NO_CHANGE' && (() => {
@@ -597,7 +796,133 @@ export function BookingModificationDialog({
                 })()}
                 
                 {/* New Pricing Details */}
-                {previewData.newPricingDetails && previewData.newPricingDetails.vehicles && previewData.newPricingDetails.vehicles.length > 0 && (
+                {previewData.newPricingSummary ? (
+                  <div className="rounded-lg border p-4 space-y-4">
+                    <h4 className="font-semibold">New Pricing Summary</h4>
+                    
+                    {/* Vehicle Rentals */}
+                    {previewData.newPricingSummary.vehicleRentals && previewData.newPricingSummary.vehicleRentals.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-muted-foreground">Vehicle Rentals</h5>
+                        {previewData.newPricingSummary.vehicleRentals.map((vehicle, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <div>
+                              <span className="font-medium">{vehicle.vehicleName}</span>
+                              <p className="text-xs text-muted-foreground">
+                                {vehicle.rentalPeriod} • {vehicle.days} days × {formatCurrency(vehicle.dailyRate)}/day
+                              </p>
+                            </div>
+                            <span className="font-medium">{formatCurrency(vehicle.amount)}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-sm border-t pt-1">
+                          <span className="text-muted-foreground">Vehicle Total:</span>
+                          <span className="font-medium">{formatCurrency(previewData.newPricingSummary.totalVehicleRentalAmount)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Offerings */}
+                    {previewData.newPricingSummary.offerings && previewData.newPricingSummary.offerings.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-muted-foreground">Add-ons & Services</h5>
+                        {previewData.newPricingSummary.offerings.map((offering, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <div>
+                              <span className="font-medium">{offering.offeringName}</span>
+                              <p className="text-xs text-muted-foreground">
+                                {offering.quantity} × {formatCurrency(offering.unitPrice)} ({offering.pricingBasis})
+                              </p>
+                            </div>
+                            <span className="font-medium">{formatCurrency(offering.amount)}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-sm border-t pt-1">
+                          <span className="text-muted-foreground">Add-ons Total:</span>
+                          <span className="font-medium">{formatCurrency(previewData.newPricingSummary.totalOfferingsAmount)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Subtotal */}
+                    <div className="flex items-center justify-between text-sm border-t pt-2">
+                      <span className="font-medium">Subtotal:</span>
+                      <span className="font-medium">{formatCurrency(previewData.newPricingSummary.subtotal)}</span>
+                    </div>
+
+                    {/* Discounts */}
+                    {previewData.newPricingSummary.discounts && previewData.newPricingSummary.discounts.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-green-600">Discounts Applied</h5>
+                        {previewData.newPricingSummary.discounts.map((discount, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <div>
+                              <span className="font-medium text-green-600">{discount.discountCode}</span>
+                              <p className="text-xs text-muted-foreground">
+                                {discount.description}
+                                {discount.scopeDetails && ` • ${discount.scopeDetails}`}
+                              </p>
+                            </div>
+                            <span className="font-medium text-green-600">-{formatCurrency(discount.discountAmount)}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Total Discounts:</span>
+                          <span className="font-medium text-green-600">-{formatCurrency(previewData.newPricingSummary.totalDiscountAmount)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Taxes & Fees */}
+                    <div className="space-y-1 border-t pt-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Taxes:</span>
+                        <span>{formatCurrency(previewData.newPricingSummary.taxAmount)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Service Fee:</span>
+                        <span>{formatCurrency(previewData.newPricingSummary.serviceFeeAmount)}</span>
+                      </div>
+                    </div>
+
+                    {/* Grand Total */}
+                    <div className="flex items-center justify-between text-base border-t pt-2 font-bold">
+                      <span>Grand Total:</span>
+                      <span>{formatCurrency(previewData.newPricingSummary.grandTotal)}</span>
+                    </div>
+
+                    {/* Payment Breakdown */}
+                    {(previewData.newPricingSummary.dueAtBooking > 0 || previewData.newPricingSummary.dueAtPickup > 0) && (
+                      <div className="bg-muted/30 rounded-md p-3 space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Due at Booking:</span>
+                          <span className="font-medium">{formatCurrency(previewData.newPricingSummary.dueAtBooking)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Due at Pickup:</span>
+                          <span className="font-medium">{formatCurrency(previewData.newPricingSummary.dueAtPickup)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Deposit */}
+                    {previewData.newPricingSummary.depositBreakdown && previewData.newPricingSummary.depositBreakdown.length > 0 && (
+                      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-3">
+                        <h5 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Security Deposit</h5>
+                        {previewData.newPricingSummary.depositBreakdown.map((deposit, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{deposit.vehicleName} ({deposit.depositType})</span>
+                            <span className="font-medium">{formatCurrency(deposit.depositAmount)}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-sm border-t border-blue-200 dark:border-blue-800 pt-1 mt-1">
+                          <span className="text-muted-foreground">Total Deposit:</span>
+                          <span className="font-medium">{formatCurrency(previewData.newPricingSummary.totalDepositAmount)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : previewData.newPricingDetails && previewData.newPricingDetails.vehicles && previewData.newPricingDetails.vehicles.length > 0 && (
                   <div className="rounded-lg border p-4">
                     <h4 className="font-semibold mb-3">Updated Pricing Details</h4>
                     {previewData.newPricingDetails.vehicles.map((vehicle, index) => (

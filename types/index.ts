@@ -372,6 +372,110 @@ export interface NewPricingDetails {
   vehicles: VehiclePricingDetail[];
 }
 
+// Price Change Breakdown Types for Modification Preview
+export interface VehicleChangeDetail {
+  changeType: 'ADDED' | 'REMOVED' | 'MODIFIED' | 'UNCHANGED';
+  vehicleName: string;
+  previousDays?: number;
+  newDays?: number;
+  previousAmount: number;
+  newAmount: number;
+  difference: number;
+  reason?: string;
+}
+
+export interface OfferingChangeDetail {
+  changeType: 'ADDED' | 'REMOVED' | 'MODIFIED' | 'UNCHANGED';
+  offeringName: string;
+  previousQuantity?: number;
+  newQuantity?: number;
+  previousAmount: number;
+  newAmount: number;
+  difference: number;
+}
+
+export interface DiscountChangeDetail {
+  changeType: 'ADDED' | 'REMOVED' | 'MODIFIED' | 'UNCHANGED';
+  discountCode: string;
+  discountName?: string;
+  previousAmount: number;
+  newAmount: number;
+  difference: number;
+}
+
+export interface PriceChangeBreakdown {
+  vehicleChanges: VehicleChangeDetail[];
+  previousVehicleTotal: number;
+  newVehicleTotal: number;
+  vehicleDifference: number;
+  previousPackageDiscount: number;
+  newPackageDiscount: number;
+  packageDiscountDifference: number;
+  offeringChanges: OfferingChangeDetail[];
+  previousOfferingsTotal: number;
+  newOfferingsTotal: number;
+  offeringsDifference: number;
+  discountChanges: DiscountChangeDetail[];
+  previousDiscountsTotal: number;
+  newDiscountsTotal: number;
+  discountsDifference: number;
+  previousTaxAmount: number;
+  newTaxAmount: number;
+  taxDifference: number;
+  previousServiceFee: number;
+  newServiceFee: number;
+  serviceFeeDifference: number;
+  previousDepositAmount: number;
+  newDepositAmount: number;
+  depositDifference: number;
+  previousSubtotal: number;
+  newSubtotal: number;
+  subtotalDifference: number;
+}
+
+export interface NewPricingSummary {
+  vehicleRentals: {
+    vehicleName: string;
+    rentalPeriod: string;
+    days: number;
+    dailyRate: number;
+    amount: number;
+  }[];
+  totalVehicleRentalAmount: number;
+  offerings: {
+    offeringName: string;
+    quantity: number;
+    unitPrice: number;
+    pricingBasis: string;
+    amount: number;
+  }[];
+  totalOfferingsAmount: number;
+  subtotal: number;
+  discounts: {
+    discountCode: string;
+    description: string;
+    discountAmount: number;
+    applicableScope?: string;
+    scopeDetails?: string;
+  }[];
+  totalDiscountAmount: number;
+  taxAmount: number;
+  serviceFeeAmount: number;
+  totalTaxesAndFees: number;
+  totalDepositAmount: number;
+  depositBreakdown: {
+    vehicleName: string;
+    depositAmount: number;
+    depositType: string;
+  }[];
+  grandTotal: number;
+  dueAtBooking: number;
+  dueAtPickup: number;
+  calculatedAt?: string;
+  currency: string;
+  calculationVersion?: string;
+}
+
 export interface BookingModificationResponse {
   bookingId: number;
   success: boolean;
@@ -387,6 +491,21 @@ export interface BookingModificationResponse {
   changedFields: string[];
   isPreview: boolean;
   modificationTimestamp?: string;
+  // Enhanced pricing breakdown fields
+  priceDifference?: number;
+  correlationId?: string;
+  modificationType?: 'MINOR' | 'MAJOR';
+  currentTotal?: number;
+  amountPaid?: number;
+  balanceDue?: number;
+  modificationCount?: number;
+  validation?: {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  };
+  newPricingSummary?: NewPricingSummary;
+  priceChangeBreakdown?: PriceChangeBreakdown;
 }
 
 export interface BookingSnapshot {
