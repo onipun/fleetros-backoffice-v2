@@ -309,7 +309,7 @@ export interface GroupedBookingImages {
 // Booking Modification Types
 export type FeeType = 'FLAT' | 'PERCENTAGE' | 'PER_DAY';
 export type AdjustmentType = 'CHARGE' | 'REFUND' | 'NO_CHANGE';
-export type ChangeType = 'CREATED' | 'MODIFIED' | 'CANCELLED' | 'COMPLETED';
+export type ChangeType = 'CREATED' | 'MODIFIED' | 'CANCELLED' | 'COMPLETED' | 'STATUS_CHANGED';
 
 export interface ModificationPolicyResponse {
   id: number;

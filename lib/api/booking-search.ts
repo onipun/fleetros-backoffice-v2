@@ -28,6 +28,7 @@ export interface BookingSearchParams {
   phone?: string;
   emailOrPhone?: string;
   status?: BookingStatus;
+  paymentStatus?: PaymentStatusFilter;
   startDate?: string;
   endDate?: string;
 }
@@ -39,6 +40,8 @@ export type BookingStatus =
   | 'COMPLETED' 
   | 'CANCELLED' 
   | 'NO_SHOW';
+
+export type PaymentStatusFilter = 'COMPLETE' | 'PENDING';
 
 /**
  * Get access token from session API
@@ -107,39 +110,48 @@ function buildQueryString(params: BookingSearchParams): string {
  * Determine the appropriate search endpoint based on parameters
  */
 function getSearchEndpoint(params: BookingSearchParams): string {
-  const { bookingId, email, phone, emailOrPhone, status, startDate, endDate } = params;
+  const { bookingId, email, phone, emailOrPhone, status, paymentStatus, startDate, endDate } = params;
   
   // Priority 1: Search by booking ID (single booking lookup)
   if (bookingId !== undefined) {
     return `/api/bookings/${bookingId}`;
   }
   
-  // Priority 2: Search by email or phone combined
+  // Priority 2: Search by payment status (balance payment complete/pending)
+  if (paymentStatus === 'COMPLETE') {
+    return '/api/bookings/search/findByBalancePaymentComplete';
+  }
+  
+  if (paymentStatus === 'PENDING') {
+    return '/api/bookings/search/findByBalancePaymentPending';
+  }
+  
+  // Priority 3: Search by email or phone combined
   if (emailOrPhone) {
     return '/api/bookings/search/findByCustomerEmailOrPhone';
   }
   
-  // Priority 3: Search by email only
+  // Priority 4: Search by email only
   if (email) {
     return '/api/bookings/search/findByCustomerEmail';
   }
   
-  // Priority 4: Search by phone only
+  // Priority 5: Search by phone only
   if (phone) {
     return '/api/bookings/search/findByCustomerPhone';
   }
   
-  // Priority 5: Search by date range and status
+  // Priority 6: Search by date range and status
   if (startDate && endDate && status) {
     return '/api/bookings/search/findByDateRangeAndStatus';
   }
   
-  // Priority 6: Search by date range only
+  // Priority 7: Search by date range only
   if (startDate && endDate) {
     return '/api/bookings/search/findByDateRange';
   }
   
-  // Priority 7: Search by status only
+  // Priority 8: Search by status only
   if (status) {
     return '/api/bookings/search/findByStatus';
   }

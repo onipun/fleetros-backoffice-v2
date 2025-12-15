@@ -79,6 +79,31 @@ const CHANGE_TYPE_CONFIG: Record<
     borderColor: 'border-green-200 dark:border-green-900',
     label: 'Completed',
   },
+  STATUS_CHANGED: {
+    icon: AlertCircle,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50 dark:bg-purple-950/20',
+    borderColor: 'border-purple-200 dark:border-purple-900',
+    label: 'Status Changed',
+  },
+};
+
+// Special config for payment received entries
+const PAYMENT_RECEIVED_CONFIG = {
+  icon: DollarSign,
+  color: 'text-emerald-600',
+  bgColor: 'bg-emerald-50 dark:bg-emerald-950/20',
+  borderColor: 'border-emerald-200 dark:border-emerald-900',
+  label: 'Payment Received',
+};
+
+// Default config for unknown change types
+const DEFAULT_CHANGE_CONFIG = {
+  icon: History,
+  color: 'text-gray-600',
+  bgColor: 'bg-gray-50 dark:bg-gray-950/20',
+  borderColor: 'border-gray-200 dark:border-gray-900',
+  label: 'Unknown',
 };
 
 function formatFieldName(field: string): string {
@@ -90,7 +115,15 @@ function formatFieldName(field: string): string {
 
 function HistoryEntry({ entry }: { entry: BookingHistoryResponse }) {
   const { formatCurrency } = useLocale();
-  const config = CHANGE_TYPE_CONFIG[entry.changeType];
+  
+  // Check if this is a payment-related entry
+  const isPaymentEntry = entry.changeReason?.toLowerCase().includes('payment') ||
+    entry.changeReason?.toLowerCase().includes('deposit') ||
+    entry.changeReason?.toLowerCase().includes('debit');
+  
+  const config = isPaymentEntry 
+    ? PAYMENT_RECEIVED_CONFIG 
+    : (CHANGE_TYPE_CONFIG[entry.changeType] ?? DEFAULT_CHANGE_CONFIG);
   const Icon = config.icon;
 
   const formattedDate = useMemo(() => {

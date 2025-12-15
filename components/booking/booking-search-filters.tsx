@@ -12,14 +12,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { BookingSearchParams, BookingStatus } from '@/lib/api/booking-search';
-import { Calendar, Filter, Hash, Search, User, X } from 'lucide-react';
+import { BookingSearchParams, BookingStatus, PaymentStatusFilter } from '@/lib/api/booking-search';
+import { Calendar, DollarSign, Filter, Hash, Search, User, X } from 'lucide-react';
 import { useState } from 'react';
 
 /**
  * Search mode type definition
  */
-type SearchMode = 'all' | 'id' | 'customer' | 'dateRange' | 'status' | 'advanced';
+type SearchMode = 'all' | 'id' | 'customer' | 'dateRange' | 'status' | 'paymentStatus' | 'advanced';
 
 /**
  * Props for BookingSearchFilters component
@@ -58,6 +58,7 @@ export function BookingSearchFilters({ onSearch, isLoading = false }: BookingSea
   const [bookingId, setBookingId] = useState('');
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [status, setStatus] = useState<BookingStatus | ''>('');
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter | ''>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [dateError, setDateError] = useState('');
@@ -149,6 +150,12 @@ export function BookingSearchFilters({ onSearch, isLoading = false }: BookingSea
         }
         break;
 
+      case 'paymentStatus':
+        if (paymentStatus !== '') {
+          params.paymentStatus = paymentStatus;
+        }
+        break;
+
       case 'advanced':
         if (startDate && endDate) {
           params.startDate = formatDateForApi(startDate, false);
@@ -176,6 +183,7 @@ export function BookingSearchFilters({ onSearch, isLoading = false }: BookingSea
     setBookingId('');
     setEmailOrPhone('');
     setStatus('');
+    setPaymentStatus('');
     setStartDate('');
     setEndDate('');
     setDateError('');
@@ -200,6 +208,8 @@ export function BookingSearchFilters({ onSearch, isLoading = false }: BookingSea
         return startDate !== '' && endDate !== '' && !dateError;
       case 'status':
         return status !== '';
+      case 'paymentStatus':
+        return paymentStatus !== '';
       case 'advanced':
         return (startDate !== '' && endDate !== '' && !dateError) || status !== '';
       default:
@@ -268,6 +278,16 @@ export function BookingSearchFilters({ onSearch, isLoading = false }: BookingSea
             className="h-9"
           >
             {t('booking.search.byStatus')}
+          </Button>
+          <Button
+            variant={searchMode === 'paymentStatus' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleModeChange('paymentStatus')}
+            disabled={isLoading}
+            className="h-9"
+          >
+            <DollarSign className="h-4 w-4 mr-1.5" />
+            {t('booking.search.byPayment')}
           </Button>
           <Button
             variant={searchMode === 'advanced' ? 'default' : 'outline'}
@@ -387,6 +407,43 @@ export function BookingSearchFilters({ onSearch, isLoading = false }: BookingSea
                     {t('booking.search.clearStatus')}
                   </button>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Payment Status Search */}
+          {searchMode === 'paymentStatus' && (
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+              <div className="flex-1 space-y-1.5">
+                <Label htmlFor="paymentStatus" className="text-sm font-medium">
+                  {t('booking.search.paymentStatus')}
+                </Label>
+                <Select
+                  value={paymentStatus}
+                  onValueChange={(value) => setPaymentStatus(value as PaymentStatusFilter | '')}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="paymentStatus" className="h-10">
+                    <SelectValue placeholder={t('booking.search.selectPaymentStatus')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="COMPLETE">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        {t('booking.search.paymentComplete')}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="PENDING">
+                      <div className="flex items-center gap-2">
+                        <span className="text-orange-600">○</span>
+                        {t('booking.search.paymentPending')}
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {t('booking.search.paymentStatusHint')}
+                </p>
               </div>
             </div>
           )}
