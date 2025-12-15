@@ -458,6 +458,16 @@
     "daysSuffix": "days",
     "finalPriceLabel": "Final Price:",
     "balanceDueLabel": "Balance Due:",
+    "table": {
+      "booking": "Booking",
+      "customer": "Customer",
+      "vehicle": "Vehicle",
+      "dates": "Dates",
+      "duration": "Duration",
+      "pickup": "Pickup",
+      "amount": "Amount",
+      "status": "Status"
+    },
     "status": {
       "pending": "Pending",
       "confirmed": "Confirmed",

@@ -334,6 +334,16 @@
     "daysSuffix": "天",
     "finalPriceLabel": "最终价格：",
     "balanceDueLabel": "待付余额：",
+    "table": {
+      "booking": "预订",
+      "customer": "客户",
+      "vehicle": "车辆",
+      "dates": "日期",
+      "duration": "时长",
+      "pickup": "取车",
+      "amount": "金额",
+      "status": "状态"
+    },
     "status": {
       "pending": "待处理",
       "confirmed": "已确认",

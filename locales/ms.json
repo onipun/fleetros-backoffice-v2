@@ -325,6 +325,16 @@
     "daysSuffix": "hari",
     "finalPriceLabel": "Harga Akhir:",
     "balanceDueLabel": "Baki Perlu Dibayar:",
+    "table": {
+      "booking": "Tempahan",
+      "customer": "Pelanggan",
+      "vehicle": "Kenderaan",
+      "dates": "Tarikh",
+      "duration": "Tempoh",
+      "pickup": "Ambil",
+      "amount": "Jumlah",
+      "status": "Status"
+    },
     "status": {
       "pending": "Menunggu",
       "confirmed": "Disahkan",

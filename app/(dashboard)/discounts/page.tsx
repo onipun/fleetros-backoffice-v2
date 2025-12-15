@@ -2,9 +2,13 @@
 
 import { DiscountSearchFilters } from '@/components/discount/discount-search-filters';
 import { DiscountsDashboard } from '@/components/discount/discounts-dashboard';
+import { useLocale } from '@/components/providers/locale-provider';
+import { Button } from '@/components/ui/button';
 import { ErrorDisplay } from '@/components/ui/error-display';
 import { useDiscountSearch } from '@/hooks/use-discount-search';
 import { type DiscountSearchParams } from '@/lib/api/discount-search';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo } from 'react';
 
 /**
@@ -18,6 +22,8 @@ import { useMemo } from 'react';
  * - Consistent UI/UX with other search pages
  */
 export default function DiscountsPage() {
+  const { t } = useLocale();
+
   // Use discount search hook for state management
   const {
     discounts,
@@ -71,6 +77,20 @@ export default function DiscountsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{t('discount.title')}</h1>
+          <p className="text-muted-foreground">{t('discount.manage')}</p>
+        </div>
+        <Link href="/discounts/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('discount.createDiscount')}
+          </Button>
+        </Link>
+      </div>
+
       {/* Search Filters */}
       <DiscountSearchFilters onSearch={handleSearch} isLoading={isLoading} />
 

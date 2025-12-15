@@ -134,19 +134,6 @@ export function DiscountsDashboard({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t('discount.title')}</h1>
-          <p className="text-muted-foreground">{t('discount.manage')}</p>
-        </div>
-        <Link href="/discounts/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('discount.createDiscount')}
-          </Button>
-        </Link>
-      </div>
-
       {discounts.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('discount.noResults')}</p>
