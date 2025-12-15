@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
 import { Input } from '@/components/ui/input';
+import { hateoasClient } from '@/lib/api/hateoas-client';
 import { useCollection } from '@/lib/api/hooks';
 import { canAcceptPayments, getMerchantStatus } from '@/lib/api/stripe-onboarding';
 import { formatDate, parseHalResource } from '@/lib/utils';
@@ -22,6 +23,7 @@ export default function PaymentsPage() {
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [loadingPaymentId, setLoadingPaymentId] = useState<number | null>(null);
   const [businessAccountId, setBusinessAccountId] = useState<string | null>(null);
   const [paymentAccountStatus, setPaymentAccountStatus] = useState<{
     hasAccount: boolean;
@@ -414,19 +416,38 @@ export default function PaymentsPage() {
                     <div className="flex gap-2">
                       <Button 
                         size="sm"
-                        onClick={() => {
-                          // Try to navigate to booking details if bookingId is available
-                          const bookingId = payment.bookingId || 
-                            (payment._links?.booking?.href?.match(/\/bookings\/(\d+)/)?.[1]);
-                          if (bookingId) {
-                            router.push(`/bookings/${bookingId}?tab=payments`);
+                        disabled={loadingPaymentId === payment.id}
+                        onClick={async () => {
+                          // First check if bookingId is directly available
+                          if (payment.bookingId) {
+                            router.push(`/bookings/${payment.bookingId}?tab=payments`);
+                            return;
+                          }
+
+                          // Follow the HATEOAS link to get the booking
+                          const bookingLink = payment._links?.booking?.href;
+                          if (bookingLink) {
+                            try {
+                              setLoadingPaymentId(payment.id ?? null);
+                              const booking = await hateoasClient.followLink<{ id?: number }>(bookingLink);
+                              if (booking?.id) {
+                                router.push(`/bookings/${booking.id}?tab=payments`);
+                              } else {
+                                alert(`Could not find booking for payment #${payment.id}`);
+                              }
+                            } catch (error) {
+                              console.error('Error fetching booking:', error);
+                              alert(`Error fetching booking details for payment #${payment.id}`);
+                            } finally {
+                              setLoadingPaymentId(null);
+                            }
                           } else {
-                            // If no booking link, show payment details in a toast
-                            alert(`Payment #${payment.id}\nAmount: ${formatCurrency(payment.amount)}\nStatus: ${payment.status}\nMethod: ${payment.paymentMethod}`);
+                            // If no booking link, show payment details
+                            alert(`Payment #${payment.id}\nAmount: ${formatCurrency(payment.amount)}\nStatus: ${payment.status}\nMethod: ${payment.paymentMethod}\n\nNo booking linked to this payment.`);
                           }
                         }}
                       >
-                        {t('common.viewDetails')}
+                        {loadingPaymentId === payment.id ? 'Loading...' : t('common.viewDetails')}
                       </Button>
                     </div>
                   </div>
