@@ -809,6 +809,14 @@
       "bankTransfer": "银行转账",
       "cash": "现金",
       "other": "其他"
+    },
+    "table": {
+      "id": "付款编号",
+      "amount": "金额",
+      "method": "方式",
+      "type": "类型",
+      "status": "状态",
+      "date": "日期"
     }
   },
   "discount": {

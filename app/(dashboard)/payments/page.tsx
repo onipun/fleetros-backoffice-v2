@@ -12,7 +12,7 @@ import { useCollection } from '@/lib/api/hooks';
 import { canAcceptPayments, getMerchantStatus } from '@/lib/api/stripe-onboarding';
 import { formatDate, parseHalResource } from '@/lib/utils';
 import type { Payment } from '@/types';
-import { AlertCircle, ArrowRight, Banknote, CheckCircle2, CreditCard, Download, Search, Settings } from 'lucide-react';
+import { AlertCircle, ArrowRight, Banknote, CheckCircle2, Download, Search, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -348,114 +348,163 @@ export default function PaymentsPage() {
         </div>
       ) : (
         <>
-          <div className="space-y-4">
-            {payments.map((payment) => {
-              const methodKey = (payment.paymentMethod ?? 'OTHER') as keyof typeof methodIcons;
-              const methodLabel = methodLabels[methodKey as keyof typeof methodLabels] ?? methodLabels.OTHER;
-              const statusKey = (payment.status ?? '') as keyof typeof statusLabels;
-              const statusLabel = statusLabels[statusKey];
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.id')}</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">{t('payment.table.amount')}</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.method')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('payment.table.type')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('payment.table.status')}</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.date')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('common.actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {payments.map((payment) => {
+                      const methodKey = (payment.paymentMethod ?? 'OTHER') as keyof typeof methodIcons;
+                      const methodLabel = methodLabels[methodKey as keyof typeof methodLabels] ?? methodLabels.OTHER;
+                      const statusKey = (payment.status ?? '') as keyof typeof statusLabels;
+                      const statusLabel = statusLabels[statusKey];
 
-              return (
-                <Card key={payment.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="h-5 w-5 text-muted-foreground" />
-                        <h3 className="text-lg font-semibold">
-                          {t('payment.paymentLabel')} #{payment.id || t('common.notAvailable')}
-                        </h3>
-                        <span
-                          className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
-                            payment.status || 'UNKNOWN'
-                          )}`}
-                        >
-                          {statusLabel || t('payment.status.unknown')}
-                        </span>
-                      </div>
+                      return (
+                        <tr key={payment.id} className="hover:bg-muted/30">
+                          <td className="px-4 py-3 text-sm font-mono">#{payment.id || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <span className="font-medium text-primary">
+                              {payment.amount != null ? formatCurrency(payment.amount) : t('common.notAvailable')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span>{methodIcons[methodKey] ?? methodIcons.OTHER}</span>
+                              <span className="font-medium">
+                                {payment.paymentMethod ? methodLabel : t('common.notAvailable')}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {payment.isDeposit && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                  Deposit
+                                </span>
+                              )}
+                              {payment.isManual && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                  Manual
+                                </span>
+                              )}
+                              {!payment.isDeposit && !payment.isManual && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                  Online
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            <span
+                              className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
+                                payment.status || 'UNKNOWN'
+                              )}`}
+                            >
+                              {statusLabel || t('payment.status.unknown')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {payment.paymentDate
+                                  ? formatDate(payment.paymentDate, locale).split(',')[0]
+                                  : t('common.notAvailable')}
+                              </span>
+                              {payment.createdAt && (
+                                <span className="text-xs text-muted-foreground">
+                                  Created: {formatDate(payment.createdAt, locale).split(',')[0]}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex items-center justify-center">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={loadingPaymentId === payment.id}
+                                onClick={async () => {
+                                  // First check if bookingId is directly available
+                                  if (payment.bookingId) {
+                                    router.push(`/bookings/${payment.bookingId}?tab=payments`);
+                                    return;
+                                  }
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">{t('payment.amountLabel')}</span>
-                          <p className="font-bold text-lg text-primary">
-                            {payment.amount != null ? formatCurrency(payment.amount) : t('common.notAvailable')}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">{t('payment.methodLabel')}</span>
-                          <div className="flex items-center gap-1">
-                            <span>{methodIcons[methodKey] ?? methodIcons.OTHER}</span>
-                            <p className="font-medium">
-                              {payment.paymentMethod ? methodLabel : t('common.notAvailable')}
-                            </p>
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">{t('payment.transactionIdLabel')}</span>
-                          <p className="font-mono text-xs">
-                            {payment.transactionId || t('common.notAvailable')}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">{t('payment.dateLabel')}</span>
-                          <p className="font-medium">
-                            {payment.paymentDate
-                              ? formatDate(payment.paymentDate, locale)
-                              : t('common.notAvailable')}
-                          </p>
-                        </div>
-                      </div>
+                                  // Try to extract booking ID from HATEOAS links
+                                  // The booking link can be a single object or an array
+                                  const bookingLinks = payment._links?.booking;
+                                  let bookingId: string | null = null;
 
-                      {payment.createdAt && (
-                        <div className="text-xs text-muted-foreground">
-                          {t('payment.createdLabel')}: {formatDate(payment.createdAt, locale)}
-                        </div>
-                      )}
-                    </div>
+                                  if (Array.isArray(bookingLinks)) {
+                                    // Find the link that contains /bookings/{id} pattern
+                                    for (const link of bookingLinks) {
+                                      const match = link.href?.match(/\/bookings\/(\d+)/);
+                                      if (match) {
+                                        bookingId = match[1];
+                                        break;
+                                      }
+                                    }
+                                  } else if (bookingLinks?.href) {
+                                    // Single link object - try to extract ID or follow the link
+                                    const match = bookingLinks.href.match(/\/bookings\/(\d+)/);
+                                    if (match) {
+                                      bookingId = match[1];
+                                    }
+                                  }
 
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm"
-                        disabled={loadingPaymentId === payment.id}
-                        onClick={async () => {
-                          // First check if bookingId is directly available
-                          if (payment.bookingId) {
-                            router.push(`/bookings/${payment.bookingId}?tab=payments`);
-                            return;
-                          }
+                                  if (bookingId) {
+                                    router.push(`/bookings/${bookingId}?tab=payments`);
+                                    return;
+                                  }
 
-                          // Follow the HATEOAS link to get the booking
-                          const bookingLink = payment._links?.booking?.href;
-                          if (bookingLink) {
-                            try {
-                              setLoadingPaymentId(payment.id ?? null);
-                              const booking = await hateoasClient.followLink<{ id?: number }>(bookingLink);
-                              if (booking?.id) {
-                                router.push(`/bookings/${booking.id}?tab=payments`);
-                              } else {
-                                alert(`Could not find booking for payment #${payment.id}`);
-                              }
-                            } catch (error) {
-                              console.error('Error fetching booking:', error);
-                              alert(`Error fetching booking details for payment #${payment.id}`);
-                            } finally {
-                              setLoadingPaymentId(null);
-                            }
-                          } else {
-                            // If no booking link, show payment details
-                            alert(`Payment #${payment.id}\nAmount: ${formatCurrency(payment.amount)}\nStatus: ${payment.status}\nMethod: ${payment.paymentMethod}\n\nNo booking linked to this payment.`);
-                          }
-                        }}
-                      >
-                        {loadingPaymentId === payment.id ? 'Loading...' : t('common.viewDetails')}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                                  // If no direct booking ID found, try to follow the relation link
+                                  const relationLink = Array.isArray(bookingLinks)
+                                    ? bookingLinks.find(l => l.href?.includes('/payments/'))?.href
+                                    : bookingLinks?.href;
+
+                                  if (relationLink) {
+                                    try {
+                                      setLoadingPaymentId(payment.id ?? null);
+                                      const booking = await hateoasClient.followLink<{ id?: number }>(relationLink);
+                                      if (booking?.id) {
+                                        router.push(`/bookings/${booking.id}?tab=payments`);
+                                      } else {
+                                        alert(`Could not find booking for payment #${payment.id}`);
+                                      }
+                                    } catch (error) {
+                                      console.error('Error fetching booking:', error);
+                                      alert(`Error fetching booking details for payment #${payment.id}`);
+                                    } finally {
+                                      setLoadingPaymentId(null);
+                                    }
+                                  } else {
+                                    alert(`Payment #${payment.id}\nNo booking linked to this payment.`);
+                                  }
+                                }}
+                              >
+                                {loadingPaymentId === payment.id ? 'Loading...' : t('common.view')}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Pagination */}
           {totalPages > 1 && (

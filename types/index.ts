@@ -5,7 +5,7 @@ export interface Link {
 }
 
 export interface Links {
-  [rel: string]: Link;
+  [rel: string]: Link | Link[];
 }
 
 export interface PageMetadata {
@@ -652,11 +652,15 @@ export interface Discount {
 export interface Payment {
   id?: number;
   amount: number;
+  currency?: string;
   paymentMethod: string;
-  transactionId: string;
+  transactionId?: string;
   status: PaymentStatus;
   paymentDate?: string;
   bookingId?: number;
+  isDeposit?: boolean;
+  isManual?: boolean;
+  recordedBy?: number;
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;

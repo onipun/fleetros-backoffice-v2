@@ -1301,6 +1301,14 @@
       "bankTransfer": "Bank Transfer",
       "cash": "Cash",
       "other": "Other"
+    },
+    "table": {
+      "id": "Payment ID",
+      "amount": "Amount",
+      "method": "Method",
+      "type": "Type",
+      "status": "Status",
+      "date": "Date"
     }
   },
   "discount": {

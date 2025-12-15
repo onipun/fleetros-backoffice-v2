@@ -801,6 +801,14 @@
       "bankTransfer": "Pemindahan Bank",
       "cash": "Tunai",
       "other": "Lain-lain"
+    },
+    "table": {
+      "id": "ID Pembayaran",
+      "amount": "Jumlah",
+      "method": "Kaedah",
+      "type": "Jenis",
+      "status": "Status",
+      "date": "Tarikh"
     }
   },
   "discount": {
