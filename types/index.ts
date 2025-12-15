@@ -656,6 +656,7 @@ export interface Payment {
   transactionId: string;
   status: PaymentStatus;
   paymentDate?: string;
+  bookingId?: number;
   createdAt?: string;
   updatedAt?: string;
   _links?: Links;

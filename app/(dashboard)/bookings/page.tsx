@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
 import { useBookingSearch } from '@/hooks/use-booking-search';
 import { formatDate } from '@/lib/utils';
-import { Calendar, Mail, Plus, User } from 'lucide-react';
+import { Calendar, Car, CheckCircle2, Clock, Mail, MapPin, Plus, User } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
@@ -102,29 +102,96 @@ export default function BookingsPage() {
         </div>
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {bookings.map((booking) => {
               const selfLink = booking._links?.self?.href;
               const bookingId = booking.id ?? (selfLink ? selfLink.split('/').pop() : undefined);
+              const isFullyPaid = booking.balancePayment != null && booking.balancePayment <= 0;
 
               return (
-                <Card key={booking.id ?? selfLink} className="hover:shadow-lg transition-shadow overflow-hidden">
-                  <CardContent className="p-0">
-                    {/* Header Section */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-muted/30 border-b">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="text-lg font-semibold">
-                          {t('booking.bookingLabel')} #{booking.id || t('common.notAvailable')}
-                        </h3>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            booking.status || 'UNKNOWN'
-                          )}`}
-                        >
-                          {statusLabels[booking.status as keyof typeof statusLabels] || t('booking.status.unknown')}
-                        </span>
+                <Card key={booking.id ?? selfLink} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                      {/* Left: Booking ID, Status & Customer */}
+                      <div className="flex items-center gap-4 lg:w-[280px] lg:flex-shrink-0">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">
+                              #{booking.id || 'N/A'}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                booking.status || 'UNKNOWN'
+                              )}`}
+                            >
+                              {statusLabels[booking.status as keyof typeof statusLabels] || t('booking.status.unknown')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <User className="h-3.5 w-3.5" />
+                            <span className="truncate max-w-[150px]">{booking.guestName || t('common.notAvailable')}</span>
+                          </div>
+                          {booking.guestEmail && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Mail className="h-3 w-3" />
+                              <span className="truncate max-w-[180px]">{booking.guestEmail}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex gap-2">
+
+                      {/* Center: Vehicle, Dates & Location */}
+                      <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Car className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Vehicle</p>
+                            <p className="font-medium">#{booking.vehicleId || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Dates</p>
+                            <p className="font-medium">
+                              {booking.startDate ? formatDate(booking.startDate, locale).split(',')[0] : 'N/A'}
+                              {booking.endDate && ` - ${formatDate(booking.endDate, locale).split(',')[0]}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Duration</p>
+                            <p className="font-medium">{booking.totalDays || 0} {t('booking.daysSuffix')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-muted-foreground">Pickup</p>
+                            <p className="font-medium truncate">{booking.pickupLocation || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Price & Actions */}
+                      <div className="flex items-center justify-between lg:justify-end gap-4 lg:w-[260px] lg:flex-shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0">
+                        <div className="text-right">
+                          <p className="font-bold text-lg">
+                            {booking.finalPrice != null ? formatCurrency(booking.finalPrice) : t('common.notAvailable')}
+                          </p>
+                          {isFullyPaid ? (
+                            <div className="flex items-center justify-end gap-1">
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              <span className="text-sm font-medium text-green-600">Fully Paid</span>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-orange-600 font-medium">
+                              Due: {booking.balancePayment != null ? formatCurrency(booking.balancePayment) : 'N/A'}
+                            </p>
+                          )}
+                        </div>
                         {bookingId ? (
                           <Button size="sm" asChild>
                             <Link href={`/bookings/${bookingId}`}>
@@ -136,89 +203,6 @@ export default function BookingsPage() {
                             {t('common.viewDetails')}
                           </Button>
                         )}
-                      </div>
-                    </div>
-
-                    {/* Body Section */}
-                    <div className="p-4 sm:p-6 space-y-4">
-                      {/* Customer Details */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/20 p-4 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-                            <User className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground">{t('booking.customerNameLabel')}</p>
-                            <p className="font-medium truncate">{booking.guestName || t('common.notAvailable')}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-                            <Mail className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground">{t('booking.customerEmailLabel')}</p>
-                            <p className="font-medium truncate">{booking.guestEmail || t('common.notAvailable')}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Booking Details Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">{t('booking.vehicleIdLabel')}</p>
-                          <p className="font-medium">#{booking.vehicleId || t('common.notAvailable')}</p>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <div className="space-y-1 min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground">{t('booking.startLabel')}</p>
-                            <p className="font-medium truncate">
-                              {booking.startDate ? formatDate(booking.startDate, locale) : t('common.notAvailable')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <div className="space-y-1 min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground">{t('booking.endLabel')}</p>
-                            <p className="font-medium truncate">
-                              {booking.endDate ? formatDate(booking.endDate, locale) : t('common.notAvailable')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">{t('booking.durationLabel')}</p>
-                          <p className="font-medium">{booking.totalDays || 0} {t('booking.daysSuffix')}</p>
-                        </div>
-                      </div>
-
-                      {/* Location Details */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">{t('booking.pickupLabel')}</p>
-                          <p className="font-medium">{booking.pickupLocation || t('common.notAvailable')}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">{t('booking.dropoffLabel')}</p>
-                          <p className="font-medium">{booking.dropoffLocation || t('common.notAvailable')}</p>
-                        </div>
-                      </div>
-
-                      {/* Pricing Section */}
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 border-t">
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">{t('booking.finalPriceLabel')}</p>
-                          <p className="font-bold text-2xl">
-                            {booking.finalPrice != null ? formatCurrency(booking.finalPrice) : t('common.notAvailable')}
-                          </p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">{t('booking.balanceDueLabel')}</p>
-                          <p className="font-semibold text-lg text-warning">
-                            {booking.balancePayment != null ? formatCurrency(booking.balancePayment) : t('common.notAvailable')}
-                          </p>
-                        </div>
                       </div>
                     </div>
                   </CardContent>

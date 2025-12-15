@@ -11,7 +11,8 @@ import { useCollection } from '@/lib/api/hooks';
 import { canAcceptPayments, getMerchantStatus } from '@/lib/api/stripe-onboarding';
 import { formatDate, parseHalResource } from '@/lib/utils';
 import type { Payment } from '@/types';
-import { AlertCircle, ArrowRight, CheckCircle2, CreditCard, Download, Search, Settings } from 'lucide-react';
+import { AlertCircle, ArrowRight, Banknote, CheckCircle2, CreditCard, Download, Search, Settings } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -255,6 +256,44 @@ export default function PaymentsPage() {
         </Card>
       )}
 
+      {/* Manual Payment Info */}
+      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+              <Banknote className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-1">Record Manual Payments</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Need to record a cash payment, bank transfer, or other offline payment? 
+                You can record manual payments directly from the booking details page.
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-3">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-blue-900/50">
+                  💵 Cash
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-blue-900/50">
+                  🏦 Bank Transfer
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-blue-900/50">
+                  📱 QR Payment
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-blue-900/50">
+                  📲 Mobile Wallet
+                </span>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/bookings">
+                  View Bookings
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -373,7 +412,22 @@ export default function PaymentsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button size="sm">{t('common.viewDetails')}</Button>
+                      <Button 
+                        size="sm"
+                        onClick={() => {
+                          // Try to navigate to booking details if bookingId is available
+                          const bookingId = payment.bookingId || 
+                            (payment._links?.booking?.href?.match(/\/bookings\/(\d+)/)?.[1]);
+                          if (bookingId) {
+                            router.push(`/bookings/${bookingId}?tab=payments`);
+                          } else {
+                            // If no booking link, show payment details in a toast
+                            alert(`Payment #${payment.id}\nAmount: ${formatCurrency(payment.amount)}\nStatus: ${payment.status}\nMethod: ${payment.paymentMethod}`);
+                          }
+                        }}
+                      >
+                        {t('common.viewDetails')}
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

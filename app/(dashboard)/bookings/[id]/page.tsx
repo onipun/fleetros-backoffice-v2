@@ -6,7 +6,9 @@ import { BookingReceipt } from '@/components/booking/booking-receipt';
 import { CustomCategoryManagement } from '@/components/booking/custom-category-management';
 import { BookingImageGallery } from '@/components/booking/image-gallery';
 import { ImageUploadDialog } from '@/components/booking/image-upload-dialog';
+import { ManualPaymentDialog } from '@/components/booking/manual-payment-dialog';
 import { ModificationPolicyCard } from '@/components/booking/modification-policy-card';
+import { PaymentSummaryCard } from '@/components/booking/payment-summary-card';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,10 +18,10 @@ import { hateoasClient } from '@/lib/api/hateoas-client';
 import { formatDateTime } from '@/lib/utils';
 import type { Booking, Offering } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, DollarSign, Edit3, FileText, History, Settings, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, CreditCard, DollarSign, Edit3, FileText, History, Settings, Trash2, Upload } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 const roundToTwo = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -44,6 +46,7 @@ export default function BookingDetailPage() {
   const { t, formatCurrency } = useLocale();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const bookingId = params.id as string;
 
@@ -51,7 +54,16 @@ export default function BookingDetailPage() {
   const [categoryManagementOpen, setCategoryManagementOpen] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [modificationDialogOpen, setModificationDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
+  const [manualPaymentDialogOpen, setManualPaymentDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'details');
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['details', 'payments', 'history'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const { data: booking, isLoading: bookingLoading, error: bookingError } = useQuery({
     queryKey: ['booking', bookingId],
@@ -259,6 +271,10 @@ export default function BookingDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="default" onClick={() => setManualPaymentDialogOpen(true)}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Record Payment
+          </Button>
           <Button variant="outline" onClick={() => setReceiptOpen(true)}>
             <FileText className="mr-2 h-4 w-4" />
             {t('booking.receipt.print')}
@@ -401,6 +417,10 @@ export default function BookingDetailPage() {
             <Calendar className="mr-2 h-4 w-4" />
             Details
           </TabsTrigger>
+          <TabsTrigger value="payments">
+            <CreditCard className="mr-2 h-4 w-4" />
+            Payments
+          </TabsTrigger>
           <TabsTrigger value="history">
             <History className="mr-2 h-4 w-4" />
             History
@@ -498,7 +518,14 @@ export default function BookingDetailPage() {
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">{t('booking.detail.fields.balancePayment')}</span>
-                <p className="font-medium text-warning">{formatCurrency(booking.balancePayment ?? 0)}</p>
+                {(booking.balancePayment ?? 0) <= 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <span className="font-medium text-green-600">Fully Paid</span>
+                  </div>
+                ) : (
+                  <p className="font-medium text-warning">{formatCurrency(booking.balancePayment ?? 0)}</p>
+                )}
               </div>
               {booking.insurancePolicy && (
                 <div className="md:col-span-2">
@@ -547,6 +574,13 @@ export default function BookingDetailPage() {
       </div>
         </TabsContent>
 
+        <TabsContent value="payments" className="space-y-6">
+          <PaymentSummaryCard
+            bookingId={Number(bookingId)}
+            onRecordPayment={() => setManualPaymentDialogOpen(true)}
+          />
+        </TabsContent>
+
         <TabsContent value="history" className="space-y-6">
           <BookingAuditTrail bookingId={Number(bookingId)} />
         </TabsContent>
@@ -583,6 +617,20 @@ export default function BookingDetailPage() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
           queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        }}
+      />
+
+      {/* Manual Payment Dialog */}
+      <ManualPaymentDialog
+        bookingId={Number(bookingId)}
+        bookingTotal={booking.finalPrice ?? 0}
+        balanceDue={booking.balancePayment ?? 0}
+        bookingStatus={booking.status}
+        open={manualPaymentDialogOpen}
+        onOpenChange={setManualPaymentDialogOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['payment-summary', Number(bookingId)] });
+          queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
         }}
       />
     </div>
