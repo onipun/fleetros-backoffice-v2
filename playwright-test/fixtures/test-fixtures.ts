@@ -1,6 +1,9 @@
 import { test as base, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { BookingDetailPage } from '../pages/booking-detail.page';
+import { BookingFormPage } from '../pages/booking-form.page';
+import { BookingsListPage } from '../pages/bookings-list.page';
 import { DiscountFormPage } from '../pages/discount-form.page';
 import { DiscountsListPage } from '../pages/discounts-list.page';
 import { LoginPage } from '../pages/login.page';
@@ -39,11 +42,15 @@ type VehicleFixtures = {
   modificationPolicyFormPage: ModificationPolicyFormPage;
   loyaltyConfigurationsListPage: LoyaltyConfigurationsListPage;
   loyaltyConfigurationFormPage: LoyaltyConfigurationFormPage;
+  bookingsListPage: BookingsListPage;
+  bookingFormPage: BookingFormPage;
+  bookingDetailPage: BookingDetailPage;
   authenticatedPage: Page;
   testImagePath: string;
   testVehicleData: ReturnType<typeof TestHelpers.generateVehicleData>;
   testOfferingData: ReturnType<typeof TestHelpers.generateOfferingData>;
   testPackageData: ReturnType<typeof TestHelpers.generatePackageData>;
+  testBookingData: ReturnType<typeof TestHelpers.generateBookingData>;
 };
 
 export const test = base.extend<VehicleFixtures>({
@@ -127,6 +134,21 @@ export const test = base.extend<VehicleFixtures>({
     await use(loyaltyConfigurationFormPage);
   },
 
+  bookingsListPage: async ({ page }, use) => {
+    const bookingsListPage = new BookingsListPage(page);
+    await use(bookingsListPage);
+  },
+
+  bookingFormPage: async ({ page }, use) => {
+    const bookingFormPage = new BookingFormPage(page);
+    await use(bookingFormPage);
+  },
+
+  bookingDetailPage: async ({ page }, use) => {
+    const bookingDetailPage = new BookingDetailPage(page);
+    await use(bookingDetailPage);
+  },
+
   authenticatedPage: async ({ page }, use) => {
     // Login before each test using Keycloak flow
     const username = process.env.TEST_USERNAME || 'john.admin';
@@ -199,6 +221,11 @@ export const test = base.extend<VehicleFixtures>({
 
   testPackageData: async ({}, use) => {
     const data = TestHelpers.generatePackageData('Playwright');
+    await use(data);
+  },
+
+  testBookingData: async ({}, use) => {
+    const data = TestHelpers.generateBookingData('Playwright');
     await use(data);
   },
 });

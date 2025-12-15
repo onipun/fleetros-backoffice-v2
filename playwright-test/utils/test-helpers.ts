@@ -163,6 +163,29 @@ export class TestHelpers {
   }
 
   /**
+   * Generate unique booking data
+   */
+  static generateBookingData(prefix = 'Test') {
+    const uniqueId = this.generateUniqueId();
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() + 1); // Tomorrow
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 3); // 3 days rental
+
+    return {
+      guestName: `${prefix} Guest ${uniqueId}`,
+      guestEmail: `guest_${uniqueId}@example.com`,
+      guestPhone: `+60${Math.floor(100000000 + Math.random() * 900000000)}`,
+      pickupLocation: 'Kuala Lumpur Airport',
+      dropoffLocation: 'Kuala Lumpur Airport',
+      insurancePolicy: 'Standard coverage for test booking',
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+  }
+
+  /**  /**
    * Generate package data with minimum values
    */
   static generateMinimumPackageData(prefix = 'AAA-Min') {
