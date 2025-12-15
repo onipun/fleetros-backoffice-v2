@@ -233,6 +233,41 @@ export default function BookingDetailPage() {
     },
   });
 
+  const markAsCompletedMutation = useMutation({
+    mutationFn: async () => {
+      const token = await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken);
+      const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Failed to update booking status');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Booking Completed',
+        description: 'The booking has been marked as completed.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['booking-history', Number(bookingId)] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to Complete Booking',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   if (bookingLoading || isPricingLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
@@ -478,7 +513,25 @@ export default function BookingDetailPage() {
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">{t('booking.detail.fields.status')}</span>
-                <p className="font-medium">{booking.status}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{booking.status}</p>
+                  {booking.status === 'CONFIRMED' && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      disabled={markAsCompletedMutation.isPending}
+                      onClick={() => {
+                        if (confirm('Are you sure you want to mark this booking as completed?')) {
+                          markAsCompletedMutation.mutate();
+                        }
+                      }}
+                    >
+                      <CheckCircle2 className="mr-1 h-4 w-4" />
+                      {markAsCompletedMutation.isPending ? 'Updating...' : 'Mark as Completed'}
+                    </Button>
+                  )}
+                </div>
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">{t('booking.detail.fields.start')}</span>
