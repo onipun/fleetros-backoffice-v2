@@ -608,6 +608,9 @@ export default function NewBookingPage() {
         applyLoyaltyDiscount: false, // Set based on user selection if loyalty is implemented
         pointsToRedeem: 0,
         currency: 'MYR',
+        guestName: payload.guestName,
+        guestEmail: payload.guestEmail,
+        guestPhone: payload.guestPhone,
       };
 
       return hateoasClient.previewBookingPricing(previewRequest);
