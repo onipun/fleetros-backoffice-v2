@@ -43,7 +43,7 @@ import {
 import { AlertCircle, Edit, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export function ModificationPoliciesDashboard() {
   const router = useRouter();
@@ -52,7 +52,6 @@ export function ModificationPoliciesDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState<ModificationPolicy | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const loadedRef = useRef(false);
 
   const loadData = async () => {
     try {
@@ -72,10 +71,7 @@ export function ModificationPoliciesDashboard() {
   };
 
   useEffect(() => {
-    if (!loadedRef.current) {
-      loadedRef.current = true;
-      loadData();
-    }
+    loadData();
   }, []);
 
   const handleDelete = async () => {

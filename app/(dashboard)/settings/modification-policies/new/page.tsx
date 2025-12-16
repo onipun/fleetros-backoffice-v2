@@ -19,6 +19,7 @@ export default function NewModificationPolicyPage() {
         description: 'Modification policy created successfully',
       });
       router.push('/settings/modification-policies');
+      router.refresh();
     } catch (error) {
       console.error('Failed to create policy:', error);
       toast({

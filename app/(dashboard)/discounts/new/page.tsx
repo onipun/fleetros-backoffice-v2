@@ -7,7 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { linkDiscountToOfferings, linkDiscountToPackages } from '@/lib/api/discount-api';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import type { Discount } from '@/types';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -37,6 +37,7 @@ function buildDiscountPayload(values: DiscountFormState) {
 
 export default function NewDiscountPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { t } = useLocale();
 
   const createDiscount = useMutation({
@@ -82,6 +83,8 @@ export default function NewDiscountPage() {
       return createdDiscount;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['discounts'] });
+      queryClient.invalidateQueries({ queryKey: ['discounts-search'] });
       toast({
         title: t('discount.toast.createTitle'),
         description: t('discount.toast.createDescription'),

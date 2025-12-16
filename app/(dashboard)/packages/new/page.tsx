@@ -78,6 +78,7 @@ export default function NewPackagePage() {
         description: t('package.createSuccess'),
       });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      queryClient.invalidateQueries({ queryKey: ['packages-search'] });
       
       // Only redirect if banner was not uploaded
       if (!bannerImage) {

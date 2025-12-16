@@ -37,6 +37,7 @@ export default function OfferingsPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      await queryClient.invalidateQueries({ queryKey: ['offerings-search'] });
       toast({
         title: t('common.success'),
         description: 'Offering deleted successfully',

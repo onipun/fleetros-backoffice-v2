@@ -43,6 +43,7 @@ export default function EditModificationPolicyPage({ params }: { params: Promise
         description: 'Modification policy updated successfully',
       });
       router.push('/settings/modification-policies');
+      router.refresh();
     } catch (error) {
       console.error('Failed to update policy:', error);
       toast({

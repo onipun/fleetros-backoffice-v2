@@ -7,7 +7,6 @@ import { CustomCategoryManagement } from '@/components/booking/custom-category-m
 import { BookingImageGallery } from '@/components/booking/image-gallery';
 import { ImageUploadDialog } from '@/components/booking/image-upload-dialog';
 import { ManualPaymentDialog } from '@/components/booking/manual-payment-dialog';
-import { ModificationPolicyCard } from '@/components/booking/modification-policy-card';
 import { PaymentSummaryCard } from '@/components/booking/payment-summary-card';
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ import { hateoasClient } from '@/lib/api/hateoas-client';
 import { formatDateTime } from '@/lib/utils';
 import type { Booking, Offering } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, CheckCircle2, CreditCard, DollarSign, Edit3, FileText, History, Settings, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, CreditCard, Edit3, FileText, History, Settings, Trash2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -232,6 +231,7 @@ export default function BookingDetailPage() {
         description: t('booking.detail.deleteBookingDescription'),
       });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings-search'] });
       router.push('/bookings');
     },
     onError: (error: Error) => {
@@ -267,6 +267,7 @@ export default function BookingDetailPage() {
       });
       queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings-search'] });
       queryClient.invalidateQueries({ queryKey: ['booking-history', Number(bookingId)] });
     },
     onError: (error: Error) => {
@@ -343,118 +344,6 @@ export default function BookingDetailPage() {
           </Button>
         </div>
       </div>
-      
-      {/* Modification Policy Card */}
-      <ModificationPolicyCard bookingId={Number(bookingId)} compact />
-
-      {/* Applied Pricing Overview */}
-      {pricingSnapshot && pricingLineItems.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              {t('booking.form.summary.appliedPricing')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Date Range */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>
-                {new Date(booking?.startDate || '').toLocaleDateString('en-MY', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-                {' → '}
-                {new Date(booking?.endDate || '').toLocaleDateString('en-MY', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </span>
-            </div>
-
-            {/* Duration */}
-            {pricingSummary?.vehicleRentals?.[0] && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{t('booking.form.summary.duration')}:</span>
-                <span className="font-medium">
-                  {pricingSummary.vehicleRentals[0].days} {pricingSummary.vehicleRentals[0].days === 1 ? t('booking.form.daySingular') : t('booking.form.dayPlural')}
-                </span>
-              </div>
-            )}
-
-            {/* Bill Details */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">{t('booking.form.summary.billDetails')}</h4>
-              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
-                {pricingLineItems.map((item) => (
-                  <div key={item.id} className="flex items-start justify-between gap-4 text-sm">
-                    <div>
-                      <p className="font-medium">{item.label}</p>
-                      {item.helper && (
-                        <p className="text-xs text-muted-foreground">{item.helper}</p>
-                      )}
-                    </div>
-                    <span className="font-medium">{formatCurrency(item.amount)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Totals */}
-            {pricingSummary && (
-              <div className="space-y-1 rounded-md bg-muted/20 p-3">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{t('booking.form.summary.subtotal')}</span>
-                  <span>{formatCurrency(pricingSummary.subtotal)}</span>
-                </div>
-                {pricingSummary.totalDepositAmount > 0 && (
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{t('booking.form.summary.deposit')}</span>
-                    <span>{formatCurrency(pricingSummary.totalDepositAmount)}</span>
-                  </div>
-                )}
-                {pricingSummary.totalDiscountAmount > 0 && (
-                  <div className="flex items-center justify-between text-sm text-green-600">
-                    <span>Total Savings</span>
-                    <span>-{formatCurrency(pricingSummary.totalDiscountAmount)}</span>
-                  </div>
-                )}
-                {pricingSummary.taxAmount > 0 && (
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Tax ({((pricingSummary.taxAmount / pricingSummary.subtotal) * 100).toFixed(0)}%)</span>
-                    <span>{formatCurrency(pricingSummary.taxAmount)}</span>
-                  </div>
-                )}
-                {pricingSummary.serviceFeeAmount > 0 && (
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Service Fee</span>
-                    <span>{formatCurrency(pricingSummary.serviceFeeAmount)}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between text-base font-semibold pt-2 border-t">
-                  <span>{t('booking.form.summary.total')}</span>
-                  <span>{formatCurrency(pricingSummary.grandTotal)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Due at Booking</span>
-                  <span className="font-medium">{formatCurrency(pricingSummary.dueAtBooking)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Due at Pickup</span>
-                  <span className="font-medium">{formatCurrency(pricingSummary.dueAtPickup)}</span>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
@@ -840,6 +729,7 @@ export default function BookingDetailPage() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
           queryClient.invalidateQueries({ queryKey: ['bookings'] });
+          queryClient.invalidateQueries({ queryKey: ['bookings-search'] });
         }}
       />
 

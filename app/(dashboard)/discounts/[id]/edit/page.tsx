@@ -5,13 +5,13 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import {
-  fetchLinkedOfferings,
-  fetchLinkedPackages,
-  linkDiscountToOfferings,
-  linkDiscountToPackages,
-  parseApplicableIds,
-  unlinkAllOfferings,
-  unlinkAllPackages,
+    fetchLinkedOfferings,
+    fetchLinkedPackages,
+    linkDiscountToOfferings,
+    linkDiscountToPackages,
+    parseApplicableIds,
+    unlinkAllOfferings,
+    unlinkAllPackages,
 } from '@/lib/api/discount-api';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import type { Discount } from '@/types';
@@ -185,6 +185,7 @@ export default function EditDiscountPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discounts'] });
+      queryClient.invalidateQueries({ queryKey: ['discounts-search'] });
       queryClient.invalidateQueries({ queryKey: ['discount', discountId] });
       toast({
         title: t('discount.toast.updateTitle'),

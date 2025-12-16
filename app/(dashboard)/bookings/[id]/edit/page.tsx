@@ -710,6 +710,7 @@ export default function EditBookingPage() {
         description: t('booking.form.notifications.updateSuccessDescription'),
       });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings-search'] });
       queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
       router.push(`/bookings/${bookingId}`);
     },

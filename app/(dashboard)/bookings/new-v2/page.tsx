@@ -189,6 +189,7 @@ export default function NewBookingPageV2() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings-search'] });
       router.push(`/bookings/${booking.bookingId}`);
     } catch (error) {
       toast({

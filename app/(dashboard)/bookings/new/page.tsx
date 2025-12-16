@@ -691,6 +691,7 @@ export default function NewBookingPage() {
         description: t('booking.form.notifications.createSuccessDescription'),
       });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings-search'] });
       if (response.bookingId) {
         router.push(`/bookings/${response.bookingId}`);
       } else {

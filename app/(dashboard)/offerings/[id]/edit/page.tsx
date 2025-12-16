@@ -123,6 +123,7 @@ export default function EditOfferingPage() {
       }
 
       await queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      await queryClient.invalidateQueries({ queryKey: ['offerings-search'] });
       await queryClient.invalidateQueries({ queryKey: ['offering', offeringId] });
       toast({
         title: t('common.success'),
@@ -147,6 +148,7 @@ export default function EditOfferingPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      await queryClient.invalidateQueries({ queryKey: ['offerings-search'] });
       toast({
         title: t('common.success'),
         description: 'Offering deleted successfully',

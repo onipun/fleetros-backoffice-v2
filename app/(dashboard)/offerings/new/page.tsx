@@ -97,6 +97,7 @@ export default function NewOfferingPage() {
         description: t('toast.createSuccess'),
       });
       await queryClient.invalidateQueries({ queryKey: ['offerings'] });
+      await queryClient.invalidateQueries({ queryKey: ['offerings-search'] });
       router.push('/offerings');
       router.refresh();
     },

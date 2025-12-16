@@ -199,6 +199,7 @@ export default function EditPackagePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      queryClient.invalidateQueries({ queryKey: ['packages-search'] });
       queryClient.invalidateQueries({ queryKey: ['package', packageId] });
       queryClient.invalidateQueries({ queryKey: ['package', packageId, 'offerings'] });
       toast({
