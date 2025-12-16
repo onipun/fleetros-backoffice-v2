@@ -1,27 +1,23 @@
 'use client';
 
+import { PaymentSearchFilters } from '@/components/payment/payment-search-filters';
 import { useLocale } from '@/components/providers/locale-provider';
 import { TablePageSkeleton } from '@/components/skeletons/page-skeletons';
 import { OnboardingStatusBadge } from '@/components/stripe-onboarding';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
-import { Input } from '@/components/ui/input';
+import { usePaymentSearch } from '@/hooks/use-payment-search';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import { useCollection } from '@/lib/api/hooks';
 import { canAcceptPayments, getMerchantStatus } from '@/lib/api/stripe-onboarding';
-import { formatDate, parseHalResource } from '@/lib/utils';
-import type { Payment } from '@/types';
-import { AlertCircle, ArrowRight, CheckCircle2, Download, Search, Settings } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+import { AlertCircle, ArrowRight, CheckCircle2, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function PaymentsPage() {
   const { t, formatCurrency, locale } = useLocale();
   const router = useRouter();
-  const [page, setPage] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
   const [loadingPaymentId, setLoadingPaymentId] = useState<number | null>(null);
   const [businessAccountId, setBusinessAccountId] = useState<string | null>(null);
   const [paymentAccountStatus, setPaymentAccountStatus] = useState<{
@@ -35,14 +31,19 @@ export default function PaymentsPage() {
     isLoading: true,
   });
 
-  const { data, isLoading, error, refetch } = useCollection<Payment>('payments', {
-    page,
-    size: 20,
-    sort: 'createdAt,desc',
-  });
-
-  const payments = data ? parseHalResource<Payment>(data, 'payments') : [];
-  const totalPages = data?.page?.totalPages || 0;
+  // Use payment search hook
+  const {
+    payments,
+    totalPages,
+    totalElements,
+    currentPage,
+    isLoading,
+    error,
+    search,
+    nextPage,
+    previousPage,
+    refetch,
+  } = usePaymentSearch();
 
   // Check payment account status
   useEffect(() => {
@@ -257,40 +258,8 @@ export default function PaymentsPage() {
         </Card>
       )}
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('payment.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('payment.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <select
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">{t('common.allStatuses')}</option>
-              <option value="PENDING">{statusLabels.PENDING}</option>
-              <option value="COMPLETED">{statusLabels.COMPLETED}</option>
-              <option value="FAILED">{statusLabels.FAILED}</option>
-              <option value="REFUNDED">{statusLabels.REFUNDED}</option>
-            </select>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              {t('common.exportCSV')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search Filters */}
+      <PaymentSearchFilters onSearch={search} isLoading={isLoading} />
 
       {/* Payments List */}
       {isLoading ? (
@@ -469,24 +438,26 @@ export default function PaymentsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
-              >
-                {t('common.previous')}
-              </Button>
+            <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
-                {t('common.page')} {page + 1} {t('common.of')} {totalPages}
+                {t('common.page')} {currentPage + 1} {t('common.of')} {totalPages} ({totalElements} {t('payment.title').toLowerCase()})
               </span>
-              <Button
-                variant="outline"
-                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                disabled={page >= totalPages - 1}
-              >
-                {t('common.next')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={previousPage}
+                  disabled={currentPage === 0}
+                >
+                  {t('common.previous')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={nextPage}
+                  disabled={currentPage >= totalPages - 1}
+                >
+                  {t('common.next')}
+                </Button>
+              </div>
             </div>
           )}
         </>
