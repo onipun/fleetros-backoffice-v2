@@ -637,11 +637,11 @@ export function DiscountSearchFilters({ onSearch, isLoading = false }: DiscountS
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <div className="flex gap-2 pt-2">
             <Button
               onClick={handleSearch}
               disabled={!canSearch() || isLoading}
-              className="flex-1 h-10"
+              className="h-10 px-6"
             >
               <Search className="h-4 w-4 mr-2" />
               {isLoading ? (t('common.searching') || 'Searching...') : (t('common.search') || 'Search')}
@@ -650,7 +650,7 @@ export function DiscountSearchFilters({ onSearch, isLoading = false }: DiscountS
               variant="outline"
               onClick={handleReset}
               disabled={isLoading}
-              className="h-10"
+              className="h-10 px-6"
             >
               <X className="h-4 w-4 mr-2" />
               {t('common.reset') || 'Reset'}

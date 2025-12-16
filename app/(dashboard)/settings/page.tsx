@@ -5,7 +5,7 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Award, Check, CreditCard, Globe, Palette, Settings as SettingsIcon, Shield } from 'lucide-react';
+import { ArrowRight, Award, Check, CreditCard, Globe, Palette, Settings as SettingsIcon, Shield, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -136,6 +136,28 @@ export default function SettingsPage() {
                 <Button className="w-full" variant="outline">
                   <Award className="mr-2 h-4 w-4" />
                   Manage Loyalty Tiers
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Team Management - Quick Access */}
+          <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-500" />
+                <CardTitle>{t('nav.team')}</CardTitle>
+              </div>
+              <CardDescription>
+                Manage team members, roles, and permissions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/team">
+                <Button className="w-full" variant="outline">
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Team
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

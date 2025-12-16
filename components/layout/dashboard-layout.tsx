@@ -4,32 +4,31 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PageTransition } from '@/components/ui/page-transition';
 import { useUserInfo } from '@/hooks/use-user-info';
 import { cn } from '@/lib/utils';
 import {
-    Bell,
-    Car,
-    DollarSign,
-    FileText,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    Moon,
-    Package,
-    Percent,
-    Settings,
-    Sun,
-    User,
-    Users,
-    X,
+  Bell,
+  Car,
+  DollarSign,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Moon,
+  Package,
+  Percent,
+  Settings,
+  Sun,
+  User,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -89,12 +88,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       href: '/packages', 
       icon: Package,
       permission: 'PACKAGE_READ'
-    },
-    { 
-      name: t('nav.team'), 
-      href: '/team', 
-      icon: Users,
-      permission: 'USER_READ'
     },
     { 
       name: t('nav.payments'), 

@@ -47,7 +47,13 @@
   "notAvailable": "Tidak tersedia",
   "seconds": "saat",
   "yes": "Ya",
-  "no": "Tidak"
+  "no": "Tidak",
+  "displayOptions": "Pilihan Paparan",
+  "pageSize": "Saiz Halaman",
+  "sortBy": "Susun Mengikut",
+  "order": "Susunan",
+  "ascending": "Menaik",
+  "descending": "Menurun"
   },
   "nav": {
     "dashboard": "Papan Pemuka",

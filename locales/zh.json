@@ -55,7 +55,13 @@
   "notAvailable": "暂无",
   "seconds": "秒",
   "yes": "是",
-  "no": "否"
+  "no": "否",
+  "displayOptions": "显示选项",
+  "pageSize": "每页显示",
+  "sortBy": "排序方式",
+  "order": "排序顺序",
+  "ascending": "升序",
+  "descending": "降序"
   },
   "nav": {
     "dashboard": "仪表板",

@@ -59,7 +59,13 @@
     "yes": "Yes",
     "no": "No",
     "characters": "characters",
-    "done": "Done"
+    "done": "Done",
+    "displayOptions": "Display Options",
+    "pageSize": "Page Size",
+    "sortBy": "Sort By",
+    "order": "Order",
+    "ascending": "Ascending",
+    "descending": "Descending"
   },
   "nav": {
     "dashboard": "Dashboard",
