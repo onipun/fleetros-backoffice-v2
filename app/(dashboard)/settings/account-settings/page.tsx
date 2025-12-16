@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -27,9 +28,10 @@ import {
     isValidSettingKey,
     isValidSettingValue,
     updateAccountSetting,
+    type Currency,
 } from '@/lib/api/account-settings';
 import type { AccountSetting } from '@/types';
-import { Edit, Plus, Settings, Trash2, X } from 'lucide-react';
+import { Check, DollarSign, Edit, Plus, Settings, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const SETTING_OPTIONS = [
@@ -37,7 +39,15 @@ const SETTING_OPTIONS = [
   { value: 'serviceFeeRate', label: 'Service Fee Rate' },
 ];
 
+const CURRENCIES = [
+  { code: 'USD' as Currency, name: 'US Dollar', symbol: '$' },
+  { code: 'MYR' as Currency, name: 'Malaysian Ringgit', symbol: 'RM' },
+  { code: 'CNY' as Currency, name: 'Chinese Yuan', symbol: '¥' },
+  { code: 'SGD' as Currency, name: 'Singapore Dollar', symbol: 'S$' },
+];
+
 export default function AccountSettingsPage() {
+  const { currency, setCurrency, t } = useLocale();
   const [settings, setSettings] = useState<AccountSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -48,11 +58,38 @@ export default function AccountSettingsPage() {
     description: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(currency);
+  const [isCurrencySaving, setIsCurrencySaving] = useState(false);
+
+  // Update selected currency when context changes
+  useEffect(() => {
+    setSelectedCurrency(currency);
+  }, [currency]);
 
   // Load settings on mount
   useEffect(() => {
     loadSettings();
   }, []);
+
+  const handleCurrencyChange = async (newCurrency: Currency) => {
+    setSelectedCurrency(newCurrency);
+    setIsCurrencySaving(true);
+    try {
+      await setCurrency(newCurrency);
+      toast({
+        title: 'Success',
+        description: 'Currency updated successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update currency',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCurrencySaving(false);
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -198,6 +235,44 @@ export default function AccountSettingsPage() {
           Add Setting
         </Button>
       </div>
+
+      {/* Currency Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-primary" />
+            <CardTitle>{t('settings.currency.title')}</CardTitle>
+          </div>
+          <CardDescription>{t('settings.currency.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {CURRENCIES.map((curr) => (
+              <button
+                key={curr.code}
+                onClick={() => handleCurrencyChange(curr.code)}
+                disabled={isCurrencySaving}
+                className={`relative flex items-center gap-3 p-4 rounded-lg border-2 transition-all hover:border-primary/50 ${
+                  selectedCurrency === curr.code
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border'
+                } ${isCurrencySaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted text-lg font-bold">
+                  {curr.symbol}
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium">{curr.name}</div>
+                  <div className="text-xs text-muted-foreground">{curr.code}</div>
+                </div>
+                {selectedCurrency === curr.code && (
+                  <Check className="h-5 w-5 text-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Settings List */}
       {loading ? (

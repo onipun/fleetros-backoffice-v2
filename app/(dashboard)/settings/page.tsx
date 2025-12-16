@@ -5,31 +5,22 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Award, Check, CreditCard, DollarSign, Globe, Palette, Settings as SettingsIcon, Shield } from 'lucide-react';
+import { ArrowRight, Award, Check, CreditCard, Globe, Palette, Settings as SettingsIcon, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 type Locale = 'en' | 'zh' | 'ms';
-type Currency = 'USD' | 'MYR' | 'CNY' | 'SGD';
 
 export default function SettingsPage() {
-  const { locale, setLocale, t, currency, setCurrency } = useLocale();
+  const { locale, setLocale, t } = useLocale();
   const { theme, setTheme } = useTheme();
   const [selectedLocale, setSelectedLocale] = useState<Locale>(locale);
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(currency);
   const [selectedTheme, setSelectedTheme] = useState(theme);
 
   const languages = [
     { code: 'en' as Locale, name: t('settings.language.en'), flag: '🇬🇧' },
     { code: 'zh' as Locale, name: t('settings.language.zh'), flag: '🇨🇳' },
     { code: 'ms' as Locale, name: t('settings.language.ms'), flag: '🇲🇾' },
-  ];
-
-  const currencies = [
-    { code: 'USD' as Currency, name: t('settings.currency.usd'), symbol: '$' },
-    { code: 'MYR' as Currency, name: t('settings.currency.myr'), symbol: 'RM' },
-    { code: 'CNY' as Currency, name: t('settings.currency.cny'), symbol: '¥' },
-    { code: 'SGD' as Currency, name: t('settings.currency.sgd'), symbol: 'S$' },
   ];
 
   const themes = [
@@ -40,7 +31,6 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setLocale(selectedLocale);
-    setCurrency(selectedCurrency);
     setTheme(selectedTheme);
     
     toast({
@@ -51,7 +41,6 @@ export default function SettingsPage() {
 
   const hasChanges = 
     selectedLocale !== locale || 
-    selectedCurrency !== currency || 
     selectedTheme !== theme;
 
   return (
@@ -181,43 +170,6 @@ export default function SettingsPage() {
                     <div className="text-xs text-muted-foreground uppercase">{lang.code}</div>
                   </div>
                   {selectedLocale === lang.code && (
-                    <Check className="h-5 w-5 text-primary" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Currency Settings */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <CardTitle>{t('settings.currency.title')}</CardTitle>
-            </div>
-            <CardDescription>{t('settings.currency.description')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {currencies.map((curr) => (
-                <button
-                  key={curr.code}
-                  onClick={() => setSelectedCurrency(curr.code)}
-                  className={`relative flex items-center gap-3 p-4 rounded-lg border-2 transition-all hover:border-primary/50 ${
-                    selectedCurrency === curr.code
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border'
-                  }`}
-                >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted text-lg font-bold">
-                    {curr.symbol}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">{curr.name}</div>
-                    <div className="text-xs text-muted-foreground">{curr.code}</div>
-                  </div>
-                  {selectedCurrency === curr.code && (
                     <Check className="h-5 w-5 text-primary" />
                   )}
                 </button>

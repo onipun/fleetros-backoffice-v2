@@ -1,12 +1,12 @@
 'use client';
 
+import { getCurrencySetting, updateCurrencySetting, type Currency } from '@/lib/api/account-settings';
 import enTranslations from '@/locales/en.json';
 import msTranslations from '@/locales/ms.json';
 import zhTranslations from '@/locales/zh.json';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 type Locale = 'en' | 'zh' | 'ms';
-type Currency = 'USD' | 'MYR' | 'CNY' | 'SGD';
 
 interface LocaleContextType {
   locale: Locale;
@@ -39,17 +39,21 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    // Load saved preferences from localStorage
+    // Load saved locale preference from localStorage
     const savedLocale = localStorage.getItem('locale') as Locale;
-    const savedCurrency = localStorage.getItem('currency') as Currency;
     
     if (savedLocale && ['en', 'zh', 'ms'].includes(savedLocale)) {
       setLocaleState(savedLocale);
     }
     
-    if (savedCurrency && ['USD', 'MYR', 'CNY', 'SGD'].includes(savedCurrency)) {
-      setCurrencyState(savedCurrency);
-    }
+    // Load currency from API
+    getCurrencySetting().then((apiCurrency) => {
+      if (apiCurrency && ['USD', 'MYR', 'CNY', 'SGD'].includes(apiCurrency)) {
+        setCurrencyState(apiCurrency);
+      }
+    }).catch((error) => {
+      console.error('Failed to load currency setting:', error);
+    });
   }, []);
 
   const setLocale = (newLocale: Locale) => {
@@ -57,10 +61,16 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('locale', newLocale);
   };
 
-  const setCurrency = (newCurrency: Currency) => {
-    setCurrencyState(newCurrency);
-    localStorage.setItem('currency', newCurrency);
-  };
+  const setCurrency = useCallback(async (newCurrency: Currency) => {
+    try {
+      await updateCurrencySetting(newCurrency);
+      setCurrencyState(newCurrency);
+    } catch (error) {
+      console.error('Failed to update currency setting:', error);
+      // Still update locally even if API fails
+      setCurrencyState(newCurrency);
+    }
+  }, []);
 
   const t = (key: string): string => {
     const keys = key.split('.');

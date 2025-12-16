@@ -16,7 +16,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function OfferingDetailPage() {
-  const { t } = useLocale();
+  const { t, formatCurrency } = useLocale();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -358,7 +358,7 @@ export default function OfferingDetailPage() {
                 <div>
                   <span className="text-sm text-muted-foreground">{t('offering.unitPriceLabel')}</span>
                   <p className="font-medium">
-                    ${offering.price?.toFixed(2) || '0.00'}
+                    {formatCurrency(offering.price ?? 0)}
                   </p>
                 </div>
                 <div>

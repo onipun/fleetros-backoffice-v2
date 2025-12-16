@@ -4,6 +4,7 @@
  */
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -47,6 +48,7 @@ import { useEffect, useState } from 'react';
 
 export function ModificationPoliciesDashboard() {
   const router = useRouter();
+  const { formatCurrency } = useLocale();
   const [policies, setPolicies] = useState<ModificationPolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -187,9 +189,9 @@ export function ModificationPoliciesDashboard() {
                       </TableCell>
                       <TableCell>{getTierBadge(policy.loyaltyTier)}</TableCell>
                       <TableCell>{policy.freeModificationHours}h</TableCell>
-                      <TableCell>${policy.lateModificationFee.toFixed(2)}</TableCell>
-                      <TableCell>${policy.categoryChangeFee.toFixed(2)}</TableCell>
-                      <TableCell>${policy.locationChangeFee.toFixed(2)}</TableCell>
+                      <TableCell>{formatCurrency(policy.lateModificationFee)}</TableCell>
+                      <TableCell>{formatCurrency(policy.categoryChangeFee)}</TableCell>
+                      <TableCell>{formatCurrency(policy.locationChangeFee)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,7 @@ export function EntityMultiSelect({
   label,
   description,
 }: EntityMultiSelectProps) {
+  const { formatCurrency } = useLocale();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data, isLoading, error } = useQuery({
@@ -167,7 +169,7 @@ export function EntityMultiSelect({
                 )}
                 {'price' in entity && entity.price !== undefined && (
                   <p className="text-xs text-primary font-medium">
-                    Price: ${entity.price.toFixed(2)}
+                    Price: {formatCurrency(entity.price)}
                   </p>
                 )}
               </div>

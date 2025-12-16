@@ -152,3 +152,73 @@ export function parseBooleanSetting(value: string | undefined): boolean {
   if (!value) return false;
   return value.toLowerCase() === 'true' || value === '1';
 }
+
+/**
+ * Currency type
+ */
+export type Currency = 'USD' | 'MYR' | 'CNY' | 'SGD';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
+
+/**
+ * Get current currency setting
+ */
+export async function getCurrencySetting(): Promise<Currency> {
+  try {
+    const token = typeof window !== 'undefined' 
+      ? await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken)
+      : null;
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/account-settings/currency`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return 'MYR'; // Default currency
+      }
+      throw new Error('Failed to fetch currency setting');
+    }
+
+    const data = await response.json();
+    return (data.currency as Currency) || 'MYR';
+  } catch (error) {
+    console.error('Error fetching currency setting:', error);
+    return 'MYR'; // Default fallback
+  }
+}
+
+/**
+ * Update currency setting
+ */
+export async function updateCurrencySetting(currency: Currency): Promise<void> {
+  const token = typeof window !== 'undefined' 
+    ? await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken)
+    : null;
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/account-settings/currency`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ currency }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update currency setting');
+  }
+}
