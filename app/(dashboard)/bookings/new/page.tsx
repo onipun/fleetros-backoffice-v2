@@ -7,6 +7,7 @@ import { VehicleSelectorAdvanced } from '@/components/booking/vehicle-selector-a
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,6 +97,9 @@ export default function NewBookingPage() {
   // Removed shouldFetchPricing - no longer auto-fetching legacy pricing API
   const [pricingPreview, setPricingPreview] = useState<PreviewPricingResponse | null>(null);
   const [isPreviewingPricing, setIsPreviewingPricing] = useState(false);
+  const [isPricingStale, setIsPricingStale] = useState(false);
+  const [applyLoyaltyDiscount, setApplyLoyaltyDiscount] = useState(false);
+  const [pointsToRedeem, setPointsToRedeem] = useState<number>(0);
   const hasInitializedRef = useRef(false);
 
   const formatDaysLabel = useCallback(
@@ -605,8 +609,8 @@ export default function NewBookingPage() {
         packageId: payload.packageId ?? undefined,
         offerings,
         discountCodes,
-        applyLoyaltyDiscount: false, // Set based on user selection if loyalty is implemented
-        pointsToRedeem: 0,
+        applyLoyaltyDiscount: payload.applyLoyaltyDiscount || false,
+        pointsToRedeem: payload.pointsToRedeem || 0,
         currency: 'MYR',
         guestName: payload.guestName,
         guestEmail: payload.guestEmail,
@@ -617,6 +621,7 @@ export default function NewBookingPage() {
     },
     onSuccess: (preview: PreviewPricingResponse) => {
       setPricingPreview(preview);
+      setIsPricingStale(false);
       
       // Show preview in a toast or modal
       if (preview.validation.isValid) {
@@ -669,8 +674,8 @@ export default function NewBookingPage() {
         packageId: payload.packageId ?? undefined,
         offerings,
         discountCodes,
-        applyLoyaltyDiscount: false,
-        pointsToRedeem: 0,
+        applyLoyaltyDiscount: payload.applyLoyaltyDiscount || false,
+        pointsToRedeem: payload.pointsToRedeem || 0,
         currency: 'MYR',
         guestName: payload.guestName || undefined,
         guestEmail: payload.guestEmail || undefined,
@@ -910,6 +915,8 @@ export default function NewBookingPage() {
       guestName: formState.guestName,
       guestEmail: formState.guestEmail,
       guestPhone: formState.guestPhone,
+      applyLoyaltyDiscount,
+      pointsToRedeem,
       pricingSummary: {
         vehicleCharge: vehicleBaseCharge,
         packageCharge,
@@ -1188,13 +1195,23 @@ export default function NewBookingPage() {
               <CardContent>
                 {/* Preview Pricing Result */}
                 {pricingPreview ? (
-                  <div className="rounded-lg border-2 border-green-500 bg-green-50 p-4 dark:bg-green-950/20">
+                  <div className={`rounded-lg border-2 ${isPricingStale ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/20' : 'border-green-500 bg-green-50 dark:bg-green-950/20'} p-4`}>
                     <div className="flex items-center gap-2 mb-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <h4 className="font-semibold text-green-900 dark:text-green-100">
-                        Preview Pricing Result
+                      {isPricingStale ? (
+                        <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      ) : (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      )}
+                      <h4 className={`font-semibold ${isPricingStale ? 'text-amber-900 dark:text-amber-100' : 'text-green-900 dark:text-green-100'}`}>
+                        Preview Pricing Result {isPricingStale && '(Outdated)'}
                       </h4>
                     </div>
+                    
+                    {isPricingStale && (
+                      <div className="mb-3 p-2 bg-amber-100 dark:bg-amber-900/30 rounded text-sm text-amber-800 dark:text-amber-200">
+                        ⚠️ Loyalty settings changed. Click "Preview Pricing" to recalculate.
+                      </div>
+                    )}
                     
                     {pricingPreview.validation.isValid ? (
                       <div className="space-y-3">
@@ -1363,6 +1380,77 @@ export default function NewBookingPage() {
                                 {(pricingPreview.loyaltyInfo || pricingPreview.loyaltyPointsInfo)?.availablePoints.toLocaleString()}
                               </span>
                             </div>
+                            {(pricingPreview.loyaltyInfo?.maxPointsDiscount ?? pricingPreview.loyaltyPointsInfo?.maxPointsDiscount) != null && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-green-700 dark:text-green-300">Max Discount Available:</span>
+                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                  {formatCurrency((pricingPreview.loyaltyInfo?.maxPointsDiscount ?? pricingPreview.loyaltyPointsInfo?.maxPointsDiscount) || 0)}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Loyalty Discount Controls */}
+                            {(pricingPreview.loyaltyInfo?.isEligibleForRedemption || pricingPreview.loyaltyPointsInfo?.isEligibleForRedemption) && (
+                              <div className="mt-3 pt-3 border-t border-green-300 space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id="applyLoyaltyDiscount"
+                                    checked={applyLoyaltyDiscount}
+                                    onCheckedChange={(checked) => {
+                                      setApplyLoyaltyDiscount(checked === true);
+                                      if (!checked) {
+                                        setPointsToRedeem(0);
+                                      } else {
+                                        // Set minimum points when enabling
+                                        const minPoints = (pricingPreview.loyaltyInfo?.pointsConversionRate ?? pricingPreview.loyaltyPointsInfo?.pointsConversionRate) || 100;
+                                        setPointsToRedeem(minPoints);
+                                      }
+                                      // Mark pricing as stale to prompt re-calculation
+                                      setIsPricingStale(true);
+                                    }}
+                                  />
+                                  <Label htmlFor="applyLoyaltyDiscount" className="text-sm text-green-700 dark:text-green-300 cursor-pointer">
+                                    Apply Loyalty Points Discount
+                                  </Label>
+                                </div>
+                                
+                                {applyLoyaltyDiscount && (
+                                  <div className="space-y-2">
+                                    <Label htmlFor="pointsToRedeem" className="text-sm text-green-700 dark:text-green-300">
+                                      Points to Redeem (Min: {(pricingPreview.loyaltyInfo?.pointsConversionRate ?? pricingPreview.loyaltyPointsInfo?.pointsConversionRate)?.toLocaleString() || 100})
+                                    </Label>
+                                    <Input
+                                      id="pointsToRedeem"
+                                      type="number"
+                                      min={(pricingPreview.loyaltyInfo?.pointsConversionRate ?? pricingPreview.loyaltyPointsInfo?.pointsConversionRate) || 100}
+                                      max={(pricingPreview.loyaltyInfo?.availablePoints ?? pricingPreview.loyaltyPointsInfo?.availablePoints) || 0}
+                                      step={1}
+                                      value={pointsToRedeem}
+                                      onChange={(e) => {
+                                        const value = Number(e.target.value);
+                                        setPointsToRedeem(value);
+                                        // Mark pricing as stale to prompt re-calculation
+                                        setIsPricingStale(true);
+                                      }}
+                                      onBlur={() => {
+                                        // Validate and clamp on blur
+                                        const minPoints = (pricingPreview.loyaltyInfo?.pointsConversionRate ?? pricingPreview.loyaltyPointsInfo?.pointsConversionRate) || 100;
+                                        const maxPoints = (pricingPreview.loyaltyInfo?.availablePoints ?? pricingPreview.loyaltyPointsInfo?.availablePoints) || 0;
+                                        if (pointsToRedeem < minPoints) {
+                                          setPointsToRedeem(minPoints);
+                                        } else if (pointsToRedeem > maxPoints) {
+                                          setPointsToRedeem(maxPoints);
+                                        }
+                                      }}
+                                      className="bg-white dark:bg-gray-800 border-green-300"
+                                    />
+                                    <p className="text-xs text-green-600 dark:text-green-400">
+                                      Estimated discount: {formatCurrency(pointsToRedeem / ((pricingPreview.loyaltyInfo?.pointsConversionRate ?? pricingPreview.loyaltyPointsInfo?.pointsConversionRate) || 100))}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                         

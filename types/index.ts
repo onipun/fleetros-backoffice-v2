@@ -216,9 +216,22 @@ export interface Booking {
   status: BookingStatus;
   createdAt?: string;
   updatedAt?: string;
+  // Financial details
+  subtotal?: number;
+  totalDiscount?: number;
+  taxAmount?: number;
+  serviceFee?: number;
+  grandTotal?: number;
+  totalDeposit?: number;
+  dueAtBooking?: number;
+  dueAtPickup?: number;
+  originalAmount?: number;
+  currentAmount?: number;
+  amountPaid?: number;
   // Customer details
   guestName?: string;
   guestEmail?: string;
+  guestPhone?: string;
   customerId?: number;
   _links?: Links;
   package?: string; // HATEOAS link to package
@@ -232,6 +245,8 @@ export interface Booking {
   bookingEndDate?: string;
   offerings?: BookingOffering[] | Offering[]; // Supports direct offering payloads for creation
   images?: BookingImage[]; // Mirrors vehicle image handling for damage reports
+  // Modification tracking
+  modificationCount?: number;
 }
 
 export interface BookingOffering {

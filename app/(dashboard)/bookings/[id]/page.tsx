@@ -100,6 +100,7 @@ export default function BookingDetailPage() {
       // Parse JSON strings in the pricing snapshot response
       let pricingSummary = null;
       let detailedSnapshots = null;
+      let loyaltySnapshot = null;
       
       if (data.pricingSummaryJson && typeof data.pricingSummaryJson === 'string') {
         try {
@@ -117,10 +118,19 @@ export default function BookingDetailPage() {
         }
       }
       
+      if (data.loyaltySnapshotJson && typeof data.loyaltySnapshotJson === 'string') {
+        try {
+          loyaltySnapshot = JSON.parse(data.loyaltySnapshotJson);
+        } catch (e) {
+          console.error('Failed to parse loyaltySnapshotJson:', e);
+        }
+      }
+      
       return {
         ...data,
         pricingSummary,
         detailedSnapshots,
+        loyaltySnapshot,
       };
     },
     enabled: !!bookingId,
@@ -556,34 +566,194 @@ export default function BookingDetailPage() {
             <CardHeader>
               <CardTitle>{t('booking.detail.sections.financial')}</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div>
-                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.totalDays')}</span>
-                <p className="font-medium">{booking.totalDays ?? 0}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.totalRentalFee')}</span>
-                <p className="font-medium">{formatCurrency(booking.totalRentalFee ?? 0)}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.finalPrice')}</span>
-                <p className="font-medium">{formatCurrency(booking.finalPrice ?? 0)}</p>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">{t('booking.detail.fields.balancePayment')}</span>
-                {(booking.balancePayment ?? 0) <= 0 ? (
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-600">Fully Paid</span>
+            <CardContent className="space-y-4">
+              {/* Use pricing snapshot data when available, fallback to booking data */}
+              {pricingSnapshot ? (
+                <div className="space-y-3">
+                  {/* Rental Summary */}
+                  {pricingSnapshot.pricingSummary?.vehicleRentals?.map((rental: any, idx: number) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {rental.vehicleName} ({rental.days} {rental.days === 1 ? 'day' : 'days'} × {formatCurrency(rental.dailyRate)})
+                      </span>
+                      <span className="font-medium">{formatCurrency(rental.amount)}</span>
+                    </div>
+                  ))}
+                  
+                  {/* Offerings */}
+                  {pricingSnapshot.pricingSummary?.offerings?.length > 0 && (
+                    <>
+                      {pricingSnapshot.pricingSummary.offerings.map((offering: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{offering.offeringName}</span>
+                          <span className="font-medium">{formatCurrency(offering.amount)}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="font-medium">{formatCurrency(pricingSnapshot.subtotal ?? pricingSnapshot.pricingSummary?.subtotal ?? 0)}</span>
+                    </div>
                   </div>
-                ) : (
-                  <p className="font-medium text-warning">{formatCurrency(booking.balancePayment ?? 0)}</p>
-                )}
-              </div>
+                  
+                  {/* Discounts */}
+                  {pricingSnapshot.pricingSummary?.discounts?.length > 0 && (
+                    <>
+                      {pricingSnapshot.pricingSummary.discounts.map((discount: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-sm text-green-600">
+                          <span>Discount: {discount.discountCode}</span>
+                          <span>-{formatCurrency(discount.discountAmount)}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  
+                  {/* Loyalty Discount */}
+                  {pricingSnapshot.isLoyaltyRedeemed && pricingSnapshot.loyaltyDiscountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span className="flex items-center gap-1">
+                        <span>🎁</span>
+                        Loyalty Points Discount
+                        {pricingSnapshot.loyaltySnapshot && (
+                          <span className="text-xs text-muted-foreground">
+                            ({pricingSnapshot.loyaltyPointsRedeemed?.toLocaleString()} pts)
+                          </span>
+                        )}
+                      </span>
+                      <span>-{formatCurrency(pricingSnapshot.loyaltyDiscountAmount)}</span>
+                    </div>
+                  )}
+                  
+                  {/* Total Discount Summary */}
+                  {(pricingSnapshot.totalDiscount ?? 0) > 0 && (
+                    <div className="flex justify-between text-sm font-medium text-green-600">
+                      <span>Total Savings</span>
+                      <span>-{formatCurrency(pricingSnapshot.totalDiscount)}</span>
+                    </div>
+                  )}
+                  
+                  {/* Taxes and Fees */}
+                  {(pricingSnapshot.taxAmount ?? 0) > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Tax</span>
+                      <span className="font-medium">{formatCurrency(pricingSnapshot.taxAmount)}</span>
+                    </div>
+                  )}
+                  
+                  {(pricingSnapshot.serviceFee ?? 0) > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Service Fee</span>
+                      <span className="font-medium">{formatCurrency(pricingSnapshot.serviceFee)}</span>
+                    </div>
+                  )}
+                  
+                  {/* Deposit */}
+                  {(pricingSnapshot.totalDeposit ?? 0) > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Deposit (Refundable)</span>
+                      <span className="font-medium">{formatCurrency(pricingSnapshot.totalDeposit)}</span>
+                    </div>
+                  )}
+                  
+                  {/* Grand Total */}
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between text-base font-semibold">
+                      <span>Grand Total</span>
+                      <span>{formatCurrency(pricingSnapshot.grandTotal)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Payment Schedule */}
+                  <div className="rounded-md bg-muted/30 p-3 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Due at Booking</span>
+                      <span className="font-medium">{formatCurrency(pricingSnapshot.dueAtBooking)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Due at Pickup</span>
+                      <span className="font-medium">{formatCurrency(pricingSnapshot.dueAtPickup)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Loyalty Info */}
+                  {pricingSnapshot.loyaltySnapshot && (
+                    <div className="rounded-md bg-amber-50 dark:bg-amber-950/20 p-3 space-y-1">
+                      <p className="text-xs font-medium text-amber-800 dark:text-amber-200">Loyalty Points Info</p>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-300">Tier at Booking</span>
+                        <span className="font-medium">{pricingSnapshot.loyaltySnapshot.customerTierAtBooking}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-300">Points Before</span>
+                        <span>{pricingSnapshot.loyaltySnapshot.availablePointsBeforeRedemption?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-300">Points Redeemed</span>
+                        <span className="text-green-600">-{pricingSnapshot.loyaltySnapshot.pointsRedeemed?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-300">Points After</span>
+                        <span>{pricingSnapshot.loyaltySnapshot.availablePointsAfterRedemption?.toLocaleString()}</span>
+                      </div>
+                      {pricingSnapshot.loyaltySnapshot.redemptionDescription && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                          {pricingSnapshot.loyaltySnapshot.redemptionDescription}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Balance Payment Status */}
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">{t('booking.detail.fields.balancePayment')}</span>
+                      {(booking.balancePayment ?? 0) <= 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <span className="font-medium text-green-600">Fully Paid</span>
+                        </div>
+                      ) : (
+                        <span className="font-medium text-warning">{formatCurrency(booking.balancePayment ?? 0)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Fallback to booking data when no pricing snapshot */
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <span className="text-sm text-muted-foreground">{t('booking.detail.fields.totalDays')}</span>
+                    <p className="font-medium">{booking.totalDays ?? 0}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">{t('booking.detail.fields.totalRentalFee')}</span>
+                    <p className="font-medium">{formatCurrency(booking.totalRentalFee ?? 0)}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">{t('booking.detail.fields.finalPrice')}</span>
+                    <p className="font-medium">{formatCurrency(booking.finalPrice ?? 0)}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">{t('booking.detail.fields.balancePayment')}</span>
+                    {(booking.balancePayment ?? 0) <= 0 ? (
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span className="font-medium text-green-600">Fully Paid</span>
+                      </div>
+                    ) : (
+                      <p className="font-medium text-warning">{formatCurrency(booking.balancePayment ?? 0)}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               {booking.insurancePolicy && (
-                <div className="md:col-span-2">
+                <div className="border-t pt-3">
                   <span className="text-sm text-muted-foreground">{t('booking.detail.fields.insurancePolicy')}</span>
-                  <p className="text-sm text-muted-foreground">{booking.insurancePolicy}</p>
+                  <p className="text-sm">{booking.insurancePolicy}</p>
                 </div>
               )}
             </CardContent>
