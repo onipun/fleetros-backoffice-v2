@@ -188,9 +188,10 @@ export const test = base.extend<VehicleFixtures>({
   },
 
   testImagePath: async ({}, use) => {
-    // Create a test image file
+    // Create a test image file with unique name per fixture instance
     const fixturesDir = path.join(__dirname, '../fixtures');
-    const imagePath = path.join(fixturesDir, 'test-image.png');
+    const uniqueId = Date.now() + '_' + Math.random().toString(36).substring(7);
+    const imagePath = path.join(fixturesDir, `fixture-test-image-${uniqueId}.png`);
 
     // Create fixtures directory if it doesn't exist
     if (!fs.existsSync(fixturesDir)) {
@@ -203,7 +204,7 @@ export const test = base.extend<VehicleFixtures>({
 
     await use(imagePath);
 
-    // Cleanup
+    // Cleanup this specific fixture's image file
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }

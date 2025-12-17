@@ -20,3 +20,5 @@ test-results
 /docs
 playwright-test/test-results
 playwright-test/reports
+debug*
+debug-vehicle-list.png

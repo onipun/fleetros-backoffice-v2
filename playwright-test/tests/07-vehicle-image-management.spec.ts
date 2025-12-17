@@ -10,6 +10,18 @@ import { TestHelpers } from '../utils/test-helpers';
 test.describe('Vehicle Image Management Operations', () => {
   let testVehicleId: string;
   let testImagePath: string;
+  const uniqueSuffix = Date.now();
+
+  // Helper function to ensure test image exists
+  function ensureTestImage() {
+    if (!fs.existsSync(testImagePath)) {
+      const fixturesDir = path.dirname(testImagePath);
+      if (!fs.existsSync(fixturesDir)) {
+        fs.mkdirSync(fixturesDir, { recursive: true });
+      }
+      fs.writeFileSync(testImagePath, TestHelpers.createTestImageBuffer(100));
+    }
+  }
 
   test.beforeAll(async ({ browser }) => {
     // Create test vehicle using authenticated context
@@ -64,16 +76,21 @@ test.describe('Vehicle Image Management Operations', () => {
     
     console.log('beforeAll: Created vehicle with ID:', testVehicleId);
     
-    // Create test image file using TestHelpers
+    // Create test image file using TestHelpers with unique name to avoid conflicts
     const fixturesDir = path.join(__dirname, '../fixtures');
     if (!fs.existsSync(fixturesDir)) {
       fs.mkdirSync(fixturesDir, { recursive: true });
     }
-    testImagePath = path.join(fixturesDir, 'mgmt-test-image.png');
+    testImagePath = path.join(fixturesDir, `mgmt-test-image-${uniqueSuffix}.png`);
     fs.writeFileSync(testImagePath, TestHelpers.createTestImageBuffer(100));
     
     await page.close();
     await context.close();
+  });
+
+  // Ensure test image exists before each test
+  test.beforeEach(async () => {
+    ensureTestImage();
   });
 
   test.afterAll(async () => {

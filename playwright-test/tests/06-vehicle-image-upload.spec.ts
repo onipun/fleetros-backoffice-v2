@@ -9,26 +9,27 @@ import { TestHelpers } from '../utils/test-helpers';
  */
 test.describe('Vehicle Image Upload Operations', () => {
   let testImagePaths: { [key: string]: string } = {};
+  const uniqueSuffix = Date.now();
 
   test.beforeAll(async () => {
-    // Create test image files once for all tests
+    // Create test image files once for all tests with unique names to avoid conflicts
     const fixturesDir = path.join(__dirname, '../fixtures');
     if (!fs.existsSync(fixturesDir)) {
       fs.mkdirSync(fixturesDir, { recursive: true });
     }
     
-    // Create PNG image (100KB - valid size)
-    const pngPath = path.join(fixturesDir, 'test-image.png');
+    // Create PNG image (100KB - valid size) with unique name
+    const pngPath = path.join(fixturesDir, `upload-test-image-${uniqueSuffix}.png`);
     fs.writeFileSync(pngPath, TestHelpers.createTestImageBuffer(100));
     testImagePaths['png'] = pngPath;
     
-    // Create JPEG image (150KB - valid size)
-    const jpegPath = path.join(fixturesDir, 'test-image.jpg');
+    // Create JPEG image (150KB - valid size) with unique name
+    const jpegPath = path.join(fixturesDir, `upload-test-image-${uniqueSuffix}.jpg`);
     fs.writeFileSync(jpegPath, TestHelpers.createTestImageBuffer(150));
     testImagePaths['jpeg'] = jpegPath;
     
-    // Create large image (11MB - exceeds limit for validation tests)
-    const largePath = path.join(fixturesDir, 'large-image.png');
+    // Create large image (11MB - exceeds limit for validation tests) with unique name
+    const largePath = path.join(fixturesDir, `upload-large-image-${uniqueSuffix}.png`);
     fs.writeFileSync(largePath, TestHelpers.createTestImageBuffer(11 * 1024));
     testImagePaths['large'] = largePath;
   });
@@ -39,6 +40,14 @@ test.describe('Vehicle Image Upload Operations', () => {
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
+    }
+  });
+
+  // Ensure test image exists before each test
+  test.beforeEach(async () => {
+    // Re-create PNG image if it doesn't exist (might be deleted by another process)
+    if (testImagePaths['png'] && !fs.existsSync(testImagePaths['png'])) {
+      fs.writeFileSync(testImagePaths['png'], TestHelpers.createTestImageBuffer(100));
     }
   });
 

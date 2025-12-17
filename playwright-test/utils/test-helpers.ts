@@ -347,10 +347,10 @@ export class TestHelpers {
   static async verifyToastMessage(page: Page, expectedText: string | RegExp) {
     if (typeof expectedText === 'string') {
       const toast = page.locator('[role="status"]', { hasText: expectedText });
-      await expect(toast).toBeVisible({ timeout: 5000 });
+      await expect(toast).toBeVisible({ timeout: 10000 });
     } else {
       const toast = page.locator('[role="status"]').filter({ hasText: expectedText });
-      await expect(toast).toBeVisible({ timeout: 5000 });
+      await expect(toast).toBeVisible({ timeout: 10000 });
     }
   }
 

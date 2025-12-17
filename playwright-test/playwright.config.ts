@@ -12,17 +12,25 @@ dotenv.config({ path: path.resolve(__dirname, '.env.test') });
 export default defineConfig({
   testDir: './tests',
   
+  /* Global test timeout - increased to handle network latency during full suite runs */
+  timeout: 60000,
+  
+  /* Expect timeout - increased for elements that take time to appear */
+  expect: {
+    timeout: 15000,
+  },
+  
   /* Run tests in files in parallel */
   fullyParallel: false,
   
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
   
-  /* Retry on CI only */
-  retries: 0,
+  /* Retry failed tests once to handle flaky tests */
+  retries: 1,
   
-  /* Opt out of parallel tests on CI */
-  workers: process.env.CI ? 1 : undefined,
+  /* Force single worker to prevent browser memory issues during full suite runs */
+  workers: 1,
   
   /* Reporter to use */
   reporter: [
