@@ -15,6 +15,11 @@ export class OfferingFormPage {
   readonly isMandatoryCheckbox: Locator;
   readonly descriptionTextarea: Locator;
   
+  // New Inventory Management Fields
+  readonly inventoryModeSelect: Locator;
+  readonly consumableTypeSelect: Locator;
+  readonly purchaseLimitPerBookingInput: Locator;
+  
   // Form Actions
   readonly saveButton: Locator;
   readonly cancelButton: Locator;
@@ -31,6 +36,11 @@ export class OfferingFormPage {
     this.maxQuantityInput = page.locator('input#maxQuantityPerBooking');
     this.isMandatoryCheckbox = page.locator('button#isMandatory[role="checkbox"]');
     this.descriptionTextarea = page.locator('textarea#description');
+    
+    // New Inventory Management Fields
+    this.inventoryModeSelect = page.locator('select#inventoryMode');
+    this.consumableTypeSelect = page.locator('select#consumableType');
+    this.purchaseLimitPerBookingInput = page.locator('input#purchaseLimitPerBooking');
     
     // Form Actions
     this.saveButton = page.locator('button[type="submit"]');
@@ -57,6 +67,10 @@ export class OfferingFormPage {
     maxQuantityPerBooking?: number;
     isMandatory?: boolean;
     description?: string;
+    // New inventory management fields
+    inventoryMode?: 'SHARED' | 'EXCLUSIVE';
+    consumableType?: 'RETURNABLE' | 'CONSUMABLE' | 'SERVICE' | 'ACCOMMODATION';
+    purchaseLimitPerBooking?: number | null;
   }) {
     if (data.name) {
       await this.nameInput.fill(data.name);
@@ -66,9 +80,24 @@ export class OfferingFormPage {
       await this.offeringTypeSelect.selectOption(data.offeringType);
     }
     
+    // Fill inventory management fields first (before availability/maxQuantity since EXCLUSIVE mode disables them)
+    if (data.inventoryMode) {
+      await this.inventoryModeSelect.selectOption(data.inventoryMode);
+      // Wait a moment for auto-adjustment to take effect
+      await this.page.waitForTimeout(300);
+    }
+    
+    if (data.consumableType) {
+      await this.consumableTypeSelect.selectOption(data.consumableType);
+    }
+    
+    // Only fill availability if not disabled (EXCLUSIVE mode disables it)
     if (data.availability !== undefined) {
-      await this.availabilityInput.clear();
-      await this.availabilityInput.fill(String(data.availability));
+      const isDisabled = await this.availabilityInput.isDisabled();
+      if (!isDisabled) {
+        await this.availabilityInput.clear();
+        await this.availabilityInput.fill(String(data.availability));
+      }
     }
     
     if (data.price !== undefined) {
@@ -76,9 +105,13 @@ export class OfferingFormPage {
       await this.priceInput.fill(String(data.price));
     }
     
+    // Only fill maxQuantity if not disabled (EXCLUSIVE mode disables it)
     if (data.maxQuantityPerBooking !== undefined) {
-      await this.maxQuantityInput.clear();
-      await this.maxQuantityInput.fill(String(data.maxQuantityPerBooking));
+      const isDisabled = await this.maxQuantityInput.isDisabled();
+      if (!isDisabled) {
+        await this.maxQuantityInput.clear();
+        await this.maxQuantityInput.fill(String(data.maxQuantityPerBooking));
+      }
     }
     
     if (data.isMandatory !== undefined) {
@@ -91,6 +124,11 @@ export class OfferingFormPage {
     
     if (data.description) {
       await this.descriptionTextarea.fill(data.description);
+    }
+    
+    if (data.purchaseLimitPerBooking !== undefined && data.purchaseLimitPerBooking !== null) {
+      await this.purchaseLimitPerBookingInput.clear();
+      await this.purchaseLimitPerBookingInput.fill(String(data.purchaseLimitPerBooking));
     }
   }
 
@@ -105,6 +143,7 @@ export class OfferingFormPage {
    * Get current form values
    */
   async getFormValues() {
+    const purchaseLimitValue = await this.purchaseLimitPerBookingInput.inputValue();
     return {
       name: await this.nameInput.inputValue(),
       offeringType: await this.offeringTypeSelect.inputValue(),
@@ -113,6 +152,9 @@ export class OfferingFormPage {
       maxQuantityPerBooking: await this.maxQuantityInput.inputValue(),
       isMandatory: (await this.isMandatoryCheckbox.getAttribute('aria-checked')) === 'true',
       description: await this.descriptionTextarea.inputValue(),
+      inventoryMode: await this.inventoryModeSelect.inputValue(),
+      consumableType: await this.consumableTypeSelect.inputValue(),
+      purchaseLimitPerBooking: purchaseLimitValue ? purchaseLimitValue : null,
     };
   }
 

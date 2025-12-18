@@ -98,6 +98,10 @@ export class TestHelpers {
       maxQuantityPerBooking: 1,
       isMandatory: false,
       description: `Test offering created at ${new Date().toISOString()}`,
+      // New inventory management fields with defaults
+      inventoryMode: 'SHARED' as const,
+      consumableType: 'RETURNABLE' as const,
+      purchaseLimitPerBooking: null as number | null,
     };
   }
 
@@ -114,6 +118,9 @@ export class TestHelpers {
       maxQuantityPerBooking: 1,
       isMandatory: false,
       description: '',
+      inventoryMode: 'SHARED' as const,
+      consumableType: 'RETURNABLE' as const,
+      purchaseLimitPerBooking: null as number | null,
     };
   }
 
@@ -133,6 +140,47 @@ export class TestHelpers {
       maxQuantityPerBooking: 100,
       isMandatory: true,
       description: maxDescription,
+      inventoryMode: 'SHARED' as const,
+      consumableType: 'SERVICE' as const,
+      purchaseLimitPerBooking: null as number | null,
+    };
+  }
+
+  /**
+   * Generate EXCLUSIVE offering data (e.g., villa, homestay)
+   */
+  static generateExclusiveOfferingData(prefix = 'Exclusive') {
+    const uniqueId = this.generateUniqueId();
+    return {
+      name: `${prefix} Accommodation ${uniqueId}`,
+      offeringType: 'OTHER' as const,
+      availability: 1, // Will be auto-set by form for EXCLUSIVE
+      price: 250.00,
+      maxQuantityPerBooking: 1, // Will be auto-set by form for EXCLUSIVE
+      isMandatory: false,
+      description: `Exclusive accommodation offering created at ${new Date().toISOString()}`,
+      inventoryMode: 'EXCLUSIVE' as const,
+      consumableType: 'ACCOMMODATION' as const,
+      purchaseLimitPerBooking: 1,
+    };
+  }
+
+  /**
+   * Generate CONSUMABLE offering data (e.g., full tank option)
+   */
+  static generateConsumableOfferingData(prefix = 'Consumable') {
+    const uniqueId = this.generateUniqueId();
+    return {
+      name: `${prefix} Full Tank ${uniqueId}`,
+      offeringType: 'OTHER' as const,
+      availability: 100,
+      price: 75.00,
+      maxQuantityPerBooking: 1,
+      isMandatory: false,
+      description: `Consumable offering created at ${new Date().toISOString()}`,
+      inventoryMode: 'SHARED' as const,
+      consumableType: 'CONSUMABLE' as const,
+      purchaseLimitPerBooking: 1,
     };
   }
 

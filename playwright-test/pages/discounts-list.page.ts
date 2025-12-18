@@ -13,7 +13,8 @@ export class DiscountsListPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.addDiscountButton = page.locator('a[href="/discounts/new"]');
+    // Use first() to avoid strict mode violation when both "Create Discount" and "Create Your First Discount" are present
+    this.addDiscountButton = page.locator('a[href="/discounts/new"]').first();
     // New search filter component uses id="code" for code search input
     this.searchInput = page.locator('input#code');
     // Search button with SVG icon - locate by icon and text

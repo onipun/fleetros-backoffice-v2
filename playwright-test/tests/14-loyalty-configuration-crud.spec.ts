@@ -38,6 +38,14 @@ test.describe('Loyalty Configuration CRUD Operations', () => {
     return true; // Try to create anyway
   }
 
+  // Helper function to delete ALL existing loyalty tiers to avoid range overlap conflicts
+  async function deleteAllTiers(page: any, listPage: any): Promise<void> {
+    const tiers = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
+    for (const tier of tiers) {
+      await deleteTierIfExists(page, listPage, tier);
+    }
+  }
+
   const bronzeConfigData = {
     tier: 'BRONZE',
     displayName: 'Bronze Tier',
@@ -99,8 +107,8 @@ test.describe('Loyalty Configuration CRUD Operations', () => {
     loyaltyConfigurationsListPage,
     loyaltyConfigurationFormPage 
   }) => {
-    await test.step('Delete existing Bronze tier if exists', async () => {
-      await deleteTierIfExists(authenticatedPage, loyaltyConfigurationsListPage, 'BRONZE');
+    await test.step('Delete ALL existing tiers to avoid range overlap', async () => {
+      await deleteAllTiers(authenticatedPage, loyaltyConfigurationsListPage);
     });
 
     await test.step('Navigate to loyalty configurations list', async () => {

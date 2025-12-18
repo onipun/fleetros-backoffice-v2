@@ -248,6 +248,106 @@ test.describe('Offering CRUD Operations', () => {
       await offeringsListPage.goto();
       await offeringsListPage.verifyOfferingExists(dataWithoutDescription.name);
     });
+
+    test('OFF-012: Should create EXCLUSIVE inventory mode offering', async ({
+      authenticatedPage,
+      offeringsListPage,
+      offeringFormPage,
+    }) => {
+      const exclusiveData = TestHelpers.generateExclusiveOfferingData('ExclusiveTest');
+
+      await offeringsListPage.clickAddOffering();
+      await offeringFormPage.waitForFormLoad();
+      await offeringFormPage.fillForm(exclusiveData);
+      await offeringFormPage.submit();
+
+      await authenticatedPage.waitForTimeout(2000);
+      await offeringsListPage.goto();
+      await offeringsListPage.verifyOfferingExists(exclusiveData.name);
+    });
+
+    test('OFF-013: Should create CONSUMABLE type offering', async ({
+      authenticatedPage,
+      offeringsListPage,
+      offeringFormPage,
+    }) => {
+      const consumableData = TestHelpers.generateConsumableOfferingData('ConsumableTest');
+
+      await offeringsListPage.clickAddOffering();
+      await offeringFormPage.waitForFormLoad();
+      await offeringFormPage.fillForm(consumableData);
+      await offeringFormPage.submit();
+
+      await authenticatedPage.waitForTimeout(2000);
+      await offeringsListPage.goto();
+      await offeringsListPage.verifyOfferingExists(consumableData.name);
+    });
+
+    test('OFF-014: EXCLUSIVE mode should auto-set availability to 1', async ({
+      authenticatedPage,
+      offeringsListPage,
+      offeringFormPage,
+    }) => {
+      await offeringsListPage.clickAddOffering();
+      await offeringFormPage.waitForFormLoad();
+
+      // Select EXCLUSIVE mode
+      await offeringFormPage.inventoryModeSelect.selectOption('EXCLUSIVE');
+      await authenticatedPage.waitForTimeout(500);
+
+      // Check that availability is now 1 and disabled
+      const availabilityValue = await offeringFormPage.availabilityInput.inputValue();
+      expect(availabilityValue).toBe('1');
+      
+      const isDisabled = await offeringFormPage.availabilityInput.isDisabled();
+      expect(isDisabled).toBe(true);
+    });
+
+    test('OFF-015: Should create SERVICE consumable type offering', async ({
+      authenticatedPage,
+      offeringsListPage,
+      offeringFormPage,
+    }) => {
+      const serviceData = {
+        ...TestHelpers.generateOfferingData('ServiceTest'),
+        offeringType: 'ADDITIONAL_DRIVER' as const,
+        inventoryMode: 'SHARED' as const,
+        consumableType: 'SERVICE' as const,
+        purchaseLimitPerBooking: 2,
+      };
+
+      await offeringsListPage.clickAddOffering();
+      await offeringFormPage.waitForFormLoad();
+      await offeringFormPage.fillForm(serviceData);
+      await offeringFormPage.submit();
+
+      await authenticatedPage.waitForTimeout(2000);
+      await offeringsListPage.goto();
+      await offeringsListPage.verifyOfferingExists(serviceData.name);
+    });
+
+    test('OFF-016: Should create ACCOMMODATION consumable type offering', async ({
+      authenticatedPage,
+      offeringsListPage,
+      offeringFormPage,
+    }) => {
+      const accommodationData = {
+        ...TestHelpers.generateOfferingData('AccommodationTest'),
+        offeringType: 'OTHER' as const,
+        inventoryMode: 'EXCLUSIVE' as const,
+        consumableType: 'ACCOMMODATION' as const,
+        price: 350.00,
+      };
+
+      await offeringsListPage.clickAddOffering();
+      await offeringFormPage.waitForFormLoad();
+      await offeringFormPage.fillForm(accommodationData);
+      await offeringFormPage.submit();
+
+      await authenticatedPage.waitForTimeout(2000);
+      await offeringsListPage.goto();
+      await offeringsListPage.verifyOfferingExists(accommodationData.name);
+    });
   });
 
   test.describe('View Offering Details', () => {
@@ -266,7 +366,7 @@ test.describe('Offering CRUD Operations', () => {
       await offeringsListPage.goto();
     });
 
-    test('OFF-012: Should display offering details correctly', async ({
+    test('OFF-017: Should display offering details correctly', async ({
       authenticatedPage,
       offeringsListPage,
       offeringDetailPage,
@@ -279,7 +379,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(name).toContain('ViewTest');
     });
 
-    test('OFF-013: Should display all basic info fields', async ({
+    test('OFF-018: Should display all basic info fields', async ({
       authenticatedPage,
       offeringsListPage,
       offeringDetailPage,
@@ -294,7 +394,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(basicInfo.maxQuantity).toBeTruthy();
     });
 
-    test('OFF-014: Should display description', async ({
+    test('OFF-019: Should display description', async ({
       authenticatedPage,
       offeringsListPage,
       offeringDetailPage,
@@ -321,7 +421,7 @@ test.describe('Offering CRUD Operations', () => {
       await offeringsListPage.goto();
     });
 
-    test('OFF-015: Should edit offering and redisplay correctly', async ({
+    test('OFF-020: Should edit offering and redisplay correctly', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -357,7 +457,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(name).toContain('Updated');
     });
 
-    test('OFF-016: Should preserve data when navigating to edit page', async ({
+    test('OFF-021: Should preserve data when navigating to edit page', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -376,7 +476,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(formValues.name).toContain(detailName.trim());
     });
 
-    test('OFF-017: Should update offering to minimum values', async ({
+    test('OFF-022: Should update offering to minimum values', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -399,7 +499,7 @@ test.describe('Offering CRUD Operations', () => {
       await offeringsListPage.verifyOfferingExists(originalOfferingData.name);
     });
 
-    test('OFF-018: Should update offering to maximum values', async ({
+    test('OFF-023: Should update offering to maximum values', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -422,7 +522,7 @@ test.describe('Offering CRUD Operations', () => {
       await offeringsListPage.verifyOfferingExists(originalOfferingData.name);
     });
 
-    test('OFF-019: Should toggle mandatory flag', async ({
+    test('OFF-024: Should toggle mandatory flag', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -449,7 +549,7 @@ test.describe('Offering CRUD Operations', () => {
   });
 
   test.describe('Delete Offering', () => {
-    test('OFF-020: Should delete offering from list page', async ({
+    test('OFF-025: Should delete offering from list page', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -471,7 +571,7 @@ test.describe('Offering CRUD Operations', () => {
       await offeringsListPage.verifyOfferingNotExists(offeringData.name);
     });
 
-    test('OFF-021: Should delete offering from detail page', async ({
+    test('OFF-026: Should delete offering from detail page', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -519,7 +619,7 @@ test.describe('Offering CRUD Operations', () => {
       await offeringsListPage.goto();
     });
 
-    test('OFF-022: Should search offerings by name', async ({
+    test('OFF-027: Should search offerings by name', async ({
       authenticatedPage,
       offeringsListPage,
     }) => {
@@ -530,7 +630,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(count).toBeGreaterThan(0);
     });
 
-    test('OFF-023: Should filter offerings by type', async ({
+    test('OFF-028: Should filter offerings by type', async ({
       authenticatedPage,
       offeringsListPage,
     }) => {
@@ -541,7 +641,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(count).toBeGreaterThan(0);
     });
 
-    test('OFF-024: Should show no results for non-existent search', async ({
+    test('OFF-029: Should show no results for non-existent search', async ({
       authenticatedPage,
       offeringsListPage,
     }) => {
@@ -556,7 +656,7 @@ test.describe('Offering CRUD Operations', () => {
   });
 
   test.describe('Input Validation', () => {
-    test('OFF-025: Should reject negative price', async ({
+    test('OFF-030: Should reject negative price', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -577,7 +677,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(parseFloat(priceValue)).toBeGreaterThanOrEqual(0);
     });
 
-    test('OFF-026: Should handle negative availability gracefully', async ({
+    test('OFF-031: Should handle negative availability gracefully', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -597,7 +697,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(availValue).toBeTruthy();
     });
 
-    test('OFF-027: Should reject zero or negative maxQuantity', async ({
+    test('OFF-032: Should reject zero or negative maxQuantity', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -617,7 +717,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(parseInt(maxQtyValue)).toBeGreaterThanOrEqual(0);
     });
 
-    test('OFF-028: Should handle very large price', async ({
+    test('OFF-033: Should handle very large price', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -639,7 +739,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(url).toBeTruthy();
     });
 
-    test('OFF-029: Should handle very large availability', async ({
+    test('OFF-034: Should handle very large availability', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
@@ -660,7 +760,7 @@ test.describe('Offering CRUD Operations', () => {
       expect(url).toBeTruthy();
     });
 
-    test('OFF-030: Should handle maximum maxQuantity', async ({
+    test('OFF-035: Should handle maximum maxQuantity', async ({
       authenticatedPage,
       offeringsListPage,
       offeringFormPage,
