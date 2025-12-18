@@ -966,6 +966,12 @@
       "childSeat": "Child Seat",
       "wifi": "WiFi",
       "additionalDriver": "Additional Driver",
+      "homestay": "Homestay",
+      "villa": "Villa",
+      "chauffeur": "Chauffeur",
+      "airportPickup": "Airport Pickup",
+      "fullTank": "Full Tank",
+      "tollPass": "Toll Pass",
       "other": "Other"
     },
     "type": {
@@ -974,6 +980,12 @@
       "childSeat": "Child Seat",
       "wifi": "WiFi Hotspot",
       "additionalDriver": "Additional Driver",
+      "homestay": "Homestay Accommodation",
+      "villa": "Villa Accommodation",
+      "chauffeur": "Chauffeur Service",
+      "airportPickup": "Airport Pickup Service",
+      "fullTank": "Full Tank Fuel",
+      "tollPass": "Toll Pass",
       "other": "Other"
     },
     "search": {

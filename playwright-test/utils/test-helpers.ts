@@ -188,7 +188,7 @@ export class TestHelpers {
    * Get all offering types for testing
    */
   static getAllOfferingTypes() {
-    return ['GPS', 'INSURANCE', 'CHILD_SEAT', 'WIFI', 'ADDITIONAL_DRIVER', 'OTHER'];
+    return ['GPS', 'INSURANCE', 'CHILD_SEAT', 'WIFI', 'ADDITIONAL_DRIVER', 'HOMESTAY', 'VILLA', 'CHAUFFEUR', 'AIRPORT_PICKUP', 'FULL_TANK', 'TOLL_PASS', 'OTHER'];
   }
 
   /**

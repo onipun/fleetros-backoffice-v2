@@ -287,6 +287,12 @@ export function OfferingSelectorAdvanced({
                         <SelectItem value="CHILD_SEAT">{t('offering.type.childSeat') || 'Child Seat'}</SelectItem>
                         <SelectItem value="WIFI">{t('offering.type.wifi') || 'WiFi Hotspot'}</SelectItem>
                         <SelectItem value="ADDITIONAL_DRIVER">{t('offering.type.additionalDriver') || 'Additional Driver'}</SelectItem>
+                        <SelectItem value="HOMESTAY">{t('offering.type.homestay') || 'Homestay Accommodation'}</SelectItem>
+                        <SelectItem value="VILLA">{t('offering.type.villa') || 'Villa Accommodation'}</SelectItem>
+                        <SelectItem value="CHAUFFEUR">{t('offering.type.chauffeur') || 'Chauffeur Service'}</SelectItem>
+                        <SelectItem value="AIRPORT_PICKUP">{t('offering.type.airportPickup') || 'Airport Pickup Service'}</SelectItem>
+                        <SelectItem value="FULL_TANK">{t('offering.type.fullTank') || 'Full Tank Fuel'}</SelectItem>
+                        <SelectItem value="TOLL_PASS">{t('offering.type.tollPass') || 'Toll Pass'}</SelectItem>
                         <SelectItem value="OTHER">{t('offering.type.other') || 'Other'}</SelectItem>
                       </SelectContent>
                     </Select>

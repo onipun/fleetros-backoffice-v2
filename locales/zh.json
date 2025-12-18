@@ -729,6 +729,12 @@
       "childSeat": "儿童座椅",
       "wifi": "WiFi",
       "additionalDriver": "额外司机",
+      "homestay": "民宿",
+      "villa": "别墅",
+      "chauffeur": "专职司机",
+      "airportPickup": "机场接送",
+      "fullTank": "满油箱",
+      "tollPass": "过路费通行证",
       "other": "其他"
     },
     "basicInfo": "基本信息",

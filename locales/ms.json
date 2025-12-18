@@ -721,6 +721,12 @@
       "childSeat": "Kerusi Kanak-kanak",
       "wifi": "WiFi",
       "additionalDriver": "Pemandu Tambahan",
+      "homestay": "Homestay",
+      "villa": "Villa",
+      "chauffeur": "Pemandu Peribadi",
+      "airportPickup": "Penghantaran Lapangan Terbang",
+      "fullTank": "Tangki Penuh",
+      "tollPass": "Pas Tol",
       "other": "Lain-lain"
     },
     "basicInfo": "Maklumat Asas",
