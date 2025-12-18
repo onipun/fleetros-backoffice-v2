@@ -1792,6 +1792,14 @@
     "stats": {
       "totalCustomers": "Total Customers",
       "displayingResults": "Displaying"
-    }
+    },
+    "customerDetails": "Customer Details",
+    "customerDetailsDescription": "View customer information and spending summary",
+    "contactInfo": "Contact Information",
+    "spendingSummary": "Spending Summary",
+    "customerSince": "Customer since",
+    "completed": "completed",
+    "noCustomerLink": "Customer details not available",
+    "failedToLoad": "Failed to load customer details"
   }
 }

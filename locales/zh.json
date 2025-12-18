@@ -1239,6 +1239,14 @@
     "stats": {
       "totalCustomers": "客户总数",
       "displayingResults": "正在显示"
-    }
+    },
+    "customerDetails": "客户详情",
+    "customerDetailsDescription": "查看客户信息和消费概览",
+    "contactInfo": "联系信息",
+    "spendingSummary": "消费概览",
+    "customerSince": "注册时间",
+    "completed": "已完成",
+    "noCustomerLink": "客户详情不可用",
+    "failedToLoad": "加载客户详情失败"
   }
 }

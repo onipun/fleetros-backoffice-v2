@@ -370,3 +370,54 @@ export async function searchTopSpenders(
 ): Promise<HATEOASCollection<CustomerSpendingSummary>> {
   return searchCustomerSpending({ topSpenders: true, size: limit, sort: 'totalSpendLifetime,desc' });
 }
+
+/**
+ * Customer details interface (from following the customer link)
+ */
+export interface CustomerDetails {
+  id: number;
+  email?: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  phoneNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  _links?: {
+    self?: { href: string };
+    bookings?: { href: string };
+  };
+}
+
+/**
+ * Fetch customer details by following the HATEOAS customer link
+ * @param customerLink The full URL from _links.customer.href
+ */
+export async function fetchCustomerDetails(customerLink: string): Promise<CustomerDetails> {
+  try {
+    const headers = await createHeaders();
+    
+    const response = await fetch(customerLink, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Customer not found');
+      }
+      throw new Error(`Failed to fetch customer details: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    handleApiError(error);
+  }
+}

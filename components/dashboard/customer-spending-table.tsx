@@ -10,8 +10,11 @@ import {
     AlertCircle,
     ChevronLeft,
     ChevronRight,
+    Eye,
     User
 } from 'lucide-react';
+import { useState } from 'react';
+import { CustomerDetailsDialog } from './customer-details-dialog';
 
 interface CustomerSpendingTableProps {
   summaries: CustomerSpendingSummary[];
@@ -45,6 +48,16 @@ export function CustomerSpendingTable({
   onGoToPage,
 }: CustomerSpendingTableProps) {
   const { t, locale } = useLocale();
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerSpendingSummary | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+
+  /**
+   * Handle customer row click
+   */
+  const handleCustomerClick = (summary: CustomerSpendingSummary) => {
+    setSelectedCustomer(summary);
+    setDetailsDialogOpen(true);
+  };
 
   /**
    * Format currency with locale
@@ -121,11 +134,16 @@ export function CustomerSpendingTable({
                   <th className="px-4 py-3 text-center text-sm font-medium">{t('customerSpending.bookings') || 'Bookings'}</th>
                   <th className="px-4 py-3 text-right text-sm font-medium">{t('customerSpending.avgBooking') || 'Avg Booking'}</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">{t('customerSpending.lastActivity') || 'Last Activity'}</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium">{t('common.actions') || 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {summaries.map((summary) => (
-                  <tr key={summary.id} className="hover:bg-muted/30">
+                  <tr 
+                    key={summary.id} 
+                    className="hover:bg-muted/30 cursor-pointer transition-colors"
+                    onClick={() => handleCustomerClick(summary)}
+                  >
                     {/* Customer Info */}
                     <td className="px-4 py-3 text-sm">
                       <div className="flex flex-col">
@@ -222,6 +240,21 @@ export function CustomerSpendingTable({
                         )}
                       </div>
                     </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3 text-sm text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCustomerClick(summary);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        {t('common.view') || 'View'}
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -259,6 +292,13 @@ export function CustomerSpendingTable({
           </div>
         </div>
       )}
+
+      {/* Customer Details Dialog */}
+      <CustomerDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        summary={selectedCustomer}
+      />
     </>
   );
 }

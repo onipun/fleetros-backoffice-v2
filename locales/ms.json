@@ -1231,6 +1231,14 @@
     "stats": {
       "totalCustomers": "Jumlah Pelanggan",
       "displayingResults": "Memaparkan"
-    }
+    },
+    "customerDetails": "Butiran Pelanggan",
+    "customerDetailsDescription": "Lihat maklumat pelanggan dan ringkasan perbelanjaan",
+    "contactInfo": "Maklumat Perhubungan",
+    "spendingSummary": "Ringkasan Perbelanjaan",
+    "customerSince": "Pelanggan sejak",
+    "completed": "selesai",
+    "noCustomerLink": "Butiran pelanggan tidak tersedia",
+    "failedToLoad": "Gagal memuatkan butiran pelanggan"
   }
 }
