@@ -76,6 +76,7 @@
     "packages": "Packages",
     "team": "Team",
     "payments": "Payments",
+    "customers": "Customers",
     "pricings": "Pricings",
     "settings": "Settings",
     "logout": "Logout"
@@ -1736,5 +1737,61 @@
     "createError": "Failed to create",
     "updateError": "Failed to update",
     "deleteError": "Failed to delete"
+  },
+  "customerSpending": {
+    "title": "Customer Spending Summary",
+    "description": "View aggregated financial metrics and booking statistics for your customers",
+    "customers": "customers",
+    "customer": "Customer",
+    "customerId": "Customer ID",
+    "totalSpend": "Total Spend",
+    "balanceDue": "Balance Due",
+    "totalPaid": "Total Paid",
+    "bookings": "Bookings",
+    "avgBooking": "Avg Booking",
+    "lastActivity": "Last Activity",
+    "firstBooking": "First",
+    "active": "Active",
+    "refunded": "refunded",
+    "noResults": "No Results Found",
+    "noResultsHint": "Try adjusting your search criteria or filters",
+    "tableTitle": "Customer Spending Summary",
+    "search": {
+      "allCustomers": "All Customers",
+      "byId": "By ID",
+      "byEmail": "By Email",
+      "byNameOrEmail": "By Name/Email",
+      "byMinSpend": "Min Spend",
+      "pendingBalance": "Pending Balance",
+      "activeBookings": "Active Bookings",
+      "topSpenders": "Top Spenders",
+      "customerId": "Customer ID",
+      "customerIdPlaceholder": "Enter customer ID",
+      "customerIdHint": "Search for a specific customer by their ID",
+      "email": "Customer Email",
+      "emailPlaceholder": "customer@example.com",
+      "emailHint": "Enter customer email address (exact match)",
+      "nameOrEmail": "Name or Email",
+      "nameOrEmailPlaceholder": "Search by name or email...",
+      "nameOrEmailHint": "Search by customer name or email (partial match)",
+      "minSpend": "Minimum Total Spend",
+      "minSpendPlaceholder": "1000.00",
+      "minSpendHint": "Find customers with total spend above this amount",
+      "pendingBalanceInfo": "Shows customers with outstanding balance payments, ordered by balance amount",
+      "activeBookingsInfo": "Shows customers with currently active (pending/confirmed) bookings",
+      "topSpendersInfo": "Shows customers with highest total lifetime spend, ordered by amount"
+    },
+    "sort": {
+      "totalSpend": "Total Spend",
+      "balancePayment": "Balance Due",
+      "totalBookings": "Total Bookings",
+      "averageBooking": "Average Booking",
+      "lastActivity": "Last Activity",
+      "firstBooking": "First Booking"
+    },
+    "stats": {
+      "totalCustomers": "Total Customers",
+      "displayingResults": "Displaying"
+    }
   }
 }

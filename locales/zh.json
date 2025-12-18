@@ -72,6 +72,7 @@
     "packages": "套餐",
     "team": "团队",
     "payments": "付款",
+    "customers": "客户",
     "pricings": "定价",
     "settings": "设置",
     "logout": "登出"
@@ -1182,5 +1183,62 @@
     "createError": "创建失败",
     "updateError": "更新失败",
     "deleteError": "删除失败"
+  },
+  "customerSpending": {
+    "title": "客户消费概览",
+    "description": "查看客户的财务指标和预订统计数据汇总",
+    "customers": "位客户",
+    "customer": "客户",
+    "customerId": "客户ID",
+    "totalSpend": "总消费",
+    "balanceDue": "待付款",
+    "totalPaid": "已付款",
+    "bookings": "预订数",
+    "avgBooking": "平均订单",
+    "lastActivity": "最后活动",
+    "firstBooking": "首次",
+    "active": "进行中",
+    "refunded": "已退款",
+    "noResults": "未找到结果",
+    "noResultsHint": "请尝试调整搜索条件或筛选器",
+    "tableTitle": "客户消费概览",
+    "viewSummary": "查看消费概览",
+    "search": {
+      "allCustomers": "所有客户",
+      "byId": "按ID",
+      "byEmail": "按邮箱",
+      "byNameOrEmail": "按姓名/邮箱",
+      "byMinSpend": "最低消费",
+      "pendingBalance": "待付余额",
+      "activeBookings": "进行中预订",
+      "topSpenders": "消费最高",
+      "customerId": "客户ID",
+      "customerIdPlaceholder": "输入客户ID",
+      "customerIdHint": "通过ID搜索特定客户",
+      "email": "客户邮箱",
+      "emailPlaceholder": "customer@example.com",
+      "emailHint": "输入客户邮箱地址（精确匹配）",
+      "nameOrEmail": "姓名或邮箱",
+      "nameOrEmailPlaceholder": "搜索姓名或邮箱...",
+      "nameOrEmailHint": "按客户姓名或邮箱搜索（模糊匹配）",
+      "minSpend": "最低总消费",
+      "minSpendPlaceholder": "1000.00",
+      "minSpendHint": "查找总消费超过此金额的客户",
+      "pendingBalanceInfo": "显示有未付余额的客户，按余额金额排序",
+      "activeBookingsInfo": "显示有进行中（待确认/已确认）预订的客户",
+      "topSpendersInfo": "显示总消费最高的客户，按金额排序"
+    },
+    "sort": {
+      "totalSpend": "总消费",
+      "balancePayment": "待付款",
+      "totalBookings": "预订总数",
+      "averageBooking": "平均订单",
+      "lastActivity": "最后活动",
+      "firstBooking": "首次预订"
+    },
+    "stats": {
+      "totalCustomers": "客户总数",
+      "displayingResults": "正在显示"
+    }
   }
 }

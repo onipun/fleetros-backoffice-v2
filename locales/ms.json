@@ -64,6 +64,7 @@
     "packages": "Pakej",
     "team": "Pasukan",
     "payments": "Pembayaran",
+    "customers": "Pelanggan",
     "settings": "Tetapan",
     "logout": "Log Keluar"
   },
@@ -1174,5 +1175,62 @@
     "createError": "Gagal mencipta",
     "updateError": "Gagal mengemas kini",
     "deleteError": "Gagal memadam"
+  },
+  "customerSpending": {
+    "title": "Ringkasan Perbelanjaan Pelanggan",
+    "description": "Lihat metrik kewangan dan statistik tempahan pelanggan anda",
+    "customers": "pelanggan",
+    "customer": "Pelanggan",
+    "customerId": "ID Pelanggan",
+    "totalSpend": "Jumlah Perbelanjaan",
+    "balanceDue": "Baki Tertunggak",
+    "totalPaid": "Jumlah Dibayar",
+    "bookings": "Tempahan",
+    "avgBooking": "Purata Tempahan",
+    "lastActivity": "Aktiviti Terakhir",
+    "firstBooking": "Pertama",
+    "active": "Aktif",
+    "refunded": "dikembalikan",
+    "noResults": "Tiada Hasil Ditemui",
+    "noResultsHint": "Cuba laraskan kriteria carian atau penapis anda",
+    "tableTitle": "Ringkasan Perbelanjaan Pelanggan",
+    "viewSummary": "Lihat Ringkasan Perbelanjaan",
+    "search": {
+      "allCustomers": "Semua Pelanggan",
+      "byId": "Mengikut ID",
+      "byEmail": "Mengikut E-mel",
+      "byNameOrEmail": "Mengikut Nama/E-mel",
+      "byMinSpend": "Perbelanjaan Min",
+      "pendingBalance": "Baki Tertunggak",
+      "activeBookings": "Tempahan Aktif",
+      "topSpenders": "Pembeli Teratas",
+      "customerId": "ID Pelanggan",
+      "customerIdPlaceholder": "Masukkan ID pelanggan",
+      "customerIdHint": "Cari pelanggan tertentu mengikut ID mereka",
+      "email": "E-mel Pelanggan",
+      "emailPlaceholder": "pelanggan@contoh.com",
+      "emailHint": "Masukkan alamat e-mel pelanggan (padanan tepat)",
+      "nameOrEmail": "Nama atau E-mel",
+      "nameOrEmailPlaceholder": "Cari mengikut nama atau e-mel...",
+      "nameOrEmailHint": "Cari mengikut nama atau e-mel pelanggan (padanan separa)",
+      "minSpend": "Perbelanjaan Minimum",
+      "minSpendPlaceholder": "1000.00",
+      "minSpendHint": "Cari pelanggan dengan perbelanjaan melebihi jumlah ini",
+      "pendingBalanceInfo": "Menunjukkan pelanggan dengan baki tertunggak, disusun mengikut jumlah baki",
+      "activeBookingsInfo": "Menunjukkan pelanggan dengan tempahan aktif (menunggu/disahkan)",
+      "topSpendersInfo": "Menunjukkan pelanggan dengan perbelanjaan tertinggi, disusun mengikut jumlah"
+    },
+    "sort": {
+      "totalSpend": "Jumlah Perbelanjaan",
+      "balancePayment": "Baki Tertunggak",
+      "totalBookings": "Jumlah Tempahan",
+      "averageBooking": "Purata Tempahan",
+      "lastActivity": "Aktiviti Terakhir",
+      "firstBooking": "Tempahan Pertama"
+    },
+    "stats": {
+      "totalCustomers": "Jumlah Pelanggan",
+      "displayingResults": "Memaparkan"
+    }
   }
 }
