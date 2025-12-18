@@ -1050,6 +1050,7 @@
     "table": {
       "name": "Name",
       "type": "Type",
+      "inventoryMode": "Inventory",
       "price": "Price",
       "availability": "Availability",
       "maxQuantity": "Max Quantity",
@@ -1112,7 +1113,35 @@
     "pleaseSelectImages": "Please select at least one image to upload.",
     "imagesUploadedSuccess": "image(s) uploaded successfully",
     "allUploadsFailedError": "All image uploads failed",
-    "discardImagesConfirm": "Are you sure you want to discard the selected images?"
+    "discardImagesConfirm": "Are you sure you want to discard the selected images?",
+    "inventorySettings": "Inventory Settings",
+    "inventorySettingsHelp": "Configure how this offering's availability is tracked. EXCLUSIVE items can only be booked by one customer at a time, while SHARED items allow multiple concurrent bookings based on available quantity.",
+    "inventoryModeLabel": "Inventory Mode",
+    "inventoryMode": {
+      "shared": "Shared",
+      "sharedDesc": "Multiple bookings can rent this offering for overlapping dates (quantity-based tracking)",
+      "exclusive": "Exclusive",
+      "exclusiveDesc": "Only one booking can have this offering at a time (date-range blocked)"
+    },
+    "consumableTypeLabel": "Consumable Type",
+    "consumableType": {
+      "returnable": "Returnable",
+      "returnableDesc": "Physical item returned after booking (e.g., GPS, child seat)",
+      "consumable": "Consumable",
+      "consumableDesc": "One-time purchase consumed during booking (e.g., full tank, toll pass)",
+      "service": "Service",
+      "serviceDesc": "Service provided during booking (e.g., chauffeur, airport pickup)",
+      "accommodation": "Accommodation",
+      "accommodationDesc": "Place to stay (e.g., homestay, villa)"
+    },
+    "exclusiveNote": "Exclusive offerings can only be booked by one customer at a time. Availability and max quantity are automatically set to 1.",
+    "exclusiveAvailabilityNote": "Exclusive offerings have a fixed availability of 1.",
+    "purchaseLimits": "Purchase Limits",
+    "purchaseLimitsHelp": "Set limits on how many times this offering can be added to a single booking. Useful for consumable items like fuel or one-time services.",
+    "purchaseLimitPerBooking": "Purchase Limit Per Booking",
+    "purchaseLimitPlaceholder": "Leave empty for no limit",
+    "purchaseLimitDescription": "Maximum times this offering can be added to a single booking. Leave empty for no limit.",
+    "consumableLimitSuggestion": "Tip: Consumable items typically have a purchase limit of 1 per booking."
   },
   "package": {
     "title": "Packages",

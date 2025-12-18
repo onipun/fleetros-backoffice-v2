@@ -13,12 +13,12 @@ import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { createOfferingPrice } from '@/lib/api/offering-price-api';
 import { preventEnterSubmission } from '@/lib/form-utils';
-import type { Offering, OfferingType } from '@/types';
+import type { ConsumableType, InventoryMode, Offering, OfferingType } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function NewOfferingPage() {
   const router = useRouter();
@@ -33,6 +33,10 @@ export default function NewOfferingPage() {
     maxQuantityPerBooking: 1,
     isMandatory: false,
     description: '',
+    // New inventory management fields
+    inventoryMode: 'SHARED' as InventoryMode,
+    consumableType: 'RETURNABLE' as ConsumableType,
+    purchaseLimitPerBooking: null as number | null,
   });
   const [pricingsData, setPricingsData] = useState<OfferingPricingFormData[]>([]);
 
@@ -47,6 +51,43 @@ export default function NewOfferingPage() {
     ],
     [t],
   );
+
+  const inventoryModeOptions = useMemo(
+    () => [
+      { value: 'SHARED' as InventoryMode, label: t('offering.inventoryMode.shared'), description: t('offering.inventoryMode.sharedDesc') },
+      { value: 'EXCLUSIVE' as InventoryMode, label: t('offering.inventoryMode.exclusive'), description: t('offering.inventoryMode.exclusiveDesc') },
+    ],
+    [t],
+  );
+
+  const consumableTypeOptions = useMemo(
+    () => [
+      { value: 'RETURNABLE' as ConsumableType, label: t('offering.consumableType.returnable'), description: t('offering.consumableType.returnableDesc') },
+      { value: 'CONSUMABLE' as ConsumableType, label: t('offering.consumableType.consumable'), description: t('offering.consumableType.consumableDesc') },
+      { value: 'SERVICE' as ConsumableType, label: t('offering.consumableType.service'), description: t('offering.consumableType.serviceDesc') },
+      { value: 'ACCOMMODATION' as ConsumableType, label: t('offering.consumableType.accommodation'), description: t('offering.consumableType.accommodationDesc') },
+    ],
+    [t],
+  );
+
+  // Auto-adjust settings based on inventory mode and consumable type
+  useEffect(() => {
+    if (formData.inventoryMode === 'EXCLUSIVE') {
+      // EXCLUSIVE offerings should have availability of 1
+      setFormData(prev => ({
+        ...prev,
+        availability: 1,
+        maxQuantityPerBooking: 1,
+      }));
+    }
+    if (formData.consumableType === 'CONSUMABLE') {
+      // CONSUMABLE items typically have purchaseLimitPerBooking of 1
+      setFormData(prev => ({
+        ...prev,
+        purchaseLimitPerBooking: prev.purchaseLimitPerBooking ?? 1,
+      }));
+    }
+  }, [formData.inventoryMode, formData.consumableType]);
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -205,6 +246,74 @@ export default function NewOfferingPage() {
               </CardContent>
             </Card>
 
+            {/* Inventory Settings - NEW */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('offering.inventorySettings')}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('offering.inventorySettingsHelp')}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="inventoryMode">
+                    {t('offering.inventoryModeLabel')} {t('common.required')}
+                  </Label>
+                  <select
+                    id="inventoryMode"
+                    name="inventoryMode"
+                    value={formData.inventoryMode}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    required
+                  >
+                    {inventoryModeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    {inventoryModeOptions.find(o => o.value === formData.inventoryMode)?.description}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="consumableType">
+                    {t('offering.consumableTypeLabel')} {t('common.required')}
+                  </Label>
+                  <select
+                    id="consumableType"
+                    name="consumableType"
+                    value={formData.consumableType}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    required
+                  >
+                    {consumableTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    {consumableTypeOptions.find(o => o.value === formData.consumableType)?.description}
+                  </p>
+                </div>
+
+                {formData.inventoryMode === 'EXCLUSIVE' && (
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-md border border-amber-200 dark:border-amber-800">
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      {t('offering.exclusiveNote')}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
             {/* Pricing & Availability */}
             <Card>
               <CardHeader>
@@ -236,7 +345,13 @@ export default function NewOfferingPage() {
                     onChange={handleInputChange}
                     placeholder={t('offering.availabilityPlaceholder')}
                     required
+                    disabled={formData.inventoryMode === 'EXCLUSIVE'}
                   />
+                  {formData.inventoryMode === 'EXCLUSIVE' && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('offering.exclusiveAvailabilityNote')}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -252,6 +367,7 @@ export default function NewOfferingPage() {
                     onChange={handleInputChange}
                     placeholder={t('offering.quantityPlaceholder')}
                     required
+                    disabled={formData.inventoryMode === 'EXCLUSIVE'}
                   />
                 </div>
 
@@ -267,6 +383,47 @@ export default function NewOfferingPage() {
                     {t('offering.mandatoryToggleLabel')}
                   </Label>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Purchase Limits - for CONSUMABLE types */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('offering.purchaseLimits')}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('offering.purchaseLimitsHelp')}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="purchaseLimitPerBooking">
+                    {t('offering.purchaseLimitPerBooking')}
+                  </Label>
+                  <Input
+                    id="purchaseLimitPerBooking"
+                    name="purchaseLimitPerBooking"
+                    type="number"
+                    min="1"
+                    value={formData.purchaseLimitPerBooking ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
+                      setFormData((prev) => ({ ...prev, purchaseLimitPerBooking: value }));
+                    }}
+                    placeholder={t('offering.purchaseLimitPlaceholder')}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t('offering.purchaseLimitDescription')}
+                  </p>
+                </div>
+
+                {formData.consumableType === 'CONSUMABLE' && !formData.purchaseLimitPerBooking && (
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800">
+                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      {t('offering.consumableLimitSuggestion')}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

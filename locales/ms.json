@@ -752,6 +752,7 @@
     "table": {
       "name": "Nama",
       "type": "Jenis",
+      "inventoryMode": "Inventori",
       "price": "Harga",
       "availability": "Ketersediaan",
       "maxQuantity": "Kuantiti Maks",
@@ -760,7 +761,35 @@
       "actions": "Tindakan"
     },
     "yes": "Ya",
-    "no": "Tidak"
+    "no": "Tidak",
+    "inventorySettings": "Tetapan Inventori",
+    "inventorySettingsHelp": "Konfigurasikan cara ketersediaan perkhidmatan ini dijejaki. Item EKSKLUSIF hanya boleh ditempah oleh satu pelanggan pada satu masa, manakala item KONGSI membenarkan tempahan serentak berdasarkan kuantiti yang tersedia.",
+    "inventoryModeLabel": "Mod Inventori",
+    "inventoryMode": {
+      "shared": "Kongsi",
+      "sharedDesc": "Pelbagai tempahan boleh menyewa perkhidmatan ini untuk tarikh bertindih (penjejakan berdasarkan kuantiti)",
+      "exclusive": "Eksklusif",
+      "exclusiveDesc": "Hanya satu tempahan boleh memiliki perkhidmatan ini pada satu masa (julat tarikh disekat)"
+    },
+    "consumableTypeLabel": "Jenis Boleh Guna",
+    "consumableType": {
+      "returnable": "Boleh Dipulangkan",
+      "returnableDesc": "Item fizikal dipulangkan selepas tempahan (cth., GPS, tempat duduk kanak-kanak)",
+      "consumable": "Boleh Diguna",
+      "consumableDesc": "Pembelian sekali sahaja digunakan semasa tempahan (cth., tangki penuh, pas tol)",
+      "service": "Perkhidmatan",
+      "serviceDesc": "Perkhidmatan disediakan semasa tempahan (cth., pemandu, pengambilan lapangan terbang)",
+      "accommodation": "Penginapan",
+      "accommodationDesc": "Tempat penginapan (cth., homestay, vila)"
+    },
+    "exclusiveNote": "Perkhidmatan eksklusif hanya boleh ditempah oleh satu pelanggan pada satu masa. Ketersediaan dan kuantiti maksimum ditetapkan secara automatik kepada 1.",
+    "exclusiveAvailabilityNote": "Perkhidmatan eksklusif mempunyai ketersediaan tetap 1.",
+    "purchaseLimits": "Had Pembelian",
+    "purchaseLimitsHelp": "Tetapkan had berapa kali perkhidmatan ini boleh ditambah ke satu tempahan. Berguna untuk item boleh guna seperti bahan api atau perkhidmatan sekali sahaja.",
+    "purchaseLimitPerBooking": "Had Pembelian Setiap Tempahan",
+    "purchaseLimitPlaceholder": "Biarkan kosong untuk tiada had",
+    "purchaseLimitDescription": "Maksimum kali perkhidmatan ini boleh ditambah ke satu tempahan. Biarkan kosong untuk tiada had.",
+    "consumableLimitSuggestion": "Petua: Item boleh guna biasanya mempunyai had pembelian 1 setiap tempahan."
   },
   "package": {
     "title": "Pakej",

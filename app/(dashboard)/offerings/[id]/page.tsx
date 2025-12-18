@@ -379,6 +379,59 @@ export default function OfferingDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Inventory Settings Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('offering.inventorySettings')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm text-muted-foreground">{t('offering.inventoryModeLabel')}</span>
+                  <p className="font-medium">
+                    {offering.inventoryMode === 'EXCLUSIVE' ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                          {t('offering.inventoryMode.exclusive')}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                          {t('offering.inventoryMode.shared')}
+                        </span>
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {offering.inventoryMode === 'EXCLUSIVE' 
+                      ? t('offering.inventoryMode.exclusiveDesc') 
+                      : t('offering.inventoryMode.sharedDesc')}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">{t('offering.consumableTypeLabel')}</span>
+                  <p className="font-medium capitalize">
+                    {offering.consumableType 
+                      ? t(`offering.consumableType.${offering.consumableType.toLowerCase()}`)
+                      : t('offering.consumableType.returnable')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {offering.consumableType 
+                      ? t(`offering.consumableType.${offering.consumableType.toLowerCase()}Desc`)
+                      : t('offering.consumableType.returnableDesc')}
+                  </p>
+                </div>
+                {offering.purchaseLimitPerBooking && (
+                  <div className="col-span-2">
+                    <span className="text-sm text-muted-foreground">{t('offering.purchaseLimitPerBooking')}</span>
+                    <p className="font-medium">{offering.purchaseLimitPerBooking}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {offering.description && (
             <Card>
               <CardHeader>

@@ -760,6 +760,7 @@
     "table": {
       "name": "名称",
       "type": "类型",
+      "inventoryMode": "库存",
       "price": "价格",
       "availability": "可用数量",
       "maxQuantity": "最大数量",
@@ -768,7 +769,35 @@
       "actions": "操作"
     },
     "yes": "是",
-    "no": "否"
+    "no": "否",
+    "inventorySettings": "库存设置",
+    "inventorySettingsHelp": "配置此服务的可用性跟踪方式。独占项目一次只能由一位客户预订，而共享项目允许根据可用数量进行多个并发预订。",
+    "inventoryModeLabel": "库存模式",
+    "inventoryMode": {
+      "shared": "共享",
+      "sharedDesc": "多个预订可以在重叠日期租用此服务（基于数量跟踪）",
+      "exclusive": "独占",
+      "exclusiveDesc": "一次只能有一个预订拥有此服务（日期范围被阻止）"
+    },
+    "consumableTypeLabel": "消耗类型",
+    "consumableType": {
+      "returnable": "可归还",
+      "returnableDesc": "预订后归还的实物物品（例如：GPS、儿童座椅）",
+      "consumable": "消耗品",
+      "consumableDesc": "预订期间使用的一次性购买（例如：满油、通行费通行证）",
+      "service": "服务",
+      "serviceDesc": "预订期间提供的服务（例如：司机、机场接机）",
+      "accommodation": "住宿",
+      "accommodationDesc": "住宿场所（例如：民宿、别墅）"
+    },
+    "exclusiveNote": "独占服务一次只能由一位客户预订。可用性和最大数量自动设置为1。",
+    "exclusiveAvailabilityNote": "独占服务的可用性固定为1。",
+    "purchaseLimits": "购买限制",
+    "purchaseLimitsHelp": "设置此服务可添加到单个预订的次数限制。适用于燃料或一次性服务等消耗品。",
+    "purchaseLimitPerBooking": "每次预订购买限制",
+    "purchaseLimitPlaceholder": "留空表示无限制",
+    "purchaseLimitDescription": "此服务可添加到单个预订的最大次数。留空表示无限制。",
+    "consumableLimitSuggestion": "提示：消耗品通常每次预订的购买限制为1。"
   },
   "package": {
     "title": "套餐",

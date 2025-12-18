@@ -582,6 +582,12 @@ export interface OfferingPrice {
   _links?: Links;
 }
 
+// Inventory Mode - How availability is tracked
+export type InventoryMode = 'SHARED' | 'EXCLUSIVE';
+
+// Consumable Type - Type of offering item
+export type ConsumableType = 'RETURNABLE' | 'CONSUMABLE' | 'SERVICE' | 'ACCOMMODATION';
+
 export interface Offering {
   id?: number;
   name: string;
@@ -591,6 +597,10 @@ export interface Offering {
   maxQuantityPerBooking: number;
   isMandatory: boolean;
   description?: string;
+  // New inventory management fields
+  inventoryMode?: InventoryMode;
+  consumableType?: ConsumableType;
+  purchaseLimitPerBooking?: number | null;
   offeringPrices?: OfferingPrice[];
   createdAt?: string;
   updatedAt?: string;

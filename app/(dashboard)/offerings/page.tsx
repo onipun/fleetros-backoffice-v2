@@ -138,6 +138,7 @@ export default function OfferingsPage() {
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('offering.table.name')}</th>
                       <th className="px-4 py-3 text-left text-sm font-medium">{t('offering.table.type')}</th>
+                      <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.inventoryMode')}</th>
                       <th className="px-4 py-3 text-right text-sm font-medium">{t('offering.table.price')}</th>
                       <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.availability')}</th>
                       <th className="px-4 py-3 text-center text-sm font-medium">{t('offering.table.maxQuantity')}</th>
@@ -172,6 +173,17 @@ export default function OfferingsPage() {
                             {offering.offeringType
                               ? typeLabels[offering.offeringType as keyof typeof typeLabels] || typeLabels.OTHER
                               : t('common.notAvailable')}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center">
+                            {offering.inventoryMode === 'EXCLUSIVE' ? (
+                              <span className="px-2 py-1 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                                {t('offering.inventoryMode.exclusive')}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                {t('offering.inventoryMode.shared')}
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-sm text-right font-semibold text-primary">
                             {offering.price != null ? formatCurrency(offering.price) : t('common.notAvailable')}
