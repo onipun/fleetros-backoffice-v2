@@ -453,7 +453,13 @@
       "offeringTotal": "总计：",
       "deleteBookingSuccess": "预订已删除",
       "deleteBookingDescription": "预订已被移除。",
-      "deleteBookingError": "删除预订失败"
+      "deleteBookingError": "删除预订失败",
+      "completeWarning": {
+        "title": "待付余额警告",
+        "message": "此预订有未全额支付的余额。",
+        "confirm": "您确定要在未全额付款的情况下将此预订标记为已完成吗？",
+        "proceed": "仍然完成"
+      }
     },
     "images": {
       "upload": {

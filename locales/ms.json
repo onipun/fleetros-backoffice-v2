@@ -444,7 +444,13 @@
       "offeringTotal": "Jumlah:",
       "deleteBookingSuccess": "Tempahan Dipadam",
       "deleteBookingDescription": "Tempahan telah dikeluarkan.",
-      "deleteBookingError": "Gagal memadam tempahan"
+      "deleteBookingError": "Gagal memadam tempahan",
+      "completeWarning": {
+        "title": "Amaran Baki Tertunggak",
+        "message": "Tempahan ini mempunyai baki tertunggak yang belum dibayar sepenuhnya.",
+        "confirm": "Adakah anda pasti mahu menandakan tempahan ini sebagai selesai tanpa bayaran penuh?",
+        "proceed": "Selesaikan Juga"
+      }
     },
     "images": {
       "upload": {

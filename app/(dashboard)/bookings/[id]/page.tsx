@@ -9,6 +9,16 @@ import { ImageUploadDialog } from '@/components/booking/image-upload-dialog';
 import { ManualPaymentDialog } from '@/components/booking/manual-payment-dialog';
 import { PaymentSummaryCard } from '@/components/booking/payment-summary-card';
 import { useLocale } from '@/components/providers/locale-provider';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -54,6 +64,7 @@ export default function BookingDetailPage() {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [modificationDialogOpen, setModificationDialogOpen] = useState(false);
   const [manualPaymentDialogOpen, setManualPaymentDialogOpen] = useState(false);
+  const [completeWarningDialogOpen, setCompleteWarningDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'details');
 
   // Update active tab when URL changes
@@ -501,7 +512,10 @@ export default function BookingDetailPage() {
                       className="bg-green-600 hover:bg-green-700 text-white"
                       disabled={markAsCompletedMutation.isPending}
                       onClick={() => {
-                        if (confirm('Are you sure you want to mark this booking as completed?')) {
+                        const hasPendingBalance = (booking.balancePayment ?? 0) > 0;
+                        if (hasPendingBalance) {
+                          setCompleteWarningDialogOpen(true);
+                        } else {
                           markAsCompletedMutation.mutate();
                         }
                       }}
@@ -824,6 +838,48 @@ export default function BookingDetailPage() {
           queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
         }}
       />
+
+      {/* Complete Booking Warning Dialog */}
+      <AlertDialog open={completeWarningDialogOpen} onOpenChange={setCompleteWarningDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-amber-600">
+              ⚠️ {t('booking.detail.completeWarning.title') || 'Pending Balance Warning'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                {t('booking.detail.completeWarning.message') || 'This booking has an outstanding balance that has not been fully paid.'}
+              </p>
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950 rounded-md border border-amber-200 dark:border-amber-800">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{t('booking.detail.fields.balancePayment') || 'Balance Due'}:</span>
+                  <span className="text-lg font-bold text-amber-600">
+                    {formatCurrency(booking?.balancePayment ?? 0)}
+                  </span>
+                </div>
+              </div>
+              <p className="text-sm mt-3">
+                {t('booking.detail.completeWarning.confirm') || 'Are you sure you want to mark this booking as completed without full payment?'}
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('common.cancel') || 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                markAsCompletedMutation.mutate();
+                setCompleteWarningDialogOpen(false);
+              }}
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              {t('booking.detail.completeWarning.proceed') || 'Complete Anyway'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

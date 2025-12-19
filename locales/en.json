@@ -592,7 +592,13 @@
       "offeringTotal": "Total:",
       "deleteBookingSuccess": "Booking Deleted",
       "deleteBookingDescription": "The booking has been removed.",
-      "deleteBookingError": "Failed to delete booking"
+      "deleteBookingError": "Failed to delete booking",
+      "completeWarning": {
+        "title": "Pending Balance Warning",
+        "message": "This booking has an outstanding balance that has not been fully paid.",
+        "confirm": "Are you sure you want to mark this booking as completed without full payment?",
+        "proceed": "Complete Anyway"
+      }
     },
     "images": {
       "upload": {
