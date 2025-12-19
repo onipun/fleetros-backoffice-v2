@@ -17,7 +17,7 @@ import { hateoasClient } from '@/lib/api/hateoas-client';
 import { formatDateTime } from '@/lib/utils';
 import type { Booking, Offering } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, CheckCircle2, CreditCard, Edit3, FileText, History, Settings, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, CreditCard, Edit3, Eye, FileText, History, Settings, Trash2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -135,7 +135,87 @@ export default function BookingDetailPage() {
     enabled: !!bookingId,
   });
 
+  // Fetch booking offerings via HATEOAS link
+  const { data: bookingOfferingsData } = useQuery({
+    queryKey: ['booking', bookingId, 'offerings'],
+    queryFn: async () => {
+      // First check if we have the HATEOAS link in the booking response
+      const bookingOfferingsLink = booking?._links?.bookingOfferings?.href;
+      if (!bookingOfferingsLink) {
+        return [];
+      }
+
+      const token = await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(bookingOfferingsLink, {
+        headers,
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return [];
+        }
+        throw new Error('Failed to fetch booking offerings');
+      }
+
+      const data = await response.json();
+      
+      // HATEOAS response format: { _embedded: { bookingOfferings: [...] } }
+      const offerings = data._embedded?.bookingOfferings || [];
+      
+      // For each booking offering, we need to fetch the actual offering details
+      const offeringsWithDetails = await Promise.all(
+        offerings.map(async (bo: any) => {
+          // Check if there's an offering link in this bookingOffering
+          const offeringLink = bo._links?.offering?.href;
+          if (offeringLink) {
+            try {
+              const offeringRes = await fetch(offeringLink, { headers, cache: 'no-store' });
+              if (offeringRes.ok) {
+                const offeringData = await offeringRes.json();
+                return {
+                  id: offeringData.id,
+                  name: offeringData.name,
+                  quantity: bo.quantity,
+                  price: bo.priceAtBooking ?? offeringData.price,
+                  totalPrice: bo.totalPrice ?? (bo.quantity * (bo.priceAtBooking ?? offeringData.price)),
+                };
+              }
+            } catch (e) {
+              console.error('Failed to fetch offering details:', e);
+            }
+          }
+          
+          // Fallback: use data from the bookingOffering itself
+          return {
+            id: bo.offeringId ?? bo.id,
+            name: bo.offeringName ?? `Offering #${bo.offeringId ?? bo.id}`,
+            quantity: bo.quantity,
+            price: bo.priceAtBooking,
+            totalPrice: bo.totalPrice,
+          };
+        })
+      );
+
+      return offeringsWithDetails;
+    },
+    enabled: !!booking?._links?.bookingOfferings?.href,
+  });
+
   const bookingOfferings = useMemo<BookingOfferingSummary[]>(() => {
+    // Use fetched HATEOAS data first
+    if (bookingOfferingsData && bookingOfferingsData.length > 0) {
+      return bookingOfferingsData;
+    }
+    
+    // Fallback to embedded offerings (legacy support)
     if (!booking?.offerings) return [];
 
     return booking.offerings.map((item: any) => {
@@ -158,7 +238,7 @@ export default function BookingDetailPage() {
         totalPrice: 'totalPrice' in item ? item.totalPrice : undefined,
       };
     });
-  }, [booking?.offerings]);
+  }, [bookingOfferingsData, booking?.offerings]);
 
   // Compute pricing line items from pricing snapshot
   const pricingLineItems = useMemo(() => {
@@ -668,14 +748,12 @@ export default function BookingDetailPage() {
                           <p className="text-xs text-muted-foreground">{t('booking.detail.offeringQuantity')} {offering.quantity}</p>
                         )}
                       </div>
-                      <div className="text-right text-sm text-muted-foreground">
-                        {offering.price != null && (
-                          <p>{t('booking.detail.offeringPrice')} {formatCurrency(offering.price)}</p>
-                        )}
-                        {offering.totalPrice != null && (
-                          <p>{t('booking.detail.offeringTotal')} {formatCurrency(offering.totalPrice)}</p>
-                        )}
-                      </div>
+                      <Link href={`/offerings/${offering.id}`}>
+                        <Button variant="ghost" size="sm">
+                          <Eye className="mr-2 h-4 w-4" />
+                          {t('common.view')}
+                        </Button>
+                      </Link>
                     </div>
                   ))}
                 </div>
