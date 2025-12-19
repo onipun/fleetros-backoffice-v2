@@ -1153,7 +1153,15 @@
     "purchaseLimitPerBooking": "Purchase Limit Per Booking",
     "purchaseLimitPlaceholder": "Leave empty for no limit",
     "purchaseLimitDescription": "Maximum times this offering can be added to a single booking. Leave empty for no limit.",
-    "consumableLimitSuggestion": "Tip: Consumable items typically have a purchase limit of 1 per booking."
+    "consumableLimitSuggestion": "Tip: Consumable items typically have a purchase limit of 1 per booking.",
+    "tabs": {
+      "details": "Details",
+      "bookings": "Bookings"
+    },
+    "associatedBookings": "Associated Bookings",
+    "bookingsTotal": "total bookings",
+    "noBookingsFound": "No bookings found",
+    "noBookingsDescription": "This offering has not been used in any bookings yet."
   },
   "package": {
     "title": "Packages",
@@ -1346,6 +1354,7 @@
       "completed": "Completed",
       "failed": "Failed",
       "refunded": "Refunded",
+      "cancelled": "Cancelled",
       "unknown": "Unknown"
     },
     "methods": {

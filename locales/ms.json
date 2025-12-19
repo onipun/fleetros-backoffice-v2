@@ -795,7 +795,15 @@
     "purchaseLimitPerBooking": "Had Pembelian Setiap Tempahan",
     "purchaseLimitPlaceholder": "Biarkan kosong untuk tiada had",
     "purchaseLimitDescription": "Maksimum kali perkhidmatan ini boleh ditambah ke satu tempahan. Biarkan kosong untuk tiada had.",
-    "consumableLimitSuggestion": "Petua: Item boleh guna biasanya mempunyai had pembelian 1 setiap tempahan."
+    "consumableLimitSuggestion": "Petua: Item boleh guna biasanya mempunyai had pembelian 1 setiap tempahan.",
+    "tabs": {
+      "details": "Butiran",
+      "bookings": "Tempahan"
+    },
+    "associatedBookings": "Tempahan Berkaitan",
+    "bookingsTotal": "jumlah tempahan",
+    "noBookingsFound": "Tiada tempahan ditemui",
+    "noBookingsDescription": "Perkhidmatan ini belum digunakan dalam sebarang tempahan."
   },
   "package": {
     "title": "Pakej",
@@ -866,6 +874,7 @@
       "completed": "Selesai",
       "failed": "Gagal",
       "refunded": "Dipulangkan",
+      "cancelled": "Dibatalkan",
       "unknown": "Tidak diketahui"
     },
     "methods": {

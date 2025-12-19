@@ -91,6 +91,7 @@ export default function PaymentsPage() {
       COMPLETED: t('payment.status.completed'),
       FAILED: t('payment.status.failed'),
       REFUNDED: t('payment.status.refunded'),
+      CANCELLED: t('payment.status.cancelled'),
     }),
     [t]
   );
@@ -105,6 +106,8 @@ export default function PaymentsPage() {
         return 'bg-destructive/20 text-destructive';
       case 'REFUNDED':
         return 'bg-info/20 text-info';
+      case 'CANCELLED':
+        return 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
       default:
         return 'bg-muted text-muted-foreground';
     }

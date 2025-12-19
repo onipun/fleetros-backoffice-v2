@@ -66,6 +66,7 @@ export enum PaymentStatus {
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
   REFUNDED = 'REFUNDED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum DiscountType {
