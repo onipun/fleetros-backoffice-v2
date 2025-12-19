@@ -9,6 +9,10 @@
  * - Receipt image upload
  * - Deposit/partial payments
  * - Auto-confirmation option
+ * - Transaction type selection (advance payment, deposit, etc.)
+ * - Post-completion charges (damage, fines, etc.)
+ * 
+ * Based on PAYMENT_SETTLEMENT_API_GUIDE.md
  */
 
 import { useLocale } from '@/components/providers/locale-provider';
@@ -27,7 +31,9 @@ import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
@@ -45,6 +51,12 @@ import {
     type PaymentMethodType
 } from '@/lib/api/manual-payment';
 import { cn } from '@/lib/utils';
+import {
+    getTransactionTypeInfo,
+    TRANSACTION_TYPES,
+    type TransactionType,
+    type TransactionTypeInfo,
+} from '@/types/settlement';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
     AlertCircle,
@@ -84,9 +96,14 @@ export function ManualPaymentDialog({
   // Check if booking is already confirmed
   const isBookingConfirmed = bookingStatus === 'CONFIRMED' || bookingStatus === 'ACTIVE' || bookingStatus === 'COMPLETED';
 
+  // Check if booking is completed (for post-completion charges)
+  const isBookingCompleted = bookingStatus === 'COMPLETED';
+
   // Form state
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('CASH');
+  const [transactionType, setTransactionType] = useState<TransactionType>('ADVANCE_PAYMENT');
+  const [isPostCompletion, setIsPostCompletion] = useState(false);
   const [referenceNumber, setReferenceNumber] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -97,6 +114,24 @@ export function ManualPaymentDialog({
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+
+  // Get transaction type info for selected type
+  const selectedTransactionTypeInfo = getTransactionTypeInfo(transactionType);
+
+  // Get available transaction types based on booking status and post-completion flag
+  const getAvailableTransactionTypes = (): TransactionTypeInfo[] => {
+    if (isPostCompletion && isBookingCompleted) {
+      // Post-completion charges only
+      return TRANSACTION_TYPES.filter(t => t.category === 'post-completion');
+    }
+    // Standard payment types
+    return TRANSACTION_TYPES.filter(t => 
+      t.category === 'pre-rental' || 
+      t.category === 'during-rental' || 
+      t.category === 'completion'
+    );
+  };
 
   // Fetch payment summary when dialog opens
   const { data: paymentSummary, isLoading: isSummaryLoading, refetch: refetchSummary } = useQuery({
@@ -119,6 +154,8 @@ export function ManualPaymentDialog({
       const balance = paymentSummary?.balanceDue ?? balanceDue;
       setAmount(balance > 0 ? balance.toFixed(2) : '');
       setPaymentMethod('CASH');
+      setTransactionType('ADVANCE_PAYMENT');
+      setIsPostCompletion(false);
       setReferenceNumber('');
       setPaymentDate('');
       setNotes('');
@@ -129,6 +166,7 @@ export function ManualPaymentDialog({
       setReceiptFile(null);
       setReceiptPreview(null);
       setShowPaymentHistory(false);
+      setShowAdvancedOptions(false);
     }
   }, [open, balanceDue, paymentSummary?.balanceDue]);
 
@@ -179,6 +217,8 @@ export function ManualPaymentDialog({
       const paymentRequest: ManualPaymentRequest = {
         amount: parseFloat(amount),
         paymentMethod,
+        transactionType,
+        isPostCompletion,
         referenceNumber: referenceNumber || undefined,
         paymentDate: paymentDate || undefined,
         notes: notes || undefined,
@@ -196,8 +236,8 @@ export function ManualPaymentDialog({
     },
     onSuccess: (response) => {
       toast({
-        title: 'Payment Recorded',
-        description: response.message || `Payment of ${formatCurrency(response.amount)} recorded successfully`,
+        title: isPostCompletion ? 'Charge Added' : 'Payment Recorded',
+        description: response.message || `${isPostCompletion ? 'Charge' : 'Payment'} of ${formatCurrency(response.amount)} recorded successfully`,
       });
       onOpenChange(false);
       onSuccess?.(response);
@@ -456,6 +496,99 @@ export function ManualPaymentDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Transaction Type */}
+          <div className="space-y-2">
+            <Label htmlFor="transactionType">
+              Transaction Type
+            </Label>
+            <Select value={transactionType} onValueChange={(v) => setTransactionType(v as TransactionType)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select transaction type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Pre-Rental</SelectLabel>
+                  {TRANSACTION_TYPES.filter(t => t.category === 'pre-rental').map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>During Rental</SelectLabel>
+                  {TRANSACTION_TYPES.filter(t => t.category === 'during-rental').map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Completion</SelectLabel>
+                  {TRANSACTION_TYPES.filter(t => t.category === 'completion').map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                {isBookingCompleted && (
+                  <SelectGroup>
+                    <SelectLabel>Post-Completion Charges</SelectLabel>
+                    {TRANSACTION_TYPES.filter(t => t.category === 'post-completion').map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        <span className="flex items-center gap-2">
+                          <span>{type.icon}</span>
+                          <span>{type.label}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+              </SelectContent>
+            </Select>
+            {selectedTransactionTypeInfo && (
+              <p className="text-xs text-muted-foreground">
+                {selectedTransactionTypeInfo.description}
+              </p>
+            )}
+          </div>
+
+          {/* Post-Completion Toggle - Only for completed bookings */}
+          {isBookingCompleted && (
+            <div className="flex items-center justify-between rounded-lg border p-4 bg-amber-50 dark:bg-amber-950/30">
+              <div>
+                <Label htmlFor="isPostCompletion" className="text-sm font-medium">
+                  Post-Completion Charge
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Add a charge after the rental has been completed
+                </p>
+              </div>
+              <input
+                id="isPostCompletion"
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300"
+                checked={isPostCompletion}
+                onChange={(e) => {
+                  setIsPostCompletion(e.target.checked);
+                  if (e.target.checked) {
+                    setTransactionType('DAMAGE_CHARGE');
+                  } else {
+                    setTransactionType('ADVANCE_PAYMENT');
+                  }
+                }}
+              />
+            </div>
+          )}
 
           {/* Reference Number */}
           <div className="space-y-2">

@@ -5,11 +5,15 @@
  * 
  * Displays payment information for a booking including:
  * - Total amount, paid amount, and balance due
+ * - Settlement status with close/reopen actions
  * - Payment history with status indicators
  * - Actions for managing payments
+ * 
+ * Based on PAYMENT_SETTLEMENT_API_GUIDE.md
  */
 
 import { useLocale } from '@/components/providers/locale-provider';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -22,6 +26,12 @@ import {
     type PaymentHistoryItem,
     uploadPaymentReceipt
 } from '@/lib/api/manual-payment';
+import {
+    closeSettlement,
+    getSettlementDetails,
+    getSettlementStatusInfo,
+    reopenSettlement,
+} from '@/lib/api/settlement-api';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -34,8 +44,10 @@ import {
     DollarSign,
     Eye,
     Loader2,
+    Lock,
     Plus,
     Receipt,
+    Unlock,
     Upload,
     XCircle,
 } from 'lucide-react';
@@ -43,19 +55,28 @@ import { useCallback, useState } from 'react';
 
 interface PaymentSummaryCardProps {
   bookingId: number;
+  bookingStatus?: string;
   onRecordPayment?: () => void;
+  onAddCharge?: () => void;
+  showSettlementActions?: boolean;
   compact?: boolean;
 }
 
 export function PaymentSummaryCard({
   bookingId,
+  bookingStatus,
   onRecordPayment,
+  onAddCharge,
+  showSettlementActions = true,
   compact = false,
 }: PaymentSummaryCardProps) {
   const { formatCurrency } = useLocale();
   const queryClient = useQueryClient();
   const [expandedPaymentId, setExpandedPaymentId] = useState<number | null>(null);
   const [showAllPayments, setShowAllPayments] = useState(false);
+
+  // Check if booking is completed
+  const isBookingCompleted = bookingStatus === 'COMPLETED';
 
   // Fetch payment summary
   const {
@@ -70,12 +91,27 @@ export function PaymentSummaryCard({
     refetchOnWindowFocus: false,
   });
 
+  // Fetch settlement details
+  const {
+    data: settlement,
+    refetch: refetchSettlement,
+  } = useQuery({
+    queryKey: ['settlement', bookingId],
+    queryFn: () => getSettlementDetails(bookingId),
+    enabled: !!bookingId && showSettlementActions,
+    refetchOnWindowFocus: false,
+  });
+
+  const settlementSummary = settlement?.summary;
+  const settlementStatusInfo = settlementSummary ? getSettlementStatusInfo(settlementSummary.status) : null;
+
   // Complete payment mutation
   const completeMutation = useMutation({
     mutationFn: (paymentId: number) => completePayment(bookingId, paymentId),
     onSuccess: () => {
       toast({ title: 'Payment marked as completed' });
       refetch();
+      refetchSettlement();
       queryClient.invalidateQueries({ queryKey: ['booking', String(bookingId)] });
     },
     onError: (error: Error) => {
@@ -97,6 +133,7 @@ export function PaymentSummaryCard({
     onSuccess: () => {
       toast({ title: 'Payment cancelled' });
       refetch();
+      refetchSettlement();
       queryClient.invalidateQueries({ queryKey: ['booking', String(bookingId)] });
     },
     onError: (error: Error) => {
@@ -109,6 +146,53 @@ export function PaymentSummaryCard({
       }
     },
   });
+
+  // Close settlement mutation
+  const closeSettlementMutation = useMutation({
+    mutationFn: () => {
+      const notes = prompt('Enter closing notes (optional):');
+      return closeSettlement(bookingId, notes || undefined);
+    },
+    onSuccess: () => {
+      toast({ title: 'Settlement closed successfully' });
+      refetch();
+      refetchSettlement();
+      queryClient.invalidateQueries({ queryKey: ['booking', String(bookingId)] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to close settlement',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Reopen settlement mutation
+  const reopenSettlementMutation = useMutation({
+    mutationFn: () => {
+      const reason = prompt('Enter reason for reopening (required):');
+      if (!reason) throw new Error('Reason is required');
+      return reopenSettlement(bookingId, reason);
+    },
+    onSuccess: () => {
+      toast({ title: 'Settlement reopened successfully' });
+      refetch();
+      refetchSettlement();
+      queryClient.invalidateQueries({ queryKey: ['booking', String(bookingId)] });
+    },
+    onError: (error: Error) => {
+      if (error.message !== 'Reason is required') {
+        toast({
+          title: 'Failed to reopen settlement',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    },
+  });
+
+  const isSettlementLoading = closeSettlementMutation.isPending || reopenSettlementMutation.isPending;
 
   // Receipt upload handler
   const handleReceiptUpload = useCallback(
@@ -179,16 +263,42 @@ export function PaymentSummaryCard({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CreditCard className="h-5 w-5" />
-            Payment Summary
-          </CardTitle>
-          {onRecordPayment && (
-            <Button size="sm" onClick={onRecordPayment}>
-              <Plus className="mr-1 h-4 w-4" />
-              Record Payment
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CreditCard className="h-5 w-5" />
+              Payment Summary
+            </CardTitle>
+            {/* Settlement Status Badge */}
+            {settlementStatusInfo && showSettlementActions && (
+              <Badge 
+                className={cn('gap-1', settlementStatusInfo.color)}
+                title={settlementStatusInfo.description}
+              >
+                {settlementSummary?.status === 'OPEN' ? (
+                  <Unlock className="h-3 w-3" />
+                ) : (
+                  <Lock className="h-3 w-3" />
+                )}
+                {settlementStatusInfo.label}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Post-completion charge button */}
+            {isBookingCompleted && onAddCharge && settlementSummary?.isOpen && (
+              <Button size="sm" variant="outline" onClick={onAddCharge}>
+                <Plus className="mr-1 h-4 w-4" />
+                Add Charge
+              </Button>
+            )}
+            {/* Record payment button */}
+            {onRecordPayment && settlementSummary?.isOpen && (
+              <Button size="sm" onClick={onRecordPayment}>
+                <Plus className="mr-1 h-4 w-4" />
+                Record Payment
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
 

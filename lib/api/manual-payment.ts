@@ -6,7 +6,12 @@
  * - Uploading payment receipts
  * - Getting payment history and summary
  * - Completing and cancelling payments
+ * - Post-completion charges (damage, traffic fines, etc.)
+ * 
+ * Based on PAYMENT_SETTLEMENT_API_GUIDE.md
  */
+
+import type { TransactionType } from '@/types/settlement';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
 
@@ -16,9 +21,10 @@ export const PAYMENT_METHODS = [
   { value: 'BANK_TRANSFER', label: 'Bank Transfer', icon: '🏦' },
   { value: 'CREDIT_CARD', label: 'Credit Card', icon: '💳' },
   { value: 'DEBIT_CARD', label: 'Debit Card', icon: '💳' },
+  { value: 'PAYMENT_GATEWAY', label: 'Payment Gateway', icon: '🌐' },
   { value: 'QR_PAYMENT', label: 'QR Payment (DuitNow/PayNow)', icon: '📱' },
-  { value: 'MOBILE_WALLET', label: 'Mobile Wallet', icon: '📲' },
-  { value: 'CHECK', label: 'Check', icon: '📝' },
+  { value: 'MOBILE_WALLET', label: 'Mobile Wallet (GrabPay/Touch n Go)', icon: '📲' },
+  { value: 'CHECK', label: 'Check/Cheque', icon: '📝' },
   { value: 'LOYALTY_POINTS', label: 'Loyalty Points', icon: '⭐' },
   { value: 'OTHER', label: 'Other', icon: '💰' },
 ] as const;
@@ -45,6 +51,10 @@ export interface ManualPaymentRequest {
   notes?: string;
   payerName?: string;
   isDeposit?: boolean;
+  /** Transaction type categorization (e.g., ADVANCE_PAYMENT, DAMAGE_CHARGE) */
+  transactionType?: TransactionType;
+  /** Enable post-completion charges for completed bookings */
+  isPostCompletion?: boolean;
   autoConfirmBooking?: boolean;
   confirmBooking?: boolean;
 }
@@ -59,6 +69,10 @@ export interface PaymentHistoryItem {
   paymentDate?: string;
   isDeposit?: boolean;
   notes?: string;
+  /** Transaction type categorization */
+  transactionType?: TransactionType;
+  /** Whether this is a post-completion transaction */
+  isPostCompletion?: boolean;
 }
 
 export interface ManualPaymentResponse {
@@ -79,6 +93,10 @@ export interface ManualPaymentResponse {
   balanceDue: number;
   isFullyPaid: boolean;
   bookingConfirmed: boolean;
+  /** Transaction type if specified */
+  transactionType?: TransactionType;
+  /** Whether this was a post-completion transaction */
+  isPostCompletion?: boolean;
   paymentHistory: PaymentHistoryItem[];
   message: string;
 }

@@ -1,17 +1,18 @@
 'use client';
 
-import { PaymentSearchFilters } from '@/components/payment/payment-search-filters';
+import { OutstandingSettlementsDashboard, PaymentSearchFilters } from '@/components/payment';
 import { useLocale } from '@/components/providers/locale-provider';
 import { TablePageSkeleton } from '@/components/skeletons/page-skeletons';
 import { OnboardingStatusBadge } from '@/components/stripe-onboarding';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ErrorDisplay } from '@/components/ui/error-display';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePaymentSearch } from '@/hooks/use-payment-search';
 import { hateoasClient } from '@/lib/api/hateoas-client';
 import { canAcceptPayments, getMerchantStatus } from '@/lib/api/stripe-onboarding';
 import { formatDate } from '@/lib/utils';
-import { AlertCircle, ArrowRight, CheckCircle2, Settings } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, CreditCard, FileText, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -261,42 +262,56 @@ export default function PaymentsPage() {
         </Card>
       )}
 
-      {/* Search Filters */}
-      <PaymentSearchFilters onSearch={search} isLoading={isLoading} />
+      {/* Tabs for Payments and Settlements */}
+      <Tabs defaultValue="payments" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="payments" className="gap-2">
+            <CreditCard className="h-4 w-4" />
+            Payments
+          </TabsTrigger>
+          <TabsTrigger value="settlements" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Settlements
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Payments List */}
-      {isLoading ? (
-        <TablePageSkeleton rows={8} />
-      ) : error ? (
-        <Card>
-          <ErrorDisplay
-            title={t('payment.errorTitle')}
-            message={`${t('payment.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
-            onRetry={() => refetch()}
-          />
-        </Card>
-      ) : payments.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">{t('payment.noResults')}</p>
-        </div>
-      ) : (
-        <>
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.id')}</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium">{t('payment.table.amount')}</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.method')}</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium">{t('payment.table.type')}</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium">{t('payment.table.status')}</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.date')}</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium">{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
+        <TabsContent value="payments" className="space-y-6">
+          {/* Search Filters */}
+          <PaymentSearchFilters onSearch={search} isLoading={isLoading} />
+
+          {/* Payments List */}
+          {isLoading ? (
+            <TablePageSkeleton rows={8} />
+          ) : error ? (
+            <Card>
+              <ErrorDisplay
+                title={t('payment.errorTitle')}
+                message={`${t('payment.errorMessage')}${error?.message ? ` (${error.message})` : ''}`.trim()}
+                onRetry={() => refetch()}
+              />
+            </Card>
+          ) : payments.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">{t('payment.noResults')}</p>
+            </div>
+          ) : (
+            <>
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.id')}</th>
+                          <th className="px-4 py-3 text-right text-sm font-medium">{t('payment.table.amount')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.method')}</th>
+                          <th className="px-4 py-3 text-center text-sm font-medium">{t('payment.table.type')}</th>
+                          <th className="px-4 py-3 text-center text-sm font-medium">{t('payment.table.status')}</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium">{t('payment.table.date')}</th>
+                          <th className="px-4 py-3 text-center text-sm font-medium">{t('common.actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
                     {payments.map((payment) => {
                       const methodKey = (payment.paymentMethod ?? 'OTHER') as keyof typeof methodIcons;
                       const methodLabel = methodLabels[methodKey as keyof typeof methodLabels] ?? methodLabels.OTHER;
@@ -463,8 +478,16 @@ export default function PaymentsPage() {
               </div>
             </div>
           )}
-        </>
-      )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="settlements" className="space-y-6">
+          <OutstandingSettlementsDashboard 
+            onViewSettlement={(bookingId) => router.push(`/bookings/${bookingId}?tab=settlement`)}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
