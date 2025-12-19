@@ -19,56 +19,56 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import {
-    getPaymentMethodInfo,
-    getPaymentStatusColor,
-    getPaymentSummary,
-    PAYMENT_METHODS,
-    recordManualPayment,
-    recordManualPaymentWithReceipt,
-    type ManualPaymentRequest,
-    type ManualPaymentResponse,
-    type PaymentMethodType
+  getPaymentMethodInfo,
+  getPaymentStatusColor,
+  getPaymentSummary,
+  PAYMENT_METHODS,
+  recordManualPayment,
+  recordManualPaymentWithReceipt,
+  type ManualPaymentRequest,
+  type ManualPaymentResponse,
+  type PaymentMethodType
 } from '@/lib/api/manual-payment';
 import { cn } from '@/lib/utils';
 import {
-    getTransactionTypeInfo,
-    TRANSACTION_TYPES,
-    type TransactionType,
-    type TransactionTypeInfo,
+  getTransactionTypeInfo,
+  TRANSACTION_TYPES,
+  type TransactionType,
+  type TransactionTypeInfo,
 } from '@/types/settlement';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-    AlertCircle,
-    CheckCircle2,
-    ChevronDown,
-    ChevronUp,
-    DollarSign,
-    History,
-    Loader2,
-    Receipt,
-    Upload,
-    X,
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  History,
+  Loader2,
+  Receipt,
+  Upload,
+  X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -103,7 +103,6 @@ export function ManualPaymentDialog({
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('CASH');
   const [transactionType, setTransactionType] = useState<TransactionType>('ADVANCE_PAYMENT');
-  const [isPostCompletion, setIsPostCompletion] = useState(false);
   const [referenceNumber, setReferenceNumber] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -119,17 +118,20 @@ export function ManualPaymentDialog({
   // Get transaction type info for selected type
   const selectedTransactionTypeInfo = getTransactionTypeInfo(transactionType);
 
-  // Get available transaction types based on booking status and post-completion flag
+  // Get available transaction types based on booking status
+  // Post-completion charges are automatically available when booking is completed
+  // DEPOSIT_RETURN is excluded as it's handled automatically by the system
   const getAvailableTransactionTypes = (): TransactionTypeInfo[] => {
-    if (isPostCompletion && isBookingCompleted) {
-      // Post-completion charges only
+    if (isBookingCompleted) {
+      // For completed bookings, show post-completion charges
       return TRANSACTION_TYPES.filter(t => t.category === 'post-completion');
     }
-    // Standard payment types
+    // Standard payment types (exclude DEPOSIT_RETURN - handled automatically)
     return TRANSACTION_TYPES.filter(t => 
-      t.category === 'pre-rental' || 
-      t.category === 'during-rental' || 
-      t.category === 'completion'
+      (t.category === 'pre-rental' || 
+       t.category === 'during-rental' || 
+       t.category === 'completion') &&
+      t.value !== 'DEPOSIT_RETURN'
     );
   };
 
@@ -154,8 +156,8 @@ export function ManualPaymentDialog({
       const balance = paymentSummary?.balanceDue ?? balanceDue;
       setAmount(balance > 0 ? balance.toFixed(2) : '');
       setPaymentMethod('CASH');
-      setTransactionType('ADVANCE_PAYMENT');
-      setIsPostCompletion(false);
+      // Auto-set transaction type based on booking status
+      setTransactionType(isBookingCompleted ? 'DAMAGE_CHARGE' : 'ADVANCE_PAYMENT');
       setReferenceNumber('');
       setPaymentDate('');
       setNotes('');
@@ -218,7 +220,7 @@ export function ManualPaymentDialog({
         amount: parseFloat(amount),
         paymentMethod,
         transactionType,
-        isPostCompletion,
+        isPostCompletion: isBookingCompleted, // Auto-set based on booking status
         referenceNumber: referenceNumber || undefined,
         paymentDate: paymentDate || undefined,
         notes: notes || undefined,
@@ -236,8 +238,8 @@ export function ManualPaymentDialog({
     },
     onSuccess: (response) => {
       toast({
-        title: isPostCompletion ? 'Charge Added' : 'Payment Recorded',
-        description: response.message || `${isPostCompletion ? 'Charge' : 'Payment'} of ${formatCurrency(response.amount)} recorded successfully`,
+        title: isBookingCompleted ? 'Charge Added' : 'Payment Recorded',
+        description: response.message || `${isBookingCompleted ? 'Charge' : 'Payment'} of ${formatCurrency(response.amount)} recorded successfully`,
       });
       onOpenChange(false);
       onSuccess?.(response);
@@ -561,34 +563,6 @@ export function ManualPaymentDialog({
               </p>
             )}
           </div>
-
-          {/* Post-Completion Toggle - Only for completed bookings */}
-          {isBookingCompleted && (
-            <div className="flex items-center justify-between rounded-lg border p-4 bg-amber-50 dark:bg-amber-950/30">
-              <div>
-                <Label htmlFor="isPostCompletion" className="text-sm font-medium">
-                  Post-Completion Charge
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Add a charge after the rental has been completed
-                </p>
-              </div>
-              <input
-                id="isPostCompletion"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300"
-                checked={isPostCompletion}
-                onChange={(e) => {
-                  setIsPostCompletion(e.target.checked);
-                  if (e.target.checked) {
-                    setTransactionType('DAMAGE_CHARGE');
-                  } else {
-                    setTransactionType('ADVANCE_PAYMENT');
-                  }
-                }}
-              />
-            </div>
-          )}
 
           {/* Reference Number */}
           <div className="space-y-2">

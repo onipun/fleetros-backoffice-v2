@@ -18,38 +18,38 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import {
-    cancelPayment,
-    completePayment,
-    getPaymentMethodInfo,
-    getPaymentStatusColor,
-    getPaymentSummary,
-    type PaymentHistoryItem,
-    uploadPaymentReceipt
+  cancelPayment,
+  completePayment,
+  getPaymentMethodInfo,
+  getPaymentStatusColor,
+  getPaymentSummary,
+  type PaymentHistoryItem,
+  uploadPaymentReceipt
 } from '@/lib/api/manual-payment';
 import {
-    closeSettlement,
-    getSettlementDetails,
-    getSettlementStatusInfo,
-    reopenSettlement,
+  closeSettlement,
+  getSettlementDetails,
+  getSettlementStatusInfo,
+  reopenSettlement,
 } from '@/lib/api/settlement-api';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    AlertCircle,
-    Ban,
-    CheckCircle2,
-    ChevronDown,
-    ChevronUp,
-    CreditCard,
-    DollarSign,
-    Eye,
-    Loader2,
-    Lock,
-    Plus,
-    Receipt,
-    Unlock,
-    Upload,
-    XCircle,
+  AlertCircle,
+  Ban,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  CreditCard,
+  DollarSign,
+  Eye,
+  Loader2,
+  Lock,
+  Plus,
+  Receipt,
+  Unlock,
+  Upload,
+  XCircle,
 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
@@ -573,7 +573,8 @@ function PaymentHistoryRow({
             </div>
           )}
 
-          {payment.status === 'COMPLETED' && (
+          {/* Only show cancel button for COMPLETED payments with positive amounts */}
+          {payment.status === 'COMPLETED' && payment.amount > 0 && (
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
