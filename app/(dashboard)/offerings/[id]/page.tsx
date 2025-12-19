@@ -149,21 +149,34 @@ export default function OfferingDetailPage() {
       params.append('size', bookingPageSize.toString());
       params.append('sort', 'startDate,desc');
 
+      // Helper to extract date part and format with time
+      const formatStartDate = (dateStr: string) => {
+        // If already has time component (contains 'T'), extract just the date part
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        return `${datePart}T00:00:00`;
+      };
+      
+      const formatEndDate = (dateStr: string) => {
+        // If already has time component (contains 'T'), extract just the date part
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        return `${datePart}T23:59:59`;
+      };
+
       // Determine which endpoint to use based on filters
       let endpoint = 'findBookingsByOffering';
       
       if (bookingSearchStatus && bookingSearchStatus !== 'ALL' && bookingSearchStartDate && bookingSearchEndDate) {
         endpoint = 'findBookingsByOfferingStatusAndDateRange';
         params.append('status', bookingSearchStatus);
-        params.append('startDate', `${bookingSearchStartDate}T00:00:00`);
-        params.append('endDate', `${bookingSearchEndDate}T23:59:59`);
+        params.append('startDate', formatStartDate(bookingSearchStartDate));
+        params.append('endDate', formatEndDate(bookingSearchEndDate));
       } else if (bookingSearchStatus && bookingSearchStatus !== 'ALL') {
         endpoint = 'findBookingsByOfferingAndStatus';
         params.append('status', bookingSearchStatus);
       } else if (bookingSearchStartDate && bookingSearchEndDate) {
         endpoint = 'findBookingsByOfferingAndDateRange';
-        params.append('startDate', `${bookingSearchStartDate}T00:00:00`);
-        params.append('endDate', `${bookingSearchEndDate}T23:59:59`);
+        params.append('startDate', formatStartDate(bookingSearchStartDate));
+        params.append('endDate', formatEndDate(bookingSearchEndDate));
       }
 
       const response = await fetch(
@@ -603,102 +616,103 @@ export default function OfferingDetailPage() {
         </TabsContent>
 
         {/* Bookings Tab */}
-        <TabsContent value="bookings" className="mt-6">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  {t('offering.associatedBookings') || 'Associated Bookings'}
-                </CardTitle>
-                <div className="text-sm text-muted-foreground">
-                  {bookingPagination.totalElements} {t('offering.bookingsTotal') || 'total bookings'}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Search Filters */}
-              <div className="grid gap-4 sm:grid-cols-4">
-                <div className="space-y-2">
-                  <Label>{t('booking.search.status') || 'Status'}</Label>
-                  <Select 
-                    value={bookingSearchStatus} 
-                    onValueChange={(value) => {
-                      setBookingSearchStatus(value as BookingStatus | 'ALL');
-                      setBookingPage(0);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('booking.search.allStatuses') || 'All Statuses'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">{t('booking.search.allStatuses') || 'All Statuses'}</SelectItem>
-                      <SelectItem value="PENDING">{t('booking.status.pending')}</SelectItem>
-                      <SelectItem value="CONFIRMED">{t('booking.status.confirmed')}</SelectItem>
-                      <SelectItem value="IN_PROGRESS">{t('booking.status.inProgress') || 'In Progress'}</SelectItem>
-                      <SelectItem value="COMPLETED">{t('booking.status.completed')}</SelectItem>
-                      <SelectItem value="CANCELLED">{t('booking.status.cancelled')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('booking.search.startDate') || 'Start Date'}</Label>
-                  <DateTimePicker
-                    value={bookingSearchStartDate}
-                    onChange={(value) => {
-                      setBookingSearchStartDate(value);
-                      setBookingPage(0);
-                    }}
-                    showTimeSelect={false}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('booking.search.endDate') || 'End Date'}</Label>
-                  <DateTimePicker
-                    value={bookingSearchEndDate}
-                    onChange={(value) => {
-                      setBookingSearchEndDate(value);
-                      setBookingPage(0);
-                    }}
-                    showTimeSelect={false}
-                  />
-                </div>
-                <div className="flex items-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleResetBookingFilters}
-                    className="flex-1"
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    {t('common.reset') || 'Reset'}
-                  </Button>
-                </div>
-              </div>
+        <TabsContent value="bookings" className="mt-6 space-y-6">
+          {/* Header */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                {t('offering.associatedBookings') || 'Associated Bookings'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {bookingPagination.totalElements} {t('offering.bookingsTotal') || 'total bookings'}
+              </p>
+            </div>
+          </div>
 
-              {/* Bookings Table */}
-              {bookingsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">{t('common.loading') || 'Loading...'}</p>
-                </div>
-              ) : associatedBookings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium">{t('offering.noBookingsFound') || 'No bookings found'}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('offering.noBookingsDescription') || 'This offering has not been used in any bookings yet.'}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-md border">
+          {/* Search Filters */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <div className="space-y-2">
+              <Label>{t('booking.search.status') || 'Status'}</Label>
+              <Select
+                value={bookingSearchStatus}
+                onValueChange={(value) => {
+                  setBookingSearchStatus(value as BookingStatus | 'ALL');
+                  setBookingPage(0);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('booking.search.allStatuses') || 'All Statuses'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{t('booking.search.allStatuses') || 'All Statuses'}</SelectItem>
+                  <SelectItem value="PENDING">{t('booking.status.pending')}</SelectItem>
+                  <SelectItem value="CONFIRMED">{t('booking.status.confirmed')}</SelectItem>
+                  <SelectItem value="IN_PROGRESS">{t('booking.status.inProgress') || 'In Progress'}</SelectItem>
+                  <SelectItem value="COMPLETED">{t('booking.status.completed')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('booking.status.cancelled')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('booking.search.startDate') || 'Start Date'}</Label>
+              <DateTimePicker
+                value={bookingSearchStartDate}
+                onChange={(value) => {
+                  setBookingSearchStartDate(value);
+                  setBookingPage(0);
+                }}
+                showTimeSelect={false}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('booking.search.endDate') || 'End Date'}</Label>
+              <DateTimePicker
+                value={bookingSearchEndDate}
+                onChange={(value) => {
+                  setBookingSearchEndDate(value);
+                  setBookingPage(0);
+                }}
+                showTimeSelect={false}
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetBookingFilters}
+                className="flex-1"
+              >
+                <X className="mr-2 h-4 w-4" />
+                {t('common.reset') || 'Reset'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Bookings Table */}
+          {bookingsLoading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">{t('common.loading') || 'Loading...'}</p>
+            </div>
+          ) : associatedBookings.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium">{t('offering.noBookingsFound') || 'No bookings found'}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('offering.noBookingsDescription') || 'This offering has not been used in any bookings yet.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>{t('booking.table.booking') || 'Booking ID'}</TableHead>
                           <TableHead>{t('booking.table.dates') || 'Dates'}</TableHead>
                           <TableHead>{t('booking.table.status') || 'Status'}</TableHead>
-                          <TableHead className="text-right">{t('booking.table.amount') || 'Total'}</TableHead>
                           <TableHead className="text-center">{t('common.actions')}</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -717,9 +731,6 @@ export default function OfferingDetailPage() {
                               </div>
                             </TableCell>
                             <TableCell>{getBookingStatusBadge(booking.status)}</TableCell>
-                            <TableCell className="text-right font-medium">
-                              {booking.totalAmount != null ? formatCurrency(booking.totalAmount) : '-'}
-                            </TableCell>
                             <TableCell className="text-center">
                               <Link href={`/bookings/${booking.id}`}>
                                 <Button variant="ghost" size="sm">
@@ -732,37 +743,37 @@ export default function OfferingDetailPage() {
                       </TableBody>
                     </Table>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Pagination */}
-                  {bookingPagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
-                        {t('common.page') || 'Page'} {bookingPagination.number + 1} {t('common.of') || 'of'} {bookingPagination.totalPages}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBookingPage(p => Math.max(0, p - 1))}
-                          disabled={bookingPagination.number === 0}
-                        >
-                          {t('common.previous') || 'Previous'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBookingPage(p => p + 1)}
-                          disabled={bookingPagination.number >= bookingPagination.totalPages - 1}
-                        >
-                          {t('common.next') || 'Next'}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </>
+              {/* Pagination */}
+              {bookingPagination.totalPages > 1 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {t('common.page') || 'Page'} {bookingPagination.number + 1} {t('common.of') || 'of'} {bookingPagination.totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBookingPage((p) => Math.max(0, p - 1))}
+                      disabled={bookingPagination.number === 0}
+                    >
+                      {t('common.previous') || 'Previous'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBookingPage((p) => p + 1)}
+                      disabled={bookingPagination.number >= bookingPagination.totalPages - 1}
+                    >
+                      {t('common.next') || 'Next'}
+                    </Button>
+                  </div>
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
