@@ -1369,6 +1369,7 @@
       "paypal": "PayPal",
       "bankTransfer": "Bank Transfer",
       "cash": "Cash",
+      "writeOff": "Write Off",
       "other": "Other"
     },
     "table": {

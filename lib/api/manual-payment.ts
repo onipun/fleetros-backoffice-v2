@@ -26,6 +26,7 @@ export const PAYMENT_METHODS = [
   { value: 'MOBILE_WALLET', label: 'Mobile Wallet (GrabPay/Touch n Go)', icon: '📲' },
   { value: 'CHECK', label: 'Check/Cheque', icon: '📝' },
   { value: 'LOYALTY_POINTS', label: 'Loyalty Points', icon: '⭐' },
+  { value: 'WRITE_OFF', label: 'Write Off', icon: '✏️' },
   { value: 'OTHER', label: 'Other', icon: '💰' },
 ] as const;
 

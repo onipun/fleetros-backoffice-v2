@@ -889,6 +889,7 @@
       "paypal": "PayPal",
       "bankTransfer": "Pemindahan Bank",
       "cash": "Tunai",
+      "writeOff": "Hapus Kira",
       "other": "Lain-lain"
     },
     "table": {

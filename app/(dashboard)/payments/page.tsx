@@ -121,6 +121,7 @@ export default function PaymentsPage() {
       PAYPAL: '🅿️',
       BANK_TRANSFER: '🏦',
       CASH: '💵',
+      WRITE_OFF: '✏️',
       OTHER: '💰',
     }),
     []
@@ -133,6 +134,7 @@ export default function PaymentsPage() {
       PAYPAL: t('payment.methods.paypal'),
       BANK_TRANSFER: t('payment.methods.bankTransfer'),
       CASH: t('payment.methods.cash'),
+      WRITE_OFF: t('payment.methods.writeOff'),
       OTHER: t('payment.methods.other'),
     }),
     [t]
@@ -336,20 +338,28 @@ export default function PaymentsPage() {
                           </td>
                           <td className="px-4 py-3 text-sm text-center">
                             <div className="flex flex-wrap gap-1 justify-center">
-                              {payment.isDeposit && (
-                                <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                  Deposit
+                              {payment.paymentMethod === 'WRITE_OFF' ? (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                  {t('payment.methods.writeOff')}
                                 </span>
-                              )}
-                              {payment.isManual && (
-                                <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                                  Manual
-                                </span>
-                              )}
-                              {!payment.isDeposit && !payment.isManual && (
-                                <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                  Online
-                                </span>
+                              ) : (
+                                <>
+                                  {payment.isDeposit && (
+                                    <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                      Deposit
+                                    </span>
+                                  )}
+                                  {payment.isManual && (
+                                    <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                      Manual
+                                    </span>
+                                  )}
+                                  {!payment.isDeposit && !payment.isManual && (
+                                    <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                      Online
+                                    </span>
+                                  )}
+                                </>
                               )}
                             </div>
                           </td>

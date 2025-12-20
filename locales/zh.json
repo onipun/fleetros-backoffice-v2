@@ -897,6 +897,7 @@
       "paypal": "PayPal",
       "bankTransfer": "银行转账",
       "cash": "现金",
+      "writeOff": "坏账核销",
       "other": "其他"
     },
     "table": {

@@ -16,6 +16,17 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import {
   cancelPayment,
@@ -31,6 +42,8 @@ import {
   getSettlementDetails,
   getSettlementStatusInfo,
   reopenSettlement,
+  writeOffAndClose,
+  writeOffBadDebt,
 } from '@/lib/api/settlement-api';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -43,6 +56,7 @@ import {
   CreditCard,
   DollarSign,
   Eye,
+  FileX,
   Loader2,
   Lock,
   Plus,
@@ -74,6 +88,13 @@ export function PaymentSummaryCard({
   const queryClient = useQueryClient();
   const [expandedPaymentId, setExpandedPaymentId] = useState<number | null>(null);
   const [showAllPayments, setShowAllPayments] = useState(false);
+  
+  // Write-off dialog state
+  const [writeOffDialogOpen, setWriteOffDialogOpen] = useState(false);
+  const [writeOffReason, setWriteOffReason] = useState('');
+  const [writeOffApprovedBy, setWriteOffApprovedBy] = useState('');
+  const [writeOffClosureNotes, setWriteOffClosureNotes] = useState('');
+  const [writeOffAndCloseMode, setWriteOffAndCloseMode] = useState(false);
 
   // Check if booking is completed
   const isBookingCompleted = bookingStatus === 'COMPLETED';
@@ -149,9 +170,8 @@ export function PaymentSummaryCard({
 
   // Close settlement mutation
   const closeSettlementMutation = useMutation({
-    mutationFn: () => {
-      const notes = prompt('Enter closing notes (optional):');
-      return closeSettlement(bookingId, notes || undefined);
+    mutationFn: (notes?: string) => {
+      return closeSettlement(bookingId, notes);
     },
     onSuccess: () => {
       toast({ title: 'Settlement closed successfully' });
@@ -167,6 +187,103 @@ export function PaymentSummaryCard({
       });
     },
   });
+
+  // Write-off bad debt mutation
+  const writeOffMutation = useMutation({
+    mutationFn: ({ reason, approvedBy }: { reason: string; approvedBy?: string }) => {
+      return writeOffBadDebt(bookingId, reason, approvedBy);
+    },
+    onSuccess: () => {
+      toast({ title: 'Bad debt written off successfully' });
+      setWriteOffDialogOpen(false);
+      resetWriteOffForm();
+      refetch();
+      refetchSettlement();
+      queryClient.invalidateQueries({ queryKey: ['booking', String(bookingId)] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to write off bad debt',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Write-off and close mutation
+  const writeOffAndCloseMutation = useMutation({
+    mutationFn: ({ reason, approvedBy, closureNotes }: { reason: string; approvedBy?: string; closureNotes?: string }) => {
+      return writeOffAndClose(bookingId, reason, approvedBy, closureNotes);
+    },
+    onSuccess: () => {
+      toast({ title: 'Bad debt written off and settlement closed successfully' });
+      setWriteOffDialogOpen(false);
+      resetWriteOffForm();
+      refetch();
+      refetchSettlement();
+      queryClient.invalidateQueries({ queryKey: ['booking', String(bookingId)] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to write off and close',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Reset write-off form
+  const resetWriteOffForm = () => {
+    setWriteOffReason('');
+    setWriteOffApprovedBy('');
+    setWriteOffClosureNotes('');
+    setWriteOffAndCloseMode(false);
+  };
+
+  // Handle close settlement button click
+  const handleCloseSettlement = () => {
+    const balance = settlementSummary?.balance ?? 0;
+    if (balance > 0) {
+      // Has outstanding balance - show write-off dialog
+      setWriteOffAndCloseMode(true);
+      setWriteOffDialogOpen(true);
+    } else {
+      // No balance - can close directly
+      const notes = prompt('Enter closing notes (optional):');
+      closeSettlementMutation.mutate(notes || undefined);
+    }
+  };
+
+  // Handle write-off only (without closing)
+  const handleWriteOffOnly = () => {
+    setWriteOffAndCloseMode(false);
+    setWriteOffDialogOpen(true);
+  };
+
+  // Submit write-off form
+  const handleWriteOffSubmit = () => {
+    if (!writeOffReason.trim()) {
+      toast({
+        title: 'Reason required',
+        description: 'Please enter a reason for the write-off',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (writeOffAndCloseMode) {
+      writeOffAndCloseMutation.mutate({
+        reason: writeOffReason,
+        approvedBy: writeOffApprovedBy || undefined,
+        closureNotes: writeOffClosureNotes || undefined,
+      });
+    } else {
+      writeOffMutation.mutate({
+        reason: writeOffReason,
+        approvedBy: writeOffApprovedBy || undefined,
+      });
+    }
+  };
 
   // Reopen settlement mutation
   const reopenSettlementMutation = useMutation({
@@ -192,7 +309,10 @@ export function PaymentSummaryCard({
     },
   });
 
-  const isSettlementLoading = closeSettlementMutation.isPending || reopenSettlementMutation.isPending;
+  const isSettlementLoading = closeSettlementMutation.isPending || reopenSettlementMutation.isPending || writeOffMutation.isPending || writeOffAndCloseMutation.isPending;
+
+  // Check if there's an outstanding balance
+  const hasOutstandingBalance = (settlementSummary?.balance ?? 0) > 0;
 
   // Receipt upload handler
   const handleReceiptUpload = useCallback(
@@ -298,15 +418,32 @@ export function PaymentSummaryCard({
                 Record Payment
               </Button>
             )}
+            {/* Write-Off button - show when settlement is open and has outstanding balance */}
+            {showSettlementActions && settlementSummary?.isOpen && hasOutstandingBalance && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleWriteOffOnly}
+                disabled={isSettlementLoading}
+                className="text-orange-600 hover:text-orange-700 border-orange-300 hover:border-orange-400"
+              >
+                {writeOffMutation.isPending ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <FileX className="mr-1 h-4 w-4" />
+                )}
+                Write Off
+              </Button>
+            )}
             {/* Close Settlement button - show when settlement is open */}
             {showSettlementActions && settlementSummary?.isOpen && (
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => closeSettlementMutation.mutate()}
-                disabled={closeSettlementMutation.isPending}
+                onClick={handleCloseSettlement}
+                disabled={isSettlementLoading}
               >
-                {closeSettlementMutation.isPending ? (
+                {closeSettlementMutation.isPending || writeOffAndCloseMutation.isPending ? (
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                 ) : (
                   <Lock className="mr-1 h-4 w-4" />
@@ -455,6 +592,111 @@ export function PaymentSummaryCard({
           </div>
         )}
       </CardContent>
+
+      {/* Write-Off Dialog */}
+      <Dialog open={writeOffDialogOpen} onOpenChange={(open) => {
+        setWriteOffDialogOpen(open);
+        if (!open) resetWriteOffForm();
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileX className="h-5 w-5 text-orange-500" />
+              {writeOffAndCloseMode ? 'Write Off & Close Settlement' : 'Write Off Bad Debt'}
+            </DialogTitle>
+            <DialogDescription>
+              {writeOffAndCloseMode 
+                ? `This will write off the outstanding balance of ${formatCurrency(settlementSummary?.balance ?? 0)} and close the settlement.`
+                : `Write off the outstanding balance of ${formatCurrency(settlementSummary?.balance ?? 0)} as bad debt.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Outstanding Balance Info */}
+            <div className="rounded-lg border border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Outstanding Balance</span>
+                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                  {formatCurrency(settlementSummary?.balance ?? 0)}
+                </span>
+              </div>
+            </div>
+
+            {/* Reason (Required) */}
+            <div className="space-y-2">
+              <Label htmlFor="writeOffReason">
+                Reason <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="writeOffReason"
+                placeholder="Enter the reason for writing off this debt..."
+                value={writeOffReason}
+                onChange={(e) => setWriteOffReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {/* Approved By (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="writeOffApprovedBy">Approved By</Label>
+              <Input
+                id="writeOffApprovedBy"
+                placeholder="Name of person who approved"
+                value={writeOffApprovedBy}
+                onChange={(e) => setWriteOffApprovedBy(e.target.value)}
+              />
+            </div>
+
+            {/* Closure Notes (Only for write-off and close) */}
+            {writeOffAndCloseMode && (
+              <div className="space-y-2">
+                <Label htmlFor="writeOffClosureNotes">Closure Notes</Label>
+                <Textarea
+                  id="writeOffClosureNotes"
+                  placeholder="Additional notes for settlement closure..."
+                  value={writeOffClosureNotes}
+                  onChange={(e) => setWriteOffClosureNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            )}
+
+            {/* Warning */}
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <p>
+                This action will create a WRITE_OFF transaction and set the balance to zero.
+                This cannot be undone but the settlement can be reopened later if needed.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setWriteOffDialogOpen(false);
+                resetWriteOffForm();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleWriteOffSubmit}
+              disabled={!writeOffReason.trim() || writeOffMutation.isPending || writeOffAndCloseMutation.isPending}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {(writeOffMutation.isPending || writeOffAndCloseMutation.isPending) ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileX className="mr-2 h-4 w-4" />
+              )}
+              {writeOffAndCloseMode ? 'Write Off & Close' : 'Write Off'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

@@ -199,6 +199,52 @@ export async function getTotalOutstandingBalance(): Promise<number> {
   );
 }
 
+/**
+ * Write off bad debt for a settlement
+ * POST /api/settlements/booking/{bookingId}/write-off
+ * 
+ * Creates a WRITE_OFF transaction to zero the outstanding balance
+ */
+export async function writeOffBadDebt(
+  bookingId: number,
+  reason: string,
+  approvedBy?: string
+): Promise<SettlementSummary> {
+  const url = new URL(`${API_BASE_URL}/api/settlements/booking/${bookingId}/write-off`);
+  url.searchParams.set('reason', reason);
+  if (approvedBy) {
+    url.searchParams.set('approvedBy', approvedBy);
+  }
+  
+  return authenticatedFetch<SettlementSummary>(url.toString(), {
+    method: 'POST',
+  });
+}
+
+/**
+ * Write off bad debt and close settlement in one operation
+ * POST /api/settlements/booking/{bookingId}/write-off-and-close
+ */
+export async function writeOffAndClose(
+  bookingId: number,
+  reason: string,
+  approvedBy?: string,
+  closureNotes?: string
+): Promise<SettlementSummary> {
+  const url = new URL(`${API_BASE_URL}/api/settlements/booking/${bookingId}/write-off-and-close`);
+  url.searchParams.set('reason', reason);
+  if (approvedBy) {
+    url.searchParams.set('approvedBy', approvedBy);
+  }
+  if (closureNotes) {
+    url.searchParams.set('closureNotes', closureNotes);
+  }
+  
+  return authenticatedFetch<SettlementSummary>(url.toString(), {
+    method: 'POST',
+  });
+}
+
 // ============================================================================
 // Settlement Status Helpers
 // ============================================================================
