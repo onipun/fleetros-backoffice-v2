@@ -298,6 +298,38 @@ export function PaymentSummaryCard({
                 Record Payment
               </Button>
             )}
+            {/* Close Settlement button - show when settlement is open */}
+            {showSettlementActions && settlementSummary?.isOpen && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => closeSettlementMutation.mutate()}
+                disabled={closeSettlementMutation.isPending}
+              >
+                {closeSettlementMutation.isPending ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <Lock className="mr-1 h-4 w-4" />
+                )}
+                Close Settlement
+              </Button>
+            )}
+            {/* Reopen Settlement button - show when settlement is closed */}
+            {showSettlementActions && settlementSummary && !settlementSummary.isOpen && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => reopenSettlementMutation.mutate()}
+                disabled={reopenSettlementMutation.isPending}
+              >
+                {reopenSettlementMutation.isPending ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <Unlock className="mr-1 h-4 w-4" />
+                )}
+                Reopen Settlement
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

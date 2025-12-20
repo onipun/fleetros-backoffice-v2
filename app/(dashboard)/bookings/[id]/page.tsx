@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
+import { getSettlementDetails } from '@/lib/api/settlement-api';
 import { formatDateTime } from '@/lib/utils';
 import type { Booking, Offering } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -79,6 +80,15 @@ export default function BookingDetailPage() {
     queryKey: ['booking', bookingId],
     queryFn: async () => hateoasClient.getResource<Booking>('bookings', bookingId),
   });
+
+  // Fetch settlement details to check if settlement is open
+  const { data: settlement } = useQuery({
+    queryKey: ['settlement', bookingId],
+    queryFn: () => getSettlementDetails(Number(bookingId)),
+    enabled: !!bookingId,
+  });
+
+  const isSettlementOpen = settlement?.summary?.isOpen ?? true;
 
   // Fetch applied pricing snapshot
   const { data: pricingSnapshot, isLoading: isPricingLoading } = useQuery({
@@ -408,10 +418,12 @@ export default function BookingDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="default" onClick={() => setManualPaymentDialogOpen(true)}>
-            <CreditCard className="mr-2 h-4 w-4" />
-            Record Payment
-          </Button>
+          {isSettlementOpen && (
+            <Button variant="default" onClick={() => setManualPaymentDialogOpen(true)}>
+              <CreditCard className="mr-2 h-4 w-4" />
+              Record Payment
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setReceiptOpen(true)}>
             <FileText className="mr-2 h-4 w-4" />
             {t('booking.receipt.print')}
@@ -781,6 +793,7 @@ export default function BookingDetailPage() {
         <TabsContent value="payments" className="space-y-6">
           <PaymentSummaryCard
             bookingId={Number(bookingId)}
+            bookingStatus={booking?.status}
             onRecordPayment={() => setManualPaymentDialogOpen(true)}
           />
         </TabsContent>
