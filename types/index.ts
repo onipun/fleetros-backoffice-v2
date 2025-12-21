@@ -818,6 +818,8 @@ export interface VehicleRentalSummary {
   numberOfDays?: number; // Backup field name
   dailyRate: number;
   totalDays?: number;
+  extraHours?: number;
+  hourlyRate?: number;
   amount: number; // Actual API field
   subtotal?: number; // Backup field name
 }
@@ -841,6 +843,9 @@ export interface OfferingSummary {
   unitPrice: number; // Actual API field
   pricePerUnit?: number; // Backup field name
   pricingBasis?: string;
+  applicableDays?: number;
+  extraHours?: number;
+  hourlyRate?: number;
   amount: number; // Actual API field
   totalPrice?: number; // Backup field name
 }
@@ -850,6 +855,7 @@ export interface DiscountSummary {
   discountCode: string;
   discountType: DiscountType;
   discountValue: number;
+  description?: string;
   amountBeforeDiscount: number;
   discountAmount: number;
   amountAfterDiscount: number;

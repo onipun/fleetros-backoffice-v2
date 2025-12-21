@@ -1292,12 +1292,32 @@ export default function EditBookingPage() {
                             </p>
                             <div className="flex justify-between mt-1">
                               <span className="text-green-700 dark:text-green-300">
-                                {rental.days || rental.numberOfDays} days × {formatCurrency(rental.dailyRate)}
+                                {(rental.days || rental.numberOfDays || 0).toFixed(0)} days × {formatCurrency(rental.dailyRate)}
                               </span>
                               <span className="font-semibold">
-                                {formatCurrency(rental.amount || rental.subtotal || 0)}
+                                {formatCurrency((rental.days || rental.numberOfDays || 0) * rental.dailyRate)}
                               </span>
                             </div>
+                            {/* Extra hours for vehicle */}
+                            {rental.extraHours && rental.extraHours > 0 && rental.hourlyRate && (
+                              <div className="flex justify-between mt-1 text-amber-600 dark:text-amber-400">
+                                <span>
+                                  + {rental.extraHours} extra hour{rental.extraHours !== 1 ? 's' : ''} × {formatCurrency(rental.hourlyRate)}
+                                </span>
+                                <span className="font-semibold">
+                                  {formatCurrency(rental.extraHours * rental.hourlyRate)}
+                                </span>
+                              </div>
+                            )}
+                            {/* Total for this vehicle */}
+                            {rental.extraHours && rental.extraHours > 0 && (
+                              <div className="flex justify-between mt-1 pt-1 border-t border-green-300">
+                                <span className="text-green-800 dark:text-green-200 font-medium">Vehicle Total</span>
+                                <span className="font-semibold">
+                                  {formatCurrency(rental.amount || rental.subtotal || 0)}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         ))}
 
@@ -1308,30 +1328,56 @@ export default function EditBookingPage() {
                               Add-ons:
                             </p>
                             {pricingPreview.pricingSummary.offerings.map((offering, idx) => {
-                              const days = computedTotalDays;
+                              const applicableDays = offering.applicableDays || computedTotalDays;
                               const unitPrice = offering.unitPrice || offering.pricePerUnit || 0;
-                              
-                              // Build display text based on pricing basis
-                              let displayText = offering.offeringName;
-                              if (offering.pricingBasis === 'PER_DAY') {
-                                if (offering.quantity > 1) {
-                                  displayText += ` (${offering.quantity} × ${days} ${days === 1 ? 'day' : 'days'} × ${formatCurrency(unitPrice)})`;
-                                } else {
-                                  displayText += ` (${days} ${days === 1 ? 'day' : 'days'} × ${formatCurrency(unitPrice)})`;
-                                }
-                              } else if (offering.quantity > 1) {
-                                displayText += ` (${offering.quantity} × ${formatCurrency(unitPrice)})`;
-                              }
+                              const dailyAmount = offering.quantity * unitPrice * applicableDays;
+                              const hourlyAmount = (offering.extraHours || 0) * (offering.hourlyRate || 0);
                               
                               return (
-                                <div key={idx} className="flex justify-between text-sm">
-                                  <span className="text-green-700 dark:text-green-300">
-                                    {displayText}
-                                  </span>
-                                  <span>{formatCurrency(offering.amount || offering.totalPrice || 0)}</span>
+                                <div key={idx} className="space-y-1">
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-green-700 dark:text-green-300 font-medium">
+                                      {offering.offeringName}
+                                    </span>
+                                    <span className="font-semibold">{formatCurrency(offering.amount || offering.totalPrice || 0)}</span>
+                                  </div>
+                                  {/* Daily breakdown */}
+                                  {offering.pricingBasis === 'PER_DAY' && (
+                                    <div className="flex justify-between text-xs text-green-600 dark:text-green-400 ml-2">
+                                      <span>
+                                        {offering.quantity > 1 ? `${offering.quantity} × ` : ''}{applicableDays.toFixed(0)} day{applicableDays !== 1 ? 's' : ''} × {formatCurrency(unitPrice)}
+                                      </span>
+                                      <span>{formatCurrency(dailyAmount)}</span>
+                                    </div>
+                                  )}
+                                  {/* Flat/other pricing */}
+                                  {offering.pricingBasis !== 'PER_DAY' && offering.quantity > 1 && (
+                                    <div className="flex justify-between text-xs text-green-600 dark:text-green-400 ml-2">
+                                      <span>
+                                        {offering.quantity} × {formatCurrency(unitPrice)}
+                                      </span>
+                                      <span>{formatCurrency(offering.quantity * unitPrice)}</span>
+                                    </div>
+                                  )}
+                                  {/* Extra hours for offering */}
+                                  {offering.extraHours && offering.extraHours > 0 && offering.hourlyRate && (
+                                    <div className="flex justify-between text-xs text-amber-600 dark:text-amber-400 ml-2">
+                                      <span>
+                                        + {offering.extraHours} extra hour{offering.extraHours !== 1 ? 's' : ''} × {formatCurrency(offering.hourlyRate)}
+                                      </span>
+                                      <span>{formatCurrency(hourlyAmount)}</span>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
+                            {/* Add-ons Total */}
+                            <div className="flex justify-between mt-2 pt-1 border-t border-green-300 text-sm">
+                              <span className="text-green-800 dark:text-green-200 font-medium">Add-ons Total</span>
+                              <span className="font-semibold">
+                                {formatCurrency(pricingPreview.pricingSummary.totalOfferingsAmount)}
+                              </span>
+                            </div>
                           </div>
                         )}
 
