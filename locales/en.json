@@ -1066,7 +1066,9 @@
       "noResults": "No offerings match your search.",
       "untitled": "Untitled Offering",
       "selectedSingular": "{count} offering selected",
-      "selectedPlural": "{count} offerings selected"
+      "selectedPlural": "{count} offerings selected",
+      "selectedOfferings": "Selected Offerings",
+      "browseMore": "Browse More Offerings"
     },
     "table": {
       "name": "Name",

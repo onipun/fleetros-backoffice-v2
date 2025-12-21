@@ -762,7 +762,10 @@
       "noResults": "Tiada perkhidmatan sepadan dengan carian anda.",
       "untitled": "Perkhidmatan tanpa nama",
       "selectedSingular": "{count} perkhidmatan dipilih",
-      "selectedPlural": "{count} perkhidmatan dipilih"
+      "selectedPlural": "{count} perkhidmatan dipilih",
+      "selectedOfferingsTitle": "Perkhidmatan Dipilih",
+      "browseMore": "Layari Lagi",
+      "allOfferingsTitle": "Semua Perkhidmatan"
     },
     "table": {
       "name": "Nama",

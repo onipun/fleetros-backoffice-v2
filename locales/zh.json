@@ -770,7 +770,10 @@
       "noResults": "没有符合搜索条件的服务。",
       "untitled": "未命名服务",
       "selectedSingular": "已选择 {count} 项服务",
-      "selectedPlural": "已选择 {count} 项服务"
+      "selectedPlural": "已选择 {count} 项服务",
+      "selectedOfferingsTitle": "已选择的服务",
+      "browseMore": "浏览更多",
+      "allOfferingsTitle": "所有服务"
     },
     "table": {
       "name": "名称",
