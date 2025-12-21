@@ -72,6 +72,7 @@ export interface Invitation {
   firstName: string;
   lastName: string;
   role: string;
+  roleDisplayName?: string;
   status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'CANCELLED';
   invitedByUserId: number;
   invitedByUsername: string;
@@ -79,6 +80,9 @@ export interface Invitation {
   expiresAt: string;
   acceptedAt: string | null;
   invitationToken?: string;
+  customPermissions?: string[];
+  overrideRolePermissions?: boolean;
+  effectivePermissions?: string[];
 }
 
 export interface InviteUserRequest {
@@ -86,6 +90,15 @@ export interface InviteUserRequest {
   role: string;
   firstName: string;
   lastName: string;
+  notes?: string;
+  customPermissions?: string[];
+  overrideRolePermissions?: boolean;
+}
+
+export interface UpdateInvitationPermissionsRequest {
+  role?: string;
+  customPermissions?: string[];
+  overrideRolePermissions?: boolean;
   notes?: string;
 }
 
@@ -431,6 +444,41 @@ export async function updateUserRole(userId: number, request: UpdateRoleRequest)
     if (!response.ok) {
       const error = await response.json();
       return { success: false, error: error.error || 'Failed to update role' };
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Network error' };
+  }
+}
+
+/**
+ * Update pending invitation permissions
+ */
+export async function updateInvitationPermissions(
+  invitationId: number,
+  request: UpdateInvitationPermissionsRequest
+): Promise<ApiResponse<Invitation>> {
+  try {
+    const token = await getAuthToken();
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/account/users/invitations/${invitationId}/permissions`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return { success: false, error: error.error || 'Failed to update invitation permissions' };
     }
 
     const data = await response.json();

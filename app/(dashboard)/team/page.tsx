@@ -1,13 +1,8 @@
 'use client';
 
+import { EditInvitationPermissionsDialog } from '@/components/team/edit-invitation-permissions-dialog';
 import { InviteUserDialog } from '@/components/team/invite-user-dialog';
 import { ManageCustomPermissionsDialog } from '@/components/team/manage-custom-permissions-dialog';
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,7 +49,6 @@ import {
     CheckCircle2,
     Clock,
     CreditCard,
-    Edit,
     FileText,
     FolderTree,
     Loader2,
@@ -68,7 +62,7 @@ import {
     Trash2,
     UserPlus,
     Users,
-    XCircle,
+    XCircle
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -83,6 +77,8 @@ export default function TeamPage() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [customPermissionsDialogOpen, setCustomPermissionsDialogOpen] = useState(false);
   const [selectedMemberForPermissions, setSelectedMemberForPermissions] = useState<TeamMember | null>(null);
+  const [editInvitationDialogOpen, setEditInvitationDialogOpen] = useState(false);
+  const [selectedInvitationForEdit, setSelectedInvitationForEdit] = useState<Invitation | null>(null);
   const { success, error } = useToast();
 
   useEffect(() => {
@@ -372,79 +368,6 @@ export default function TeamPage() {
         </Card>
       )}
 
-      {/* Role Permissions Reference */}
-      {allRoles.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Shield className="h-5 w-5" />
-              Role Permissions Reference
-            </CardTitle>
-            <CardDescription>
-              Quick reference guide for role permissions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible className="w-full">
-              {allRoles
-                .sort((a, b) => (b.hierarchyLevel || 0) - (a.hierarchyLevel || 0))
-                .map((role, index) => (
-                  <AccordionItem key={role.code} value={`role-${index}`}>
-                    <AccordionTrigger className="hover:no-underline">
-                      <div className="flex items-center justify-between w-full pr-4">
-                        <div className="flex items-center gap-3">
-                          <Badge className={getRoleBadgeColor(role.hierarchyLevel || 0)}>
-                            Level {role.hierarchyLevel}
-                          </Badge>
-                          <div className="text-left">
-                            <div className="font-semibold">{role.displayName}</div>
-                            <div className="text-xs text-muted-foreground font-normal">
-                              {role.description}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-xs text-muted-foreground font-normal">
-                          {role.permissions?.length || 0} permissions
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      {role.permissions && role.permissions.length > 0 ? (
-                        <div className="space-y-4 pt-2">
-                          {Object.entries(categorizePermissions(role.permissions)).map(([category, perms]) => (
-                            <div key={category} className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                                {getCategoryIcon(category)}
-                                <span>{category}</span>
-                                <Badge variant="secondary" className="ml-auto text-xs">
-                                  {perms.length}
-                                </Badge>
-                              </div>
-                              <div className="pl-6 space-y-1">
-                                {perms.map((permission) => (
-                                  <div 
-                                    key={permission} 
-                                    className="flex items-center gap-2 text-xs text-muted-foreground py-1"
-                                  >
-                                    <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-                                    <span className="font-mono">{permission}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No permissions assigned</p>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-            </Accordion>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Team Members */}
       <Card>
         <CardHeader>
@@ -526,10 +449,6 @@ export default function TeamPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Change Role
-                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onSelect={() => {
                                 setSelectedMemberForPermissions(member);
@@ -586,7 +505,7 @@ export default function TeamPage() {
                 <TableRow>
                   <TableHead>Email</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Role & Permissions</TableHead>
                   <TableHead>Invited</TableHead>
                   <TableHead>Expires</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -605,7 +524,32 @@ export default function TeamPage() {
                       {invitation.firstName} {invitation.lastName}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{invitation.role}</Badge>
+                      <div className="space-y-1">
+                        <Badge variant="outline">{invitation.roleDisplayName || invitation.role}</Badge>
+                        {invitation.customPermissions && invitation.customPermissions.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {invitation.customPermissions.slice(0, 3).map((perm) => (
+                              <Badge 
+                                key={perm} 
+                                variant="secondary" 
+                                className="text-xs bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                              >
+                                +{perm}
+                              </Badge>
+                            ))}
+                            {invitation.customPermissions.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{invitation.customPermissions.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                        {invitation.overrideRolePermissions && (
+                          <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                            Role Override
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm">
                       {formatDistanceToNow(new Date(invitation.invitedAt), { addSuffix: true })}
@@ -623,6 +567,15 @@ export default function TeamPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setSelectedInvitationForEdit(invitation);
+                              setEditInvitationDialogOpen(true);
+                            }}
+                          >
+                            <Shield className="mr-2 h-4 w-4" />
+                            Edit Permissions
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleResendInvitation(invitation.invitationId)}>
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Resend Invitation
@@ -699,6 +652,14 @@ export default function TeamPage() {
           onPermissionsUpdated={loadTeamMembers}
         />
       )}
+
+      {/* Edit Invitation Permissions Dialog */}
+      <EditInvitationPermissionsDialog
+        open={editInvitationDialogOpen}
+        onOpenChange={setEditInvitationDialogOpen}
+        invitation={selectedInvitationForEdit}
+        onSuccess={loadInvitations}
+      />
     </div>
   );
 }
