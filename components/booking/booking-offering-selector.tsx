@@ -3,6 +3,7 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -50,6 +51,7 @@ export function BookingOfferingSelector({
   const { t, formatCurrency } = useLocale();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [searchMode, setSearchMode] = useState<SearchMode>('simple');
+  const [isAllOfferingsExpanded, setIsAllOfferingsExpanded] = useState(false);
   
   // Search criteria state
   const [searchValue, setSearchValue] = useState('');
@@ -90,6 +92,35 @@ export function BookingOfferingSelector({
       return name.includes(lowered) || description.includes(lowered) || type.includes(lowered);
     });
   }, [offerings, searchValue, showAdvanced]);
+
+  // Separate offerings into package-included/mandatory and other offerings
+  const { packageOfferings, otherOfferings, selectedOfferings } = useMemo(() => {
+    const packageOffs: Offering[] = [];
+    const otherOffs: Offering[] = [];
+    const selectedOffs: Offering[] = [];
+
+    filteredOfferings.forEach((offering) => {
+      const id = offering.id;
+      if (id == null) return;
+      
+      const isIncluded = packageIncludedIds.has(id);
+      const isMandatory = mandatoryOfferingIds.has(id);
+      const isSelected = Boolean(selections[id]);
+      
+      if (isIncluded || isMandatory) {
+        packageOffs.push(offering);
+      } else if (isSelected) {
+        selectedOffs.push(offering);
+      } else {
+        otherOffs.push(offering);
+      }
+    });
+
+    return { packageOfferings: packageOffs, otherOfferings: otherOffs, selectedOfferings: selectedOffs };
+  }, [filteredOfferings, packageIncludedIds, mandatoryOfferingIds, selections]);
+
+  // Determine if we're in search mode (should show all results)
+  const isSearchActive = searchValue.trim().length > 0 || showAdvanced;
 
   /**
    * Execute backend search
@@ -496,135 +527,222 @@ export function BookingOfferingSelector({
         )}
       </div>
 
-      {filteredOfferings.length === 0 ? (
-        <p className="rounded-md border border-dashed border-muted px-4 py-6 text-sm text-muted-foreground">
-          {offerings.length === 0
-            ? t('booking.form.offerings.empty')
-            : t('booking.form.offerings.noResults')}
-        </p>
-      ) : (
-        <div className="grid gap-3">
-          {filteredOfferings.map((offering) => {
-            const id = offering.id;
-            if (id == null) return null;
+      {/* Rendering helper function for offering card */}
+      {(() => {
+        const renderOfferingCard = (offering: Offering) => {
+          const id = offering.id;
+          if (id == null) return null;
 
-            const selection = selections[id];
-            const isIncluded = packageIncludedIds.has(id);
-            const isMandatory = mandatoryOfferingIds.has(id);
-            const isSelected = Boolean(selection);
-            const quantity = selection?.quantity ?? (isIncluded ? 1 : 0);
-            const unitPrice = offering.price ?? 0;
-            const includedQuantity = selection?.included ? 1 : 0;
-            const billableQuantity = Math.max(0, quantity - includedQuantity);
-            const lineTotal = billableQuantity * unitPrice;
-            const fallbackName = offering.name || `${t('offering.unnamedOffering')} #${id}`;
-            const typeLabel = offering.offeringType ? typeLabelMap[offering.offeringType] : undefined;
+          const selection = selections[id];
+          const isIncluded = packageIncludedIds.has(id);
+          const isMandatory = mandatoryOfferingIds.has(id);
+          const isSelected = Boolean(selection);
+          const quantity = selection?.quantity ?? (isIncluded ? 1 : 0);
+          const unitPrice = offering.price ?? 0;
+          const includedQuantity = selection?.included ? 1 : 0;
+          const billableQuantity = Math.max(0, quantity - includedQuantity);
+          const lineTotal = billableQuantity * unitPrice;
+          const fallbackName = offering.name || `${t('offering.unnamedOffering')} #${id}`;
+          const typeLabel = offering.offeringType ? typeLabelMap[offering.offeringType] : undefined;
 
-            return (
-              <div
-                key={id}
-                className={cn(
-                  'rounded-md border p-3 transition-colors',
-                  isSelected ? 'border-primary bg-primary/5' : 'border-muted'
-                )}
-              >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="flex flex-1 gap-3">
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={(checked) => {
-                        if (isIncluded || isMandatory) return;
-                        onToggle(id, Boolean(checked));
-                      }}
-                      className="mt-1"
-                      disabled={isIncluded || isMandatory}
-                    />
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{fallbackName}</span>
-                        {isMandatory && (
-                          <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                            {t('offering.mandatory')}
-                          </span>
-                        )}
-                        {isIncluded && (
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                            {t('booking.form.offerings.packageBadge')}
-                          </span>
-                        )}
-                        {typeLabel && (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            {typeLabel}
-                          </span>
-                        )}
-                      </div>
-                      {offering.description && (
-                        <p className="text-sm text-muted-foreground">{offering.description}</p>
+          return (
+            <div
+              key={id}
+              className={cn(
+                'rounded-md border p-3 transition-colors',
+                isSelected ? 'border-primary bg-primary/5' : 'border-muted'
+              )}
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-1 gap-3">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={(checked) => {
+                      if (isIncluded || isMandatory) return;
+                      onToggle(id, Boolean(checked));
+                    }}
+                    className="mt-1"
+                    disabled={isIncluded || isMandatory}
+                  />
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{fallbackName}</span>
+                      {isMandatory && (
+                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                          {t('offering.mandatory')}
+                        </span>
                       )}
-                      <div className="flex flex-col gap-1">
-                        <p className="text-xs text-muted-foreground">
-                          {`${t('booking.form.offerings.unitPriceLabel')}: ${formatCurrency(unitPrice)}`}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {`Max quantity: ${offering.maxQuantityPerBooking}`}
-                        </p>
-                      </div>
+                      {isIncluded && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                          {t('booking.form.offerings.packageBadge')}
+                        </span>
+                      )}
+                      {typeLabel && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          {typeLabel}
+                        </span>
+                      )}
+                    </div>
+                    {offering.description && (
+                      <p className="text-sm text-muted-foreground">{offering.description}</p>
+                    )}
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs text-muted-foreground">
+                        {`${t('booking.form.offerings.unitPriceLabel')}: ${formatCurrency(unitPrice)}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {`Max quantity: ${offering.maxQuantityPerBooking}`}
+                      </p>
                     </div>
                   </div>
-
-                  {isSelected && (
-                    <div className="flex flex-col items-start gap-2 md:w-48">
-                      <div className="space-y-1 w-full">
-                        <Label className="text-xs text-muted-foreground">{t('booking.form.offerings.quantity')}</Label>
-                        <Input
-                          type="number"
-                          min={selection?.included ? 1 : 1}
-                          max={offering.maxQuantityPerBooking}
-                          value={quantity}
-                          onChange={(event) => {
-                            const nextQuantity = Number.parseInt(event.target.value, 10);
-                            const minQuantity = selection?.included ? 1 : 1;
-                            const maxQuantity = offering.maxQuantityPerBooking;
-                            const safeQuantity = Number.isNaN(nextQuantity)
-                              ? minQuantity
-                              : Math.max(minQuantity, Math.min(nextQuantity, maxQuantity));
-                            onQuantityChange(id, safeQuantity);
-                          }}
-                        />
-                        {selection?.included && (
-                          <p className="text-xs text-muted-foreground">
-                            {t('booking.form.offerings.packageHint')}
-                          </p>
-                        )}
-                        {offering.maxQuantityPerBooking > 1 && (
-                          <p className="text-xs text-muted-foreground">
-                            {`Max: ${offering.maxQuantityPerBooking}`}
-                          </p>
-                        )}
-                      </div>
-                      <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-                        {billableQuantity > 0
-                          ? `${billableQuantity} ${t('booking.form.offerings.billableLabel')} × ${formatCurrency(unitPrice)} = ${formatCurrency(lineTotal)}`
-                          : t('booking.form.offerings.noCharge')}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                {!isSelected && !isIncluded && !isMandatory && (
-                  <button
-                    type="button"
-                    className="mt-3 text-sm font-medium text-primary hover:underline"
-                    onClick={() => onToggle(id, true)}
-                  >
-                    {t('booking.form.offerings.addAction')}
-                  </button>
+                {isSelected && (
+                  <div className="flex flex-col items-start gap-2 md:w-48">
+                    <div className="space-y-1 w-full">
+                      <Label className="text-xs text-muted-foreground">{t('booking.form.offerings.quantity')}</Label>
+                      <Input
+                        type="number"
+                        min={selection?.included ? 1 : 1}
+                        max={offering.maxQuantityPerBooking}
+                        value={quantity}
+                        onChange={(event) => {
+                          const nextQuantity = Number.parseInt(event.target.value, 10);
+                          const minQuantity = selection?.included ? 1 : 1;
+                          const maxQuantity = offering.maxQuantityPerBooking;
+                          const safeQuantity = Number.isNaN(nextQuantity)
+                            ? minQuantity
+                            : Math.max(minQuantity, Math.min(nextQuantity, maxQuantity));
+                          onQuantityChange(id, safeQuantity);
+                        }}
+                      />
+                      {selection?.included && (
+                        <p className="text-xs text-muted-foreground">
+                          {t('booking.form.offerings.packageHint')}
+                        </p>
+                      )}
+                      {offering.maxQuantityPerBooking > 1 && (
+                        <p className="text-xs text-muted-foreground">
+                          {`Max: ${offering.maxQuantityPerBooking}`}
+                        </p>
+                      )}
+                    </div>
+                    <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                      {billableQuantity > 0
+                        ? `${billableQuantity} ${t('booking.form.offerings.billableLabel')} × ${formatCurrency(unitPrice)} = ${formatCurrency(lineTotal)}`
+                        : t('booking.form.offerings.noCharge')}
+                    </div>
+                  </div>
                 )}
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {!isSelected && !isIncluded && !isMandatory && (
+                <button
+                  type="button"
+                  className="mt-3 text-sm font-medium text-primary hover:underline"
+                  onClick={() => onToggle(id, true)}
+                >
+                  {t('booking.form.offerings.addAction')}
+                </button>
+              )}
+            </div>
+          );
+        };
+
+        // When search is active, show all filtered results in a flat list
+        if (isSearchActive) {
+          return filteredOfferings.length === 0 ? (
+            <p className="rounded-md border border-dashed border-muted px-4 py-6 text-sm text-muted-foreground">
+              {offerings.length === 0
+                ? t('booking.form.offerings.empty')
+                : t('booking.form.offerings.noResults')}
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              {filteredOfferings.map(renderOfferingCard)}
+            </div>
+          );
+        }
+
+        // Default view: show package offerings first, then collapsible section for other offerings
+        return (
+          <div className="space-y-4">
+            {/* Package-included and Mandatory offerings (always visible) */}
+            {(packageOfferings.length > 0 || selectedOfferings.length > 0) && (
+              <div className="space-y-3">
+                {packageOfferings.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      {t('booking.form.offerings.packageIncluded') || 'Package Included'}
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        {packageOfferings.length}
+                      </span>
+                    </h4>
+                    <div className="grid gap-3">
+                      {packageOfferings.map(renderOfferingCard)}
+                    </div>
+                  </div>
+                )}
+
+                {/* User-selected offerings (always visible) */}
+                {selectedOfferings.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Tag className="h-4 w-4" />
+                      {t('booking.form.offerings.selected') || 'Selected Add-ons'}
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        {selectedOfferings.length}
+                      </span>
+                    </h4>
+                    <div className="grid gap-3">
+                      {selectedOfferings.map(renderOfferingCard)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Other offerings (collapsible) */}
+            {otherOfferings.length > 0 && (
+              <Collapsible open={isAllOfferingsExpanded} onOpenChange={setIsAllOfferingsExpanded}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      {t('booking.form.offerings.browseMore') || 'Browse More Add-ons'}
+                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                        {otherOfferings.length}
+                      </span>
+                    </span>
+                    {isAllOfferingsExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3">
+                  <div className="grid gap-3">
+                    {otherOfferings.map(renderOfferingCard)}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
+            {/* Empty state when no offerings at all */}
+            {packageOfferings.length === 0 && selectedOfferings.length === 0 && otherOfferings.length === 0 && (
+              <p className="rounded-md border border-dashed border-muted px-4 py-6 text-sm text-muted-foreground">
+                {t('booking.form.offerings.empty')}
+              </p>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
