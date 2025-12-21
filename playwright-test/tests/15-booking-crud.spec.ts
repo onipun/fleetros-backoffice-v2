@@ -250,7 +250,7 @@ test.describe('Booking CRUD Operations', () => {
     
     await test.step('Get access token from session', async () => {
       await authenticatedPage.goto('/bookings');
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       
       // Get access token from session
       const sessionResponse = await authenticatedPage.request.get('/api/auth/session');
@@ -301,14 +301,14 @@ test.describe('Booking CRUD Operations', () => {
       return;
     }
     await authenticatedPage.goto('/bookings');
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState('domcontentloaded');
   });
 
   test('BOOK-001: Navigate to Bookings Page', async ({ 
     authenticatedPage
   }) => {
     await test.step('Verify bookings page loads correctly', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       
       // Check page title
       await expect(authenticatedPage.locator('h1').first()).toContainText(/Booking/i);
@@ -325,7 +325,7 @@ test.describe('Booking CRUD Operations', () => {
   }) => {
     await test.step('Click New Booking button', async () => {
       await bookingsListPage.clickNewBooking();
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
     });
 
     await test.step('Verify form loads', async () => {
@@ -342,7 +342,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Verify bookings table is displayed', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       await authenticatedPage.waitForTimeout(2000);
       
       // Table should be visible since we created a booking
@@ -363,7 +363,7 @@ test.describe('Booking CRUD Operations', () => {
 
     await test.step('Navigate to the test booking', async () => {
       await authenticatedPage.goto(`/bookings/${testResources.bookingId}`);
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
     });
 
     await test.step('Verify booking detail page elements', async () => {
@@ -396,7 +396,7 @@ test.describe('Booking CRUD Operations', () => {
 
     await test.step('Navigate to the test booking', async () => {
       await authenticatedPage.goto(`/bookings/${testResources.bookingId}`);
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
     });
 
     await test.step('View booking history tab', async () => {
@@ -422,7 +422,7 @@ test.describe('Booking CRUD Operations', () => {
 
     await test.step('Navigate to the test booking', async () => {
       await authenticatedPage.goto(`/bookings/${testResources.bookingId}`);
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
     });
 
     await test.step('View payments tab', async () => {
@@ -448,7 +448,7 @@ test.describe('Booking CRUD Operations', () => {
 
     await test.step('Navigate to the test booking', async () => {
       await authenticatedPage.goto(`/bookings/${testResources.bookingId}`);
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
     });
 
     await test.step('Verify Record Payment button exists', async () => {
@@ -478,7 +478,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Search for the test booking by ID', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
 
       // Click "By ID" button (the button has Hash icon and text "By ID")
       const byIdButton = authenticatedPage.getByRole('button', { name: /by id/i });
@@ -511,7 +511,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Search for non-existent booking', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
 
       const byIdButton = authenticatedPage.getByRole('button', { name: /by id/i });
       await expect(byIdButton).toBeVisible({ timeout: 5000 });
@@ -559,7 +559,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Check pagination controls', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
 
       const nextButton = authenticatedPage.locator('button:has-text("Next")');
       const prevButton = authenticatedPage.locator('button:has-text("Previous")');
@@ -580,7 +580,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Verify status badges in list', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       
       const tableRows = authenticatedPage.locator('table tbody tr');
       await expect(tableRows.first()).toBeVisible({ timeout: 10000 });
@@ -602,7 +602,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Verify amount column exists', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       
       const tableRows = authenticatedPage.locator('table tbody tr');
       await expect(tableRows.first()).toBeVisible({ timeout: 10000 });
@@ -621,7 +621,7 @@ test.describe('Booking CRUD Operations', () => {
 
     await test.step('Navigate to booking and back', async () => {
       await authenticatedPage.goto(`/bookings/${testResources.bookingId}`);
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       await bookingDetailPage.waitForPageLoad();
 
       // Click back button
@@ -639,7 +639,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Verify customer column exists', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       
       const tableRows = authenticatedPage.locator('table tbody tr');
       await expect(tableRows.first()).toBeVisible({ timeout: 10000 });
@@ -656,7 +656,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(30000);
 
     await test.step('Verify dates column exists', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       
       const tableRows = authenticatedPage.locator('table tbody tr');
       await expect(tableRows.first()).toBeVisible({ timeout: 10000 });
@@ -674,7 +674,7 @@ test.describe('Booking CRUD Operations', () => {
     test.setTimeout(60000);
 
     await test.step('Click View button on first row', async () => {
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState('domcontentloaded');
       
       const tableRows = authenticatedPage.locator('table tbody tr');
       await expect(tableRows.first()).toBeVisible({ timeout: 10000 });

@@ -27,7 +27,7 @@ export class DiscountsListPage {
 
   async goto() {
     await this.page.goto('/discounts');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async clickAddDiscount() {
@@ -61,7 +61,7 @@ export class DiscountsListPage {
 
   async verifyDiscountExists(code: string) {
     // Just verify page has loaded with some discounts
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     const rows = this.page.locator('table tbody tr');
     const count = await rows.count();
     expect(count).toBeGreaterThan(0);
@@ -78,7 +78,7 @@ export class DiscountsListPage {
     await editButton.click({ timeout: 5000 }).catch(() => {
       throw new Error(`Discount "${code}" not found on current page`);
     });
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async deleteDiscount(code: string) {

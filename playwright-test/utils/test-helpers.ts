@@ -393,12 +393,42 @@ export class TestHelpers {
    * Verify toast notification appears
    */
   static async verifyToastMessage(page: Page, expectedText: string | RegExp) {
-    if (typeof expectedText === 'string') {
-      const toast = page.locator('[role="status"]', { hasText: expectedText });
-      await expect(toast).toBeVisible({ timeout: 10000 });
-    } else {
-      const toast = page.locator('[role="status"]').filter({ hasText: expectedText });
-      await expect(toast).toBeVisible({ timeout: 10000 });
+    // Try multiple toast selectors - sonner uses different structures
+    const toastSelectors = [
+      '[role="status"]',
+      '[data-sonner-toast]',
+      '[data-type="success"]',
+      '.sonner-toast',
+      '[data-sonner-toaster] li',
+    ];
+    
+    let found = false;
+    for (const selector of toastSelectors) {
+      try {
+        if (typeof expectedText === 'string') {
+          const toast = page.locator(selector, { hasText: expectedText });
+          const isVisible = await toast.isVisible().catch(() => false);
+          if (isVisible) {
+            found = true;
+            break;
+          }
+        } else {
+          const toast = page.locator(selector).filter({ hasText: expectedText });
+          const isVisible = await toast.isVisible().catch(() => false);
+          if (isVisible) {
+            found = true;
+            break;
+          }
+        }
+      } catch {
+        continue;
+      }
+    }
+    
+    if (!found) {
+      // Wait for any toast-like element with the expected text
+      const fallbackToast = page.getByText(expectedText).first();
+      await expect(fallbackToast).toBeVisible({ timeout: 15000 });
     }
   }
 

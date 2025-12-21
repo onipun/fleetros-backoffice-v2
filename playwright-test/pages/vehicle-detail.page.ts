@@ -54,7 +54,7 @@ export class VehicleDetailPage {
       await dialog.accept();
     });
     await this.deleteButton.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async cancelDelete() {
@@ -221,7 +221,7 @@ export class VehicleDetailPage {
     
     // Wait for UI to update
     await TestHelpers.delay(2000);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async getImageCount(): Promise<number> {

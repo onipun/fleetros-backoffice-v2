@@ -91,7 +91,7 @@ export class OfferingsListPage {
       ]);
       
       // Wait for table to update
-      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForLoadState('domcontentloaded');
       await this.page.waitForTimeout(2000);
     } else {
       // Old search component (fallback)
@@ -132,7 +132,7 @@ export class OfferingsListPage {
   async verifyOfferingExists(offeringName: string) {
     // Just check that we can get a count > 0, assuming offering was created
     // The old UI has search issues, so we'll just verify the page loaded
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     const count = await this.getOfferingsCount();
     expect(count).toBeGreaterThan(0);
   }

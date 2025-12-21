@@ -70,11 +70,11 @@ export class BookingFormPage {
 
   async goto() {
     await this.page.goto('/bookings/new');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async waitForFormLoad() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await TestHelpers.delay(500);
   }
 
@@ -85,7 +85,7 @@ export class BookingFormPage {
     await this.page.waitForTimeout(500);
     
     // Wait for vehicle list to load
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     
     // Select the vehicle by clicking on it
     const vehicleOption = this.page.locator(`[data-vehicle-id="${vehicleId}"], button:has-text("Select"):near(:text("#${vehicleId}"))`).first();

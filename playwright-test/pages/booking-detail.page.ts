@@ -47,11 +47,11 @@ export class BookingDetailPage {
 
   async goto(bookingId: string) {
     await this.page.goto(`/bookings/${bookingId}`);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async waitForPageLoad() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await expect(this.bookingTitle).toBeVisible({ timeout: 10000 });
   }
 

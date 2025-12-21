@@ -69,7 +69,7 @@ export class PackagesListPage {
    */
   async verifyPackageExists(name: string) {
     // Just verify page has loaded with some packages
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await this.page.waitForTimeout(500);
     const count = await this.getPackagesCount();
     expect(count).toBeGreaterThan(0);

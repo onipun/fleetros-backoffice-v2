@@ -16,6 +16,7 @@ import { OfferingFormPage } from '../pages/offering-form.page';
 import { OfferingsListPage } from '../pages/offerings-list.page';
 import { PackageFormPage } from '../pages/package-form.page';
 import { PackagesListPage } from '../pages/packages-list.page';
+import { PaymentsListPage } from '../pages/payments-list.page';
 import { RegisterPage } from '../pages/register.page';
 import { VehicleDetailPage } from '../pages/vehicle-detail.page';
 import { VehicleFormPage } from '../pages/vehicle-form.page';
@@ -45,6 +46,7 @@ type VehicleFixtures = {
   bookingsListPage: BookingsListPage;
   bookingFormPage: BookingFormPage;
   bookingDetailPage: BookingDetailPage;
+  paymentsListPage: PaymentsListPage;
   authenticatedPage: Page;
   testImagePath: string;
   testVehicleData: ReturnType<typeof TestHelpers.generateVehicleData>;
@@ -147,6 +149,11 @@ export const test = base.extend<VehicleFixtures>({
   bookingDetailPage: async ({ page }, use) => {
     const bookingDetailPage = new BookingDetailPage(page);
     await use(bookingDetailPage);
+  },
+
+  paymentsListPage: async ({ page }, use) => {
+    const paymentsListPage = new PaymentsListPage(page);
+    await use(paymentsListPage);
   },
 
   authenticatedPage: async ({ page }, use) => {

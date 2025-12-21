@@ -57,12 +57,12 @@ export class VehicleFormPage {
 
   async gotoNew() {
     await this.page.goto('/vehicles/new');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async gotoEdit(vehicleId: string | number) {
     await this.page.goto(`/vehicles/${vehicleId}/edit`);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async fillStep1(data: {
@@ -316,7 +316,7 @@ export class VehicleFormPage {
   }
 
   async waitForFormLoad() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await this.nameInput.waitFor({ state: 'visible', timeout: 10000 });
   }
 }

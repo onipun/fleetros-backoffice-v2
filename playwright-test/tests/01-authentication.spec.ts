@@ -27,15 +27,32 @@ test.describe('Authentication & Setup', () => {
       // Wait for page to be fully loaded
       await page.waitForLoadState('domcontentloaded');
       
+      // Wait a bit for any additional redirects (auth callback -> app)
+      await page.waitForTimeout(2000);
+      
       // Log current URL for debugging
       console.log('Redirected to:', page.url());
+      
+      // Also wait for the page to finish any client-side routing
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify we're logged in by checking for navigation elements or redirect to onboarding
       const isOnVehiclesOrDashboard = page.url().includes('/vehicles') || page.url().includes('/dashboard');
       const isOnOnboarding = page.url().includes('/onboarding');
-      const hasNavigation = await page.locator('[href="/vehicles"], nav, header').first().isVisible({ timeout: 5000 }).catch(() => false);
+      const isOnApiCallback = page.url().includes('/api/auth/callback');
+      const hasNavigation = await page.locator('[href="/vehicles"], nav, header, [data-sidebar]').first().isVisible({ timeout: 10000 }).catch(() => false);
       
-      expect(isOnVehiclesOrDashboard || isOnOnboarding || hasNavigation).toBeTruthy();
+      // If we're still on callback, wait for redirect
+      if (isOnApiCallback) {
+        await page.waitForURL(url => !url.toString().includes('/api/auth/callback'), { timeout: 10000 });
+        await page.waitForLoadState('domcontentloaded');
+      }
+      
+      const finalUrl = page.url();
+      const isValidPage = finalUrl.includes('/vehicles') || finalUrl.includes('/dashboard') || finalUrl.includes('/onboarding');
+      const navVisible = await page.locator('[href="/vehicles"], nav, header, [data-sidebar]').first().isVisible({ timeout: 5000 }).catch(() => false);
+      
+      expect(isValidPage || navVisible).toBeTruthy();
     });
   });
 

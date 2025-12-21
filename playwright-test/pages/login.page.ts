@@ -50,7 +50,7 @@ export class LoginPage {
     await this.keycloakLoginButton.click();
     
     // Wait for redirect back to application
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async verifyErrorMessage(text: string) {

@@ -30,7 +30,7 @@ export class BookingsListPage {
 
   async goto() {
     await this.page.goto('/bookings');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async clickNewBooking() {
@@ -73,7 +73,7 @@ export class BookingsListPage {
   }
 
   async verifyBookingExists(bookingId: string) {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     const row = this.page.locator(`tr:has-text("#${bookingId}")`);
     await expect(row).toBeVisible({ timeout: 10000 });
   }
@@ -97,7 +97,7 @@ export class BookingsListPage {
   }
 
   async getBookingCount(): Promise<number> {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     const rows = this.page.locator('table tbody tr');
     return await rows.count();
   }

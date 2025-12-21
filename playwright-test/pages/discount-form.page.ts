@@ -43,12 +43,12 @@ export class DiscountFormPage {
 
   async gotoNew() {
     await this.page.goto('/discounts/new');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async gotoEdit(discountId: string | number) {
     await this.page.goto(`/discounts/${discountId}/edit`);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async fillForm(data: {
@@ -209,11 +209,11 @@ export class DiscountFormPage {
 
   async clickSubmit() {
     await this.submitButton.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async waitForFormLoad() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await this.codeInput.waitFor({ state: 'visible', timeout: 10000 });
   }
 }

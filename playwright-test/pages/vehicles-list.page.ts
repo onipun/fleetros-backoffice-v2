@@ -33,7 +33,7 @@ export class VehiclesListPage {
 
   async goto() {
     await this.page.goto('/vehicles');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async clickAddVehicle() {
@@ -44,7 +44,7 @@ export class VehiclesListPage {
 
   async searchVehicle(searchTerm: string) {
     // Wait for page to be fully loaded
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await TestHelpers.delay(500);
     
     // Check if search input is already visible (a search mode was already selected)
@@ -74,7 +74,7 @@ export class VehiclesListPage {
     await searchButton.click();
     
     await TestHelpers.delay(1500); // Wait for search to complete
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async getVehicleCardByName(name: string): Promise<Locator> {
@@ -83,12 +83,12 @@ export class VehiclesListPage {
 
   async clickVehicleByName(name: string) {
     await this.page.locator(`text=${name}`).click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async verifyVehicleExists(name: string) {
     // Wait for page to load
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await TestHelpers.delay(1000);
     
     // Look for exact vehicle name match - use getByRole for CardTitle (h3)
@@ -100,7 +100,7 @@ export class VehiclesListPage {
     
     if (!isVisible) {
       console.log(`Vehicle "${name}" not found on first attempt, reloading page...`);
-      await this.page.reload({ waitUntil: 'networkidle' });
+      await this.page.reload({ waitUntil: 'domcontentloaded' });
       await TestHelpers.delay(1500);
     }
     
@@ -109,7 +109,7 @@ export class VehiclesListPage {
 
   async searchAndVerifyVehicle(name: string) {
     // Wait for page to be fully loaded
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await TestHelpers.delay(500);
     
     // Click "By Name" button to switch to name search mode
@@ -146,7 +146,7 @@ export class VehiclesListPage {
       
       // Wait for search API call to complete and results to render
       await TestHelpers.delay(1500);
-      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForLoadState('domcontentloaded');
       await TestHelpers.delay(500); // Extra time for UI to update
       console.log(`Search completed and results loaded`);
     } else {
@@ -158,13 +158,13 @@ export class VehiclesListPage {
   }
 
   async verifyVehicleNotExists(name: string) {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     const vehicleLocator = this.page.locator(`:text("${name}")`);
     await expect(vehicleLocator).not.toBeVisible();
   }
 
   async getVehicleCount(): Promise<number> {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await TestHelpers.delay(500);
     
     // Wait for either vehicles to load or empty state
@@ -178,7 +178,7 @@ export class VehiclesListPage {
   }
 
   async waitForVehiclesToLoad() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await this.loadingSkeleton.first().waitFor({ state: 'hidden', timeout: 10000 }).catch(() => null);
   }
 
@@ -228,7 +228,7 @@ export class VehiclesListPage {
       if (await searchButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await searchButton.click();
         await TestHelpers.delay(1500);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
       }
     }
   }
@@ -267,7 +267,7 @@ export class VehiclesListPage {
       if (await searchButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await searchButton.click();
         await TestHelpers.delay(1500);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
       }
     }
   }
@@ -284,7 +284,7 @@ export class VehiclesListPage {
       if (await searchButton.isVisible({ timeout: 3000 }).catch(() => false)) {
         await searchButton.click();
         await TestHelpers.delay(1500);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
       }
     }
   }
