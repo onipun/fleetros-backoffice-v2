@@ -55,6 +55,7 @@
     "required": "*",
     "optional": "Optional",
     "notAvailable": "Not available",
+    "none": "None",
     "seconds": "seconds",
     "yes": "Yes",
     "no": "No",

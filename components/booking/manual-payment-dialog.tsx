@@ -19,56 +19,56 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import {
-  getPaymentMethodInfo,
-  getPaymentStatusColor,
-  getPaymentSummary,
-  PAYMENT_METHODS,
-  recordManualPayment,
-  recordManualPaymentWithReceipt,
-  type ManualPaymentRequest,
-  type ManualPaymentResponse,
-  type PaymentMethodType
+    getPaymentMethodInfo,
+    getPaymentStatusColor,
+    getPaymentSummary,
+    PAYMENT_METHODS,
+    recordManualPayment,
+    recordManualPaymentWithReceipt,
+    type ManualPaymentRequest,
+    type ManualPaymentResponse,
+    type PaymentMethodType
 } from '@/lib/api/manual-payment';
 import { cn } from '@/lib/utils';
 import {
-  getTransactionTypeInfo,
-  TRANSACTION_TYPES,
-  type TransactionType,
-  type TransactionTypeInfo,
+    getTransactionTypeInfo,
+    TRANSACTION_TYPES,
+    type TransactionType,
+    type TransactionTypeInfo,
 } from '@/types/settlement';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  DollarSign,
-  History,
-  Loader2,
-  Receipt,
-  Upload,
-  X,
+    AlertCircle,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    DollarSign,
+    History,
+    Loader2,
+    Receipt,
+    Upload,
+    X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -157,7 +157,7 @@ export function ManualPaymentDialog({
       setAmount(balance > 0 ? balance.toFixed(2) : '');
       setPaymentMethod('CASH');
       // Auto-set transaction type based on booking status
-      setTransactionType(isBookingCompleted ? 'DAMAGE_CHARGE' : 'ADVANCE_PAYMENT');
+      setTransactionType(isBookingCompleted ? 'FINAL_SETTLEMENT' : 'ADVANCE_PAYMENT');
       setReferenceNumber('');
       setPaymentDate('');
       setNotes('');
@@ -509,28 +509,32 @@ export function ManualPaymentDialog({
                 <SelectValue placeholder="Select transaction type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Pre-Rental</SelectLabel>
-                  {TRANSACTION_TYPES.filter(t => t.category === 'pre-rental').map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <span className="flex items-center gap-2">
-                        <span>{type.icon}</span>
-                        <span>{type.label}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>During Rental</SelectLabel>
-                  {TRANSACTION_TYPES.filter(t => t.category === 'during-rental').map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <span className="flex items-center gap-2">
-                        <span>{type.icon}</span>
-                        <span>{type.label}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
+                {!isBookingCompleted && (
+                  <>
+                    <SelectGroup>
+                      <SelectLabel>Pre-Rental</SelectLabel>
+                      {TRANSACTION_TYPES.filter(t => t.category === 'pre-rental').map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <span className="flex items-center gap-2">
+                            <span>{type.icon}</span>
+                            <span>{type.label}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel>During Rental</SelectLabel>
+                      {TRANSACTION_TYPES.filter(t => t.category === 'during-rental').map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <span className="flex items-center gap-2">
+                            <span>{type.icon}</span>
+                            <span>{type.label}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </>
+                )}
                 <SelectGroup>
                   <SelectLabel>Completion</SelectLabel>
                   {TRANSACTION_TYPES.filter(t => t.category === 'completion').map((type) => (
