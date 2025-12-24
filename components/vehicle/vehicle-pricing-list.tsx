@@ -3,12 +3,19 @@
 import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TagInput } from '@/components/ui/tag-input';
-import { usePricingTags } from '@/lib/api/hooks';
 import { formatDate } from '@/lib/utils';
 import type { Pricing } from '@/types';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, ChevronLeft, ChevronRight, DollarSign, Edit, Filter, Loader2, Tag, Trash2, X } from 'lucide-react';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Edit,
+  Loader2,
+  Tag,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -32,17 +39,12 @@ interface SearchPricingResponse {
 
 export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehiclePricingListProps) {
   const { t, formatCurrency } = useLocale();
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(0); // 0-based page index
   const PAGE_SIZE = 5;
 
-  // Fetch existing tags for autocomplete
-  const { data: existingTags = [] } = usePricingTags();
-
-  // Fetch pricings for this vehicle with optional tag filter
+  // Fetch pricings for this vehicle
   const { data: pricingsResponse, isLoading, isFetching } = useQuery({
-    queryKey: ['vehicle', vehicleId, 'pricings', selectedTags, currentPage],
+    queryKey: ['vehicle', vehicleId, 'pricings', currentPage],
     queryFn: async () => {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
       
@@ -53,11 +55,6 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
         size: String(PAGE_SIZE),
         sort: 'validFrom,desc',
       });
-      
-      // Add tag filter if tags are selected
-      if (selectedTags.length > 0) {
-        params.append('anyTag', selectedTags.join(','));
-      }
       
       const url = `${API_BASE_URL}/api/v1/pricings/search?${params.toString()}`;
       
@@ -101,10 +98,6 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
   const isRefetching = isFetching && !isLoading;
 
   const displayPricings = useMemo(() => {
-    if (selectedTags.length > 0) {
-      return pricings;
-    }
-
     const sorted = [...pricings].sort((a, b) => {
       const aDefault = a.isDefault ? 1 : 0;
       const bDefault = b.isDefault ? 1 : 0;
@@ -119,12 +112,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
     });
 
     return sorted;
-  }, [pricings, selectedTags]);
-
-  const handleClearFilters = () => {
-    setSelectedTags([]);
-    setCurrentPage(0); // Reset to first page
-  };
+  }, [pricings]);
 
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -136,12 +124,6 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
     }
-  };
-
-  // Reset to first page when filters change
-  const handleTagsChange = (tags: string[]) => {
-    setSelectedTags(tags);
-    setCurrentPage(0);
   };
 
   if (isLoading) {
@@ -167,20 +149,6 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
               {t('common.showing')} {displayPricings.length} {t('common.of')} {totalElements} {t('pricing.titlePlural')}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShowFilter(!showFilter);
-            }}
-            type="button"
-            className="gap-2"
-          >
-            <Filter className="h-4 w-4" />
-            {showFilter ? t('pricing.hideFilter') : t('pricing.filterByTags')}
-          </Button>
         </div>
       </CardHeader>
       <CardContent className="relative">
@@ -189,65 +157,13 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         )}
-        {/* Filter Section */}
-        {showFilter && (
-          <div className="mb-4 p-4 border rounded-lg bg-muted/50">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">{t('pricing.filterByTags')}</label>
-                {selectedTags.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleClearFilters();
-                    }}
-                    type="button"
-                    className="h-8 text-xs"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    {t('common.clear')}
-                  </Button>
-                )}
-              </div>
-              <TagInput
-                value={selectedTags}
-                onChange={handleTagsChange}
-                placeholder={t('pricing.selectTags')}
-                suggestions={existingTags}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('pricing.filterDescription')}
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Pricings List */}
-  {displayPricings.length === 0 ? (
+        {displayPricings.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground">
-              {selectedTags.length > 0
-                ? t('vehicle.noPricingsFiltered')
-                : t('vehicle.noPricings')}
+              {t('vehicle.noPricings')}
             </p>
-            {selectedTags.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleClearFilters();
-                }}
-                type="button"
-                className="mt-3"
-              >
-                {t('common.clearFilters')}
-              </Button>
-            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -277,7 +193,7 @@ export function VehiclePricingList({ vehicleId, onDelete, isDeleting }: VehicleP
                         </span>
                         {pricing.isDefault && (
                           <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary">
-                            {t('pricing.defaultBadge')}
+                            Default {pricing.rateType}
                           </span>
                         )}
                       </div>

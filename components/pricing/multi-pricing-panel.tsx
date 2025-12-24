@@ -73,12 +73,15 @@ export function MultiPricingPanel({
   };
 
   const handleRemovePricing = (index: number) => {
+    const removedPricing = pricings[index];
     const updatedPricings = pricings.filter((_, i) => i !== index);
     
-    // If we removed the default pricing and there are still pricings left,
-    // make the first one default
-    if (pricings[index].isDefault && updatedPricings.length > 0) {
-      updatedPricings[0].isDefault = true;
+    // If we removed a default pricing, find another pricing with the same rateType to make default
+    if (removedPricing.isDefault && updatedPricings.length > 0) {
+      const sameRateTypePricing = updatedPricings.find(p => p.rateType === removedPricing.rateType);
+      if (sameRateTypePricing) {
+        sameRateTypePricing.isDefault = true;
+      }
     }
     
     setPricings(updatedPricings);
@@ -97,10 +100,19 @@ export function MultiPricingPanel({
       }
     }
     
-    // If this pricing is being set as default, unset all others
+    // If this pricing is being set as default, unset others with the same rateType only
     if (data.isDefault && !pricings[index].isDefault) {
       updatedPricings.forEach((p, i) => {
-        if (i !== index) {
+        if (i !== index && p.rateType === data.rateType) {
+          p.isDefault = false;
+        }
+      });
+    }
+    
+    // If rateType changed and this is default, check if there's already a default for the new rateType
+    if (data.rateType !== previousData.rateType && data.isDefault) {
+      updatedPricings.forEach((p, i) => {
+        if (i !== index && p.rateType === data.rateType && p.isDefault) {
           p.isDefault = false;
         }
       });
@@ -112,10 +124,12 @@ export function MultiPricingPanel({
   };
 
   const isValidPricing = (pricing: PricingFormData): boolean => {
+    // Pricing is valid if it has a base rate > 0 AND either:
+    // - neverExpires is true, OR
+    // - both validFrom and validTo are set
     return (
       pricing.baseRate > 0 &&
-      pricing.validFrom !== '' &&
-      pricing.validTo !== ''
+      (pricing.neverExpires || (pricing.validFrom !== '' && pricing.validTo !== ''))
     );
   };
 
@@ -164,7 +178,7 @@ export function MultiPricingPanel({
                       </div>
                       {pricing.isDefault && (
                         <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
-                          {t('pricing.defaultPricing')}
+                          Default {pricing.rateType}
                         </span>
                       )}
                       {isValidPricing(pricing) && (

@@ -7,7 +7,6 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TagInput } from '@/components/ui/tag-input';
 import type { PricingFormData } from '@/lib/validations/schemas';
 import { DollarSign } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -19,7 +18,6 @@ interface PricingPanelProps {
   onDataChange?: (data: PricingFormData) => void;
   readOnly?: boolean;
   showValidity?: boolean;
-  existingTags?: string[]; // Tags from previous pricing entries
   entityInfo?: {
     type: string; // e.g., "Vehicle", "Package", "Offering"
     id: string | number;
@@ -32,7 +30,6 @@ export function PricingPanel({
   onDataChange,
   readOnly = false,
   showValidity = true,
-  existingTags = [],
   entityInfo,
 }: PricingPanelProps) {
   const { t, formatCurrency } = useLocale();
@@ -45,6 +42,7 @@ export function PricingPanel({
     validTo: initialData?.validTo ?? '',
     tags: initialData?.tags ?? [],
     isDefault: initialData?.isDefault ?? false,
+    neverExpires: initialData?.neverExpires ?? false,
   });
 
   useEffect(() => {
@@ -58,6 +56,7 @@ export function PricingPanel({
         validTo: initialData.validTo ?? '',
         tags: initialData.tags ?? [],
         isDefault: initialData.isDefault ?? false,
+        neverExpires: initialData.neverExpires ?? false,
       };
       setFormData(nextData);
       // Don't call onDataChange here to avoid infinite loops
@@ -153,9 +152,9 @@ export function PricingPanel({
             <Input
               id="minimumRentalDays"
               type="number"
-              min="1"
+              min="0"
               value={formData.minimumRentalDays}
-              onChange={(e) => handleChange({ minimumRentalDays: parseInt(e.target.value) || 1 })}
+              onChange={(e) => handleChange({ minimumRentalDays: parseInt(e.target.value) || 0 })}
               disabled={readOnly}
               required
             />
@@ -164,42 +163,62 @@ export function PricingPanel({
 
           {showValidity && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="validFrom">{`${t('pricing.validFrom')} ${t('common.required')}`}</Label>
-                <DateTimePicker
-                  id="validFrom"
-                  value={formData.validFrom}
-                  onChange={(value) => handleChange({ validFrom: value })}
-                  disabled={readOnly}
-                />
-                <p className="text-xs text-muted-foreground">{t('pricing.form.validFromHint')}</p>
+              {/* Never Expires Checkbox */}
+              <div className="md:col-span-2">
+                <div className="flex items-center gap-3 p-3 rounded-md border border-dashed">
+                  <Checkbox
+                    id="neverExpires"
+                    checked={Boolean(formData.neverExpires)}
+                    onCheckedChange={(checked) => {
+                      if (!readOnly) {
+                        handleChange({ 
+                          neverExpires: checked === true,
+                          // Clear dates when never expires is checked
+                          ...(checked === true ? { validFrom: '', validTo: '' } : {})
+                        });
+                      }
+                    }}
+                    disabled={readOnly}
+                  />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="neverExpires" className="text-sm font-medium leading-none cursor-pointer">
+                      {t('pricing.form.neverExpires')}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t('pricing.form.neverExpiresHint')}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="validTo">{`${t('pricing.validTo')} ${t('common.required')}`}</Label>
-                <DateTimePicker
-                  id="validTo"
-                  value={formData.validTo}
-                  onChange={(value) => handleChange({ validTo: value })}
-                  disabled={readOnly}
-                />
-                <p className="text-xs text-muted-foreground">{t('pricing.form.validToHint')}</p>
-              </div>
+              {/* Date Range - Only show when neverExpires is false */}
+              {!formData.neverExpires && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="validFrom">{`${t('pricing.validFrom')} ${t('common.required')}`}</Label>
+                    <DateTimePicker
+                      id="validFrom"
+                      value={formData.validFrom}
+                      onChange={(value) => handleChange({ validFrom: value })}
+                      disabled={readOnly}
+                    />
+                    <p className="text-xs text-muted-foreground">{t('pricing.form.validFromHint')}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="validTo">{`${t('pricing.validTo')} ${t('common.required')}`}</Label>
+                    <DateTimePicker
+                      id="validTo"
+                      value={formData.validTo}
+                      onChange={(value) => handleChange({ validTo: value })}
+                      disabled={readOnly}
+                    />
+                    <p className="text-xs text-muted-foreground">{t('pricing.form.validToHint')}</p>
+                  </div>
+                </>
+              )}
             </>
           )}
-
-          {/* Tags Input */}
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="tags">{`${t('pricing.tags')} (${t('common.optional')})`}</Label>
-            <TagInput
-              value={formData.tags || []}
-              onChange={(tags) => handleChange({ tags })}
-              placeholder={t('pricing.addTagsPlaceholder')}
-              suggestions={existingTags}
-              disabled={readOnly}
-            />
-            <p className="text-xs text-muted-foreground">{t('pricing.form.tagsSuggestion')}</p>
-          </div>
 
           <div className="md:col-span-2">
             <div className="flex items-start gap-3 rounded-md border border-dashed p-3">
@@ -214,56 +233,12 @@ export function PricingPanel({
               />
               <div className="space-y-1">
                 <Label htmlFor="isDefault" className="text-sm font-medium leading-none">
-                  {t('pricing.form.defaultLabel')}
+                  Set as default <span className="font-bold">{selectedRateTypeLabel?.toLowerCase() || formData.rateType.toLowerCase()}</span> pricing
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  {t('pricing.form.defaultHelper')}
+                  Each vehicle can have one default <span className="font-semibold">{selectedRateTypeLabel?.toLowerCase() || formData.rateType.toLowerCase()}</span> pricing. Setting a new default overrides any existing one for overlapping dates.
                 </p>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border bg-muted/50 p-4">
-          <h4 className="text-sm font-medium mb-2">{t('pricing.form.summaryTitle')}</h4>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('pricing.rateType')}:</span>
-              <span className="font-medium">{selectedRateTypeLabel ?? formData.rateType}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('pricing.baseRate')}:</span>
-              <span className="font-medium">{formatCurrency(formData.baseRate)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('pricing.depositAmount')}:</span>
-              <span className="font-medium">{formatCurrency(formData.depositAmount)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('pricing.minimumRentalDays')}:</span>
-              <span className="font-medium">{formData.minimumRentalDays}</span>
-            </div>
-            {showValidity && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t('pricing.form.validity')}:</span>
-                <span className="font-medium">
-                  {formData.validFrom && formData.validTo
-                    ? `${new Date(formData.validFrom).toLocaleDateString()} - ${new Date(formData.validTo).toLocaleDateString()}`
-                    : t('pricing.form.validityNotSet')}
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('pricing.tags')}:</span>
-              <span className="font-medium">
-                {formData.tags?.length ? formData.tags.join(', ') : t('pricing.form.noTags')}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('pricing.form.defaultLabel')}:</span>
-              <span className="font-medium">
-                {formData.isDefault ? t('pricing.form.defaultSummaryOn') : t('pricing.form.defaultSummaryOff')}
-              </span>
             </div>
           </div>
         </div>

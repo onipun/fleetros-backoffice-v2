@@ -119,7 +119,8 @@ export default function EditVehiclePage() {
     },
     onSuccess: async () => {
       // Create multiple pricing entries if provided
-      const validPricings = pricingsData.filter(p => p.baseRate > 0 && p.validFrom && p.validTo);
+      // Pricing is valid if baseRate > 0 AND (neverExpires OR has date range)
+      const validPricings = pricingsData.filter(p => p.baseRate > 0 && (p.neverExpires || (p.validFrom && p.validTo)));
       
       if (validPricings.length > 0) {
         let successCount = 0;
@@ -320,7 +321,7 @@ export default function EditVehiclePage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="vin">
-                    {t('vehicle.vin')} {t('common.required')}
+                    {t('vehicle.vin')} ({t('common.optional')})
                   </Label>
                   <Input
                     id="vin"
@@ -328,7 +329,6 @@ export default function EditVehiclePage() {
                     value={formData.vin}
                     onChange={handleChange}
                     placeholder={t('vehicle.vinPlaceholder')}
-                    required
                   />
                 </div>
 

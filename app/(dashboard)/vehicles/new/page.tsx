@@ -102,7 +102,8 @@ export default function NewVehiclePage() {
     },
     onSuccess: async (createdVehicle) => {
       // Create multiple pricing entries if provided
-      const validPricings = pricingsData.filter(p => p.baseRate > 0 && p.validFrom && p.validTo);
+      // Pricing is valid if baseRate > 0 AND (neverExpires OR has date range)
+      const validPricings = pricingsData.filter(p => p.baseRate > 0 && (p.neverExpires || (p.validFrom && p.validTo)));
       
       if (validPricings.length > 0) {
         let successCount = 0;

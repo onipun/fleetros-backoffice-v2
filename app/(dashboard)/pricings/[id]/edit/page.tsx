@@ -16,10 +16,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TagInput } from '@/components/ui/tag-input';
 import { toast } from '@/hooks/use-toast';
 import { hateoasClient } from '@/lib/api/hateoas-client';
-import { usePricingTags } from '@/lib/api/hooks';
 import { preventEnterSubmission } from '@/lib/form-utils';
 import type { PricingFormData } from '@/lib/validations/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -52,9 +50,6 @@ export default function EditPricingPage() {
   const queryClient = useQueryClient();
   const pricingId = params.id as string;
 
-  // Fetch existing tags for autocomplete
-  const { data: existingTags = [] } = usePricingTags();
-
   const [formData, setFormData] = useState<PricingFormState>({
     entityType: 'vehicle',
     entityId: 0,
@@ -64,7 +59,7 @@ export default function EditPricingPage() {
     minimumRentalDays: 1,
     validFrom: '',
     validTo: '',
-    tags: [],
+    neverExpires: false,
     isDefault: false,
   });
 
@@ -130,7 +125,7 @@ export default function EditPricingPage() {
         minimumRentalDays: pricing.minimumRentalDays,
         validFrom: pricing.validFrom?.substring(0, 16) || '',
         validTo: pricing.validTo?.substring(0, 16) || '',
-        tags: pricing.tags?.map((tag: any) => tag.name) || [],
+        neverExpires: pricing.neverExpires || false,
         isDefault: pricing.isDefault || false,
       });
     }
@@ -169,12 +164,15 @@ export default function EditPricingPage() {
         rateType: data.rateType,
         depositAmount: data.depositAmount,
         minimumRentalDays: data.minimumRentalDays,
-        validFrom: data.validFrom,
-        validTo: data.validTo,
+        neverExpires: data.neverExpires,
         isDefault: data.isDefault,
-        // Always include tagNames, even if empty array (to clear tags)
-        tagNames: data.tags || [],
       };
+
+      // Only include validity dates if not neverExpires
+      if (!data.neverExpires) {
+        payload.validFrom = data.validFrom;
+        payload.validTo = data.validTo;
+      }
 
       return hateoasClient.update('pricings', pricingId, payload);
     },
@@ -263,22 +261,25 @@ export default function EditPricingPage() {
       return;
     }
 
-    if (!formData.validFrom || !formData.validTo) {
-      toast({
-        title: t('pricing.form.validationErrorTitle'),
-        description: t('pricing.form.validityRequired'),
-        variant: 'destructive',
-      });
-      return;
-    }
+    // Only validate dates if not neverExpires
+    if (!formData.neverExpires) {
+      if (!formData.validFrom || !formData.validTo) {
+        toast({
+          title: t('pricing.form.validationErrorTitle'),
+          description: t('pricing.form.validityRequired'),
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
-      toast({
-        title: t('pricing.form.validationErrorTitle'),
-        description: t('pricing.form.validityOrder'),
-        variant: 'destructive',
-      });
-      return;
+      if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
+        toast({
+          title: t('pricing.form.validationErrorTitle'),
+          description: t('pricing.form.validityOrder'),
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     updateMutation.mutate(formData);
@@ -461,57 +462,61 @@ export default function EditPricingPage() {
               <CardTitle>{t('pricing.validityPeriod')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="validFrom">{t('pricing.validFrom')} *</Label>
-                  <DateTimePicker
-                    id="validFrom"
-                    value={formData.validFrom}
-                    onChange={(value) => setFormData({ ...formData, validFrom: value })}
-                    required
+              {/* Never Expires Checkbox */}
+              <div className="rounded-md border border-dashed p-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="neverExpires"
+                    checked={Boolean(formData.neverExpires)}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, neverExpires: checked === true })
+                    }
+                    className="mt-1"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {t('pricing.form.validFromHint')}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="validTo">{t('pricing.validTo')} *</Label>
-                  <DateTimePicker
-                    id="validTo"
-                    value={formData.validTo}
-                    onChange={(value) => setFormData({ ...formData, validTo: value })}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t('pricing.form.validToHint')}
-                  </p>
+                  <div className="space-y-1">
+                    <Label htmlFor="neverExpires" className="text-sm font-medium leading-none">
+                      {t('pricing.form.neverExpiresLabel')}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t('pricing.form.neverExpiresHelper')}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Tags */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('pricing.tags')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="tags">{t('pricing.tags')} ({t('common.optional')})</Label>
-                <TagInput
-                  value={formData.tags || []}
-                  onChange={(tags) => setFormData({ ...formData, tags })}
-                  placeholder={t('pricing.addTagsPlaceholder')}
-                  suggestions={existingTags}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t('pricing.form.tagsSuggestion')}
-                </p>
-              </div>
-              
+              {/* Date Fields - Only show if not neverExpires */}
+              {!formData.neverExpires && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="validFrom">{t('pricing.validFrom')} *</Label>
+                    <DateTimePicker
+                      id="validFrom"
+                      value={formData.validFrom}
+                      onChange={(value) => setFormData({ ...formData, validFrom: value })}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t('pricing.form.validFromHint')}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="validTo">{t('pricing.validTo')} *</Label>
+                    <DateTimePicker
+                      id="validTo"
+                      value={formData.validTo}
+                      onChange={(value) => setFormData({ ...formData, validTo: value })}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t('pricing.form.validToHint')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Default Pricing Checkbox */}
-              <div className="mt-4 rounded-md border border-dashed p-3">
+              <div className="rounded-md border border-dashed p-3">
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id="isDefault"

@@ -7,7 +7,7 @@ export const vehicleSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   year: z.number().min(1900).max(new Date().getFullYear() + 1),
   licensePlate: z.string().min(1, 'License plate is required'),
-  vin: z.string().min(1, 'VIN is required'),
+  vin: z.string().optional(),
   odometer: z.number().min(0),
   fuelType: z.string().min(1, 'Fuel type is required'),
   transmissionType: z.string().min(1, 'Transmission type is required'),
@@ -68,11 +68,12 @@ export const pricingSchema = z.object({
   baseRate: z.number().min(0, 'Base rate must be positive'),
   rateType: z.string().min(1, 'Rate type is required'),
   depositAmount: z.number().min(0),
-  minimumRentalDays: z.number().min(1),
-  validFrom: z.string().min(1, 'Valid from date is required'),
-  validTo: z.string().min(1, 'Valid to date is required'),
+  minimumRentalDays: z.number().min(0),
+  validFrom: z.string().optional(),
+  validTo: z.string().optional(),
   tags: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
+  neverExpires: z.boolean().optional(),
 });
 
 export const loginSchema = z.object({

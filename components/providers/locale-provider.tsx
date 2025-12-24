@@ -11,7 +11,7 @@ type Locale = 'en' | 'zh' | 'ms';
 interface LocaleContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   currency: Currency;
   setCurrency: (currency: Currency) => void;
   formatCurrency: (amount: number) => string;
@@ -72,7 +72,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const t = (key: string): string => {
+  const t = (key: string, params?: Record<string, string | number>): string => {
     const keys = key.split('.');
     let value: any = translations[locale];
     
@@ -93,7 +93,16 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
-    return typeof value === 'string' ? value : key;
+    let result = typeof value === 'string' ? value : key;
+    
+    // Replace placeholders like {rateType} with actual values
+    if (params) {
+      for (const [paramKey, paramValue] of Object.entries(params)) {
+        result = result.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue));
+      }
+    }
+    
+    return result;
   };
 
   const formatCurrency = (amount: number): string => {
