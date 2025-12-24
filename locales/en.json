@@ -554,6 +554,10 @@
       "descending": "Descending (Z-A, 9-0)"
     },
     "cancelBooking": "Cancel Booking",
+    "cancelBookingConfirm": "Are you sure you want to cancel this booking? This action cannot be undone.",
+    "cancelBookingSuccess": "Booking Cancelled",
+    "cancelBookingSuccessDescription": "The booking has been cancelled successfully.",
+    "cancelBookingError": "Failed to cancel booking",
     "detail": {
       "title": "Booking",
       "subtitle": "Manage booking details and assets",

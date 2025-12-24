@@ -430,6 +430,10 @@
       "reset": "重置"
     },
     "cancelBooking": "取消预订",
+    "cancelBookingConfirm": "您确定要取消此预订吗？此操作无法撤销。",
+    "cancelBookingSuccess": "预订已取消",
+    "cancelBookingSuccessDescription": "预订已成功取消。",
+    "cancelBookingError": "取消预订失败",
     "detail": {
       "title": "预订",
       "subtitle": "管理预订详情和资产",

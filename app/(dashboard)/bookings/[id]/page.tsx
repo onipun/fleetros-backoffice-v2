@@ -66,6 +66,7 @@ export default function BookingDetailPage() {
   const [modificationDialogOpen, setModificationDialogOpen] = useState(false);
   const [manualPaymentDialogOpen, setManualPaymentDialogOpen] = useState(false);
   const [completeWarningDialogOpen, setCompleteWarningDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'details');
 
   // Update active tab when URL changes
@@ -380,6 +381,42 @@ export default function BookingDetailPage() {
     },
   });
 
+  const cancelBookingMutation = useMutation({
+    mutationFn: async () => {
+      const token = await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken);
+      const response = await fetch(`${API_BASE_URL}/api/v1/bookings/${bookingId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Failed to cancel booking');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: t('booking.cancelBookingSuccess'),
+        description: t('booking.cancelBookingSuccessDescription'),
+      });
+      setCancelDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings-search'] });
+      queryClient.invalidateQueries({ queryKey: ['booking-history', Number(bookingId)] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('booking.cancelBookingError'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   if (bookingLoading || isPricingLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
@@ -432,6 +469,17 @@ export default function BookingDetailPage() {
             <Edit3 className="mr-2 h-4 w-4" />
             Modify Booking
           </Button>
+          {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && (
+            <Button
+              variant="outline"
+              className="border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+              disabled={cancelBookingMutation.isPending}
+              onClick={() => setCancelDialogOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t('booking.cancelBooking')}
+            </Button>
+          )}
           <Button
             variant="destructive"
             disabled={deleteBookingMutation.isPending}
@@ -890,6 +938,35 @@ export default function BookingDetailPage() {
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               {t('booking.detail.completeWarning.proceed') || 'Complete Anyway'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Booking Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('booking.cancelBooking')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('booking.cancelBookingConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelBookingMutation.isPending}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-orange-600 hover:bg-orange-700"
+              disabled={cancelBookingMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                cancelBookingMutation.mutate();
+              }}
+            >
+              {cancelBookingMutation.isPending ? t('common.loading') : t('booking.cancelBooking')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

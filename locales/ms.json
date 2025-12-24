@@ -421,6 +421,10 @@
       "reset": "Set Semula"
     },
     "cancelBooking": "Batalkan Tempahan",
+    "cancelBookingConfirm": "Adakah anda pasti mahu membatalkan tempahan ini? Tindakan ini tidak boleh dibatalkan.",
+    "cancelBookingSuccess": "Tempahan Dibatalkan",
+    "cancelBookingSuccessDescription": "Tempahan telah dibatalkan dengan jayanya.",
+    "cancelBookingError": "Gagal membatalkan tempahan",
     "detail": {
       "title": "Tempahan",
       "subtitle": "Urus butiran tempahan dan aset",
