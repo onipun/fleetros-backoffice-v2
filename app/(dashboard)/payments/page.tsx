@@ -67,16 +67,32 @@ export default function PaymentsPage() {
           getMerchantStatus(),
         ]);
         
+        // Check if merchant exists
+        if (!status.success || status.error?.includes('Merchant not found')) {
+          setPaymentAccountStatus({
+            hasAccount: false,
+            isReady: false,
+            isLoading: false,
+          });
+          return;
+        }
+        
         setPaymentAccountStatus({
           hasAccount: true,
           isReady: canAccept,
           status,
           isLoading: false,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error checking payment account:', error);
+        
+        // If merchant not found, treat as no account
+        const isMerchantNotFound = error?.message?.includes('Merchant not found') || 
+                                   error?.error?.includes('Merchant not found') ||
+                                   error?.response?.data?.error?.includes('Merchant not found');
+        
         setPaymentAccountStatus({
-          hasAccount: true,
+          hasAccount: !isMerchantNotFound,
           isReady: false,
           isLoading: false,
         });
