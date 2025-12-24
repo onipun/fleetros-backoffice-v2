@@ -222,3 +222,78 @@ export async function updateCurrencySetting(currency: Currency): Promise<void> {
     throw new Error('Failed to update currency setting');
   }
 }
+
+/**
+ * Deposit type
+ */
+export type DepositType = 'PERCENTAGE' | 'FLAT';
+
+/**
+ * Deposit settings response
+ */
+export interface DepositSettings {
+  depositType: DepositType;
+  depositRate: string;
+}
+
+/**
+ * Get deposit settings
+ */
+export async function getDepositSettings(): Promise<DepositSettings> {
+  try {
+    const token = typeof window !== 'undefined' 
+      ? await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken)
+      : null;
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/account-settings/deposit`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { depositType: 'PERCENTAGE', depositRate: '0.20' }; // Default
+      }
+      throw new Error('Failed to fetch deposit settings');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching deposit settings:', error);
+    return { depositType: 'PERCENTAGE', depositRate: '0.20' }; // Default fallback
+  }
+}
+
+/**
+ * Update deposit settings
+ */
+export async function updateDepositSettings(settings: DepositSettings): Promise<void> {
+  const token = typeof window !== 'undefined' 
+    ? await fetch('/api/auth/session').then(r => r.json()).then(s => s.accessToken)
+    : null;
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/account-settings/deposit`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(settings),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update deposit settings');
+  }
+}
