@@ -121,6 +121,7 @@
     "addNewVehicle": "Add New Vehicle",
     "createNewVehicleInFleet": "Create a new vehicle in your fleet",
     "editVehicle": "Edit Vehicle",
+    "updateAction": "Update Vehicle",
     "deleteVehicle": "Delete Vehicle",
     "vehicleDetails": "Vehicle Details",
     "basicInfo": "Basic Information",
@@ -171,6 +172,13 @@
       "automatic": "Automatic",
       "manual": "Manual",
       "cvt": "CVT"
+    },
+    "fuelTypes": {
+      "gasoline": "Gasoline",
+      "diesel": "Diesel",
+      "electric": "Electric",
+      "hybrid": "Hybrid",
+      "plugInHybrid": "Plug-in Hybrid"
     },
     "pricings": "Vehicle Pricings",
     "images": "Vehicle Images",
@@ -963,6 +971,7 @@
     "manage": "Manage additional services and add-ons",
     "addOffering": "Add Offering",
     "newOffering": "Create New Offering",
+    "updateAction": "Update Offering",
     "createDescription": "Configure details and availability for a new offering.",
     "filters": "Filters",
     "searchPlaceholder": "Search offerings...",
@@ -1192,6 +1201,7 @@
     "createPackage": "Create Package",
     "newPackage": "Create New Package",
     "editPackage": "Edit Package",
+    "updateAction": "Update Package",
     "filters": "Filters",
     "searchPlaceholder": "Search packages...",
     "loading": "Loading packages...",

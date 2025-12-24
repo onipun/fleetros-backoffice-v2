@@ -108,6 +108,7 @@
     "addNewVehicle": "Tambah Kenderaan Baharu",
     "createNewVehicleInFleet": "Cipta kenderaan baharu dalam armada anda",
     "editVehicle": "Sunting Kenderaan",
+    "updateAction": "Kemas Kini Kenderaan",
     "deleteVehicle": "Padam Kenderaan",
     "vehicleDetails": "Butiran Kenderaan",
     "basicInfo": "Maklumat Asas",
@@ -160,6 +161,13 @@
       "automatic": "Automatik",
       "manual": "Manual",
       "cvt": "CVT"
+    },
+    "fuelTypes": {
+      "gasoline": "Petrol",
+      "diesel": "Diesel",
+      "electric": "Elektrik",
+      "hybrid": "Hibrid",
+      "plugInHybrid": "Hibrid Plug-in"
     },
     "pricings": "Harga Kenderaan",
     "images": "Gambar Kenderaan",
@@ -733,6 +741,7 @@
     "manage": "Urus perkhidmatan tambahan dan add-on",
     "addOffering": "Tambah Perkhidmatan",
     "newOffering": "Cipta Perkhidmatan Baharu",
+    "updateAction": "Kemas Kini Perkhidmatan",
     "createDescription": "Konfigurasikan butiran dan ketersediaan perkhidmatan baharu.",
     "filters": "Tapisan",
     "searchPlaceholder": "Cari perkhidmatan...",
@@ -850,6 +859,7 @@
     "createPackage": "Cipta Pakej",
     "newPackage": "Cipta Pakej Baharu",
     "editPackage": "Edit Pakej",
+    "updateAction": "Kemas Kini Pakej",
     "filters": "Tapisan",
     "searchPlaceholder": "Cari pakej...",
     "loading": "Memuatkan pakej...",

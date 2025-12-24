@@ -117,6 +117,7 @@
     "addNewVehicle": "添加新车辆",
     "createNewVehicleInFleet": "在您的车队中创建新车辆",
     "editVehicle": "编辑车辆",
+    "updateAction": "更新车辆",
     "deleteVehicle": "删除车辆",
     "vehicleDetails": "车辆详情",
     "basicInfo": "基本信息",
@@ -167,6 +168,13 @@
       "automatic": "自动挡",
       "manual": "手动挡",
       "cvt": "无级变速"
+    },
+    "fuelTypes": {
+      "gasoline": "汽油",
+      "diesel": "柴油",
+      "electric": "电动",
+      "hybrid": "混合动力",
+      "plugInHybrid": "插电式混合动力"
     },
     "pricings": "车辆定价",
     "images": "车辆图片",
@@ -741,6 +749,7 @@
     "manage": "管理附加服务与增值项目",
     "addOffering": "添加服务",
     "newOffering": "创建新服务",
+    "updateAction": "更新服务",
     "createDescription": "配置新服务的详细信息和可用性。",
     "filters": "筛选",
     "searchPlaceholder": "搜索服务...",
@@ -858,6 +867,7 @@
     "createPackage": "创建套餐",
     "newPackage": "创建新套餐",
     "editPackage": "编辑套餐",
+    "updateAction": "更新套餐",
     "filters": "筛选",
     "searchPlaceholder": "搜索套餐...",
     "loading": "正在加载套餐...",

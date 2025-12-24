@@ -1234,7 +1234,7 @@ export default function NewBookingPage() {
                               </span>
                             </div>
                             {/* Extra hours for vehicle */}
-                            {rental.extraHours && rental.extraHours > 0 && rental.hourlyRate && (
+                            {rental.extraHours > 0 && rental.hourlyRate && (
                               <div className="flex justify-between mt-1 text-amber-600 dark:text-amber-400">
                                 <span>
                                   + {rental.extraHours} extra hour{rental.extraHours !== 1 ? 's' : ''} × {formatCurrency(rental.hourlyRate)}
@@ -1245,7 +1245,7 @@ export default function NewBookingPage() {
                               </div>
                             )}
                             {/* Total for this vehicle */}
-                            {rental.extraHours && rental.extraHours > 0 && (
+                            {rental.extraHours > 0 && (
                               <div className="flex justify-between mt-1 pt-1 border-t border-green-300">
                                 <span className="text-green-800 dark:text-green-200 font-medium">Vehicle Total</span>
                                 <span className="font-semibold">
@@ -1295,7 +1295,7 @@ export default function NewBookingPage() {
                                     </div>
                                   )}
                                   {/* Extra hours for offering */}
-                                  {offering.extraHours && offering.extraHours > 0 && offering.hourlyRate && (
+                                  {offering.extraHours > 0 && offering.hourlyRate && (
                                     <div className="flex justify-between text-xs text-amber-600 dark:text-amber-400 ml-2">
                                       <span>
                                         + {offering.extraHours} extra hour{offering.extraHours !== 1 ? 's' : ''} × {formatCurrency(offering.hourlyRate)}
