@@ -822,6 +822,7 @@ export default function BookingDetailPage() {
       {/* Booking Receipt Dialog */}
       <BookingReceipt
         booking={booking}
+        pricingSnapshot={pricingSnapshot}
         open={receiptOpen}
         onOpenChange={setReceiptOpen}
       />

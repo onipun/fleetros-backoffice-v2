@@ -637,6 +637,9 @@
         "insurancePolicy": "Polisi Insurans",
         "status": "Status"
       },
+      "selectVehiclePlaceholder": "Cari kenderaan...",
+      "selectPackagePlaceholder": "Pilih pakej...",
+      "selectDiscountPlaceholder": "Pilih diskaun...",
       "placeholders": {
         "pickupLocation": "cth., Terminal Lapangan Terbang",
         "dropoffLocation": "cth., Pejabat Bandar",

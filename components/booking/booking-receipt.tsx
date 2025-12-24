@@ -26,6 +26,7 @@ interface BookingReceiptProps {
     licensePlate?: string;
   };
   packageDetails?: BookingPackage;
+  pricingSnapshot?: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -34,6 +35,7 @@ export function BookingReceipt({
   booking,
   vehicleDetails,
   packageDetails,
+  pricingSnapshot,
   open,
   onOpenChange,
 }: BookingReceiptProps) {
@@ -327,44 +329,192 @@ export function BookingReceipt({
                 <span className="h-8 w-1 bg-primary rounded-full"></span>
                 {t('booking.receipt.pricingBreakdown')}
               </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between py-2">
-                  <span className="text-sm text-gray-700">
-                    {t('booking.receipt.rentalFee')}
-                  </span>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {formatCurrency(booking.totalRentalFee || 0)}
-                  </span>
-                </div>
-                {booking.discountId && (
-                  <div className="flex justify-between py-2 text-green-700">
-                    <span className="text-sm">
-                      {t('booking.receipt.discount')} (#{booking.discountId})
-                    </span>
-                    <span className="text-sm font-semibold">
-                      -{formatCurrency(
-                        (booking.totalRentalFee || 0) - (booking.finalPrice || 0)
-                      )}
-                    </span>
-                  </div>
+              <div className="space-y-1">
+                {pricingSnapshot ? (
+                  <>
+                    {/* Vehicle Rentals */}
+                    {pricingSnapshot.pricingSummary?.vehicleRentals?.map((rental: any, idx: number) => (
+                      <div key={idx} className="flex justify-between py-1">
+                        <span className="text-sm text-gray-700">
+                          {rental.vehicleName} ({rental.days} {rental.days === 1 ? 'day' : 'days'} × {formatCurrency(rental.dailyRate)})
+                        </span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {formatCurrency(rental.amount || 0)}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Package Adjustments */}
+                    {pricingSnapshot.pricingSummary?.packages?.map((pkg: any, idx: number) => (
+                      <div key={idx} className="flex justify-between py-1">
+                        <span className="text-sm text-gray-700">
+                          {pkg.packageName}
+                          {pkg.modifierType === 'PERCENTAGE' && ` (${pkg.priceModifier > 0 ? '+' : ''}${pkg.priceModifier}%)`}
+                        </span>
+                        <span className={`text-sm font-semibold ${(pkg.packageAdjustment || pkg.amount) >= 0 ? 'text-gray-900' : 'text-green-600'}`}>
+                          {(pkg.packageAdjustment || pkg.amount) >= 0 ? '' : '-'}{formatCurrency(Math.abs(pkg.packageAdjustment || pkg.amount || 0))}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Offerings */}
+                    {pricingSnapshot.pricingSummary?.offerings?.map((offering: any, idx: number) => (
+                      <div key={idx} className="flex justify-between py-1">
+                        <span className="text-sm text-gray-700">
+                          {offering.offeringName}
+                        </span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {formatCurrency(offering.amount || offering.totalPrice || 0)}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Subtotal */}
+                    <div className="flex justify-between py-1 border-t mt-1 pt-1">
+                      <span className="text-sm font-medium text-gray-700">Subtotal</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(pricingSnapshot.subtotal ?? pricingSnapshot.pricingSummary?.subtotal ?? pricingSnapshot.subtotalBeforeDiscount ?? 0)}
+                      </span>
+                    </div>
+
+                    {/* Discounts */}
+                    {pricingSnapshot.pricingSummary?.discounts?.map((discount: any, idx: number) => (
+                      <div key={idx} className="flex justify-between py-1 text-green-600">
+                        <span className="text-sm">Discount: {discount.discountCode}</span>
+                        <span className="text-sm font-semibold">-{formatCurrency(discount.discountAmount || 0)}</span>
+                      </div>
+                    ))}
+
+                    {/* Loyalty Discount */}
+                    {pricingSnapshot.isLoyaltyRedeemed && pricingSnapshot.loyaltyDiscountAmount > 0 && (
+                      <div className="flex justify-between py-1 text-green-600">
+                        <span className="text-sm flex items-center gap-1">
+                          🎁 Loyalty Points Discount
+                          {pricingSnapshot.loyaltyPointsRedeemed && (
+                            <span className="text-xs text-gray-500">
+                              ({pricingSnapshot.loyaltyPointsRedeemed.toLocaleString()} pts)
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-sm font-semibold">-{formatCurrency(pricingSnapshot.loyaltyDiscountAmount)}</span>
+                      </div>
+                    )}
+
+                    {/* Total Savings */}
+                    {(pricingSnapshot.totalDiscount ?? 0) > 0 && (
+                      <div className="flex justify-between py-1 text-green-600">
+                        <span className="text-sm font-medium">Total Savings</span>
+                        <span className="text-sm font-semibold">-{formatCurrency(pricingSnapshot.totalDiscount)}</span>
+                      </div>
+                    )}
+
+                    {/* Taxes */}
+                    {(pricingSnapshot.taxAmount ?? 0) > 0 && (
+                      <div className="flex justify-between py-1 border-t mt-1 pt-1">
+                        <span className="text-sm text-gray-700">Tax</span>
+                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(pricingSnapshot.taxAmount)}</span>
+                      </div>
+                    )}
+
+                    {/* Service Fee */}
+                    {(pricingSnapshot.serviceFee ?? 0) > 0 && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-sm text-gray-700">Service Fee</span>
+                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(pricingSnapshot.serviceFee)}</span>
+                      </div>
+                    )}
+
+                    {/* Deposit */}
+                    {(pricingSnapshot.totalDeposit ?? 0) > 0 && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-sm text-gray-700">Deposit (Refundable)</span>
+                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(pricingSnapshot.totalDeposit)}</span>
+                      </div>
+                    )}
+
+                    {/* Grand Total */}
+                    <Separator className="my-1" />
+                    <div className="flex justify-between py-2 bg-white rounded-lg px-4">
+                      <span className="text-base font-bold text-gray-900">Grand Total</span>
+                      <span className="text-xl font-bold text-primary">
+                        {formatCurrency(pricingSnapshot.grandTotal || booking.finalPrice || 0)}
+                      </span>
+                    </div>
+
+                    {/* Payment Schedule */}
+                    {(pricingSnapshot.dueAtBooking || pricingSnapshot.dueAtPickup) && (
+                      <div className="space-y-1 mt-2 p-3 bg-gray-100 rounded-lg">
+                        {pricingSnapshot.dueAtBooking > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-700">Due at Booking</span>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {formatCurrency(pricingSnapshot.dueAtBooking)}
+                            </span>
+                          </div>
+                        )}
+                        {pricingSnapshot.dueAtPickup > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-700">Due at Pickup</span>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {formatCurrency(pricingSnapshot.dueAtPickup)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Balance Due */}
+                    <div className="flex justify-between py-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 mt-2">
+                      <span className="text-sm font-semibold text-yellow-900">
+                        {t('booking.receipt.balanceDue')}
+                      </span>
+                      <span className="text-base font-bold text-yellow-900">
+                        {formatCurrency(booking.balancePayment || 0)}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Fallback to simple breakdown if no pricing snapshot */}
+                    <div className="flex justify-between py-1">
+                      <span className="text-sm text-gray-700">
+                        {t('booking.receipt.rentalFee')}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(booking.totalRentalFee || 0)}
+                      </span>
+                    </div>
+                    {booking.discountId && (
+                      <div className="flex justify-between py-1 text-green-700">
+                        <span className="text-sm">
+                          {t('booking.receipt.discount')} (#{booking.discountId})
+                        </span>
+                        <span className="text-sm font-semibold">
+                          -{formatCurrency(
+                            (booking.totalRentalFee || 0) - (booking.finalPrice || 0)
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    <Separator className="my-1" />
+                    <div className="flex justify-between py-2 bg-white rounded-lg px-4">
+                      <span className="text-base font-bold text-gray-900">
+                        {t('booking.receipt.totalAmount')}
+                      </span>
+                      <span className="text-xl font-bold text-primary">
+                        {formatCurrency(booking.finalPrice || 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 mt-2">
+                      <span className="text-sm font-semibold text-yellow-900">
+                        {t('booking.receipt.balanceDue')}
+                      </span>
+                      <span className="text-base font-bold text-yellow-900">
+                        {formatCurrency(booking.balancePayment || 0)}
+                      </span>
+                    </div>
+                  </>
                 )}
-                <Separator className="my-2" />
-                <div className="flex justify-between py-2 bg-white rounded-lg px-4">
-                  <span className="text-base font-bold text-gray-900">
-                    {t('booking.receipt.totalAmount')}
-                  </span>
-                  <span className="text-xl font-bold text-primary">
-                    {formatCurrency(booking.finalPrice || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4">
-                  <span className="text-sm font-semibold text-yellow-900">
-                    {t('booking.receipt.balanceDue')}
-                  </span>
-                  <span className="text-base font-bold text-yellow-900">
-                    {formatCurrency(booking.balancePayment || 0)}
-                  </span>
-                </div>
               </div>
             </CardContent>
           </Card>

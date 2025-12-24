@@ -761,7 +761,6 @@
       },
       "fields": {
         "vehicle": "Vehicle",
-        "selectVehiclePlaceholder": "Search for a vehicle...",
         "packageOptional": "Package (Optional)",
         "discountOptional": "Discount (Optional)",
         "startDate": "Start Date",
@@ -771,6 +770,9 @@
         "insurancePolicy": "Insurance Policy",
         "status": "Status"
       },
+      "selectVehiclePlaceholder": "Search for a vehicle...",
+      "selectPackagePlaceholder": "Select a package...",
+      "selectDiscountPlaceholder": "Select a discount...",
       "discountDisabledByPackage": "This package does not allow discount codes to be applied",
       "placeholders": {
         "pickupLocation": "e.g., Airport Terminal",

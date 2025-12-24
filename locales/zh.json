@@ -639,12 +639,16 @@
         "vehicle": "车辆",
         "packageOptional": "套餐（可选）",
         "discountOptional": "折扣（可选）",
+        "startDate": "开始日期",
         "endDate": "结束日期",
         "pickupLocation": "取车地点",
         "dropoffLocation": "还车地点",
         "insurancePolicy": "保险条款",
         "status": "状态"
       },
+      "selectVehiclePlaceholder": "搜索车辆...",
+      "selectPackagePlaceholder": "选择套餐...",
+      "selectDiscountPlaceholder": "选择折扣...",
       "placeholders": {
         "pickupLocation": "例如：机场航站楼",
         "dropoffLocation": "例如：市区办公室",
