@@ -2,7 +2,7 @@
 
 import { useLocale } from '@/components/providers/locale-provider';
 import { cn } from '@/lib/utils';
-import { endOfMonth, endOfYear, format, isValid, startOfMonth, startOfToday, startOfYear } from 'date-fns';
+import { endOfMonth, endOfYear, format, isValid, parse, startOfMonth, startOfToday, startOfYear } from 'date-fns';
 import { Calendar, Clock, X } from 'lucide-react';
 import * as React from 'react';
 import DatePicker from 'react-datepicker';
@@ -20,10 +20,13 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
   const { t } = useLocale();
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
   const [tempDate, setTempDate] = React.useState<Date | null>(null);
+  const [manualInput, setManualInput] = React.useState('');
+  const [inputError, setInputError] = React.useState(false);
     const [showQuickSelect, setShowQuickSelect] = React.useState(false);
     const [showDatePicker, setShowDatePicker] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const datePickerRef = React.useRef<DatePicker>(null);
+    const manualInputRef = React.useRef<HTMLInputElement>(null);
 
     // Parse ISO string to Date
     React.useEffect(() => {
@@ -43,6 +46,28 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
         setTempDate(null);
       }
     }, [value]);
+
+    // Update manual input when tempDate changes
+    React.useEffect(() => {
+      if (tempDate && isValid(tempDate)) {
+        const formatStr = showTimeSelect ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd';
+        setManualInput(format(tempDate, formatStr));
+        setInputError(false);
+      } else if (!tempDate) {
+        setManualInput('');
+        setInputError(false);
+      }
+    }, [tempDate, showTimeSelect]);
+
+    // Focus input when date picker opens
+    React.useEffect(() => {
+      if (showDatePicker && manualInputRef.current) {
+        setTimeout(() => {
+          manualInputRef.current?.focus();
+          manualInputRef.current?.select();
+        }, 100);
+      }
+    }, [showDatePicker]);
 
     // Close quick select on outside click
     React.useEffect(() => {
@@ -66,7 +91,34 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
       setTempDate(date);
     };
 
-    const handleOkClick = (e: React.MouseEvent) => {
+    const handleManualInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const inputValue = e.target.value;
+      setManualInput(inputValue);
+      
+      // Try to parse the input
+      const formatStr = showTimeSelect ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd';
+      const parsedDate = parse(inputValue, formatStr, new Date());
+      
+      if (isValid(parsedDate) && inputValue.length >= (showTimeSelect ? 16 : 10)) {
+        setTempDate(parsedDate);
+        setInputError(false);
+      } else if (inputValue.length >= (showTimeSelect ? 16 : 10)) {
+        setInputError(true);
+      } else {
+        setInputError(false);
+      }
+    };
+
+    const handleManualInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (tempDate && isValid(tempDate) && !inputError) {
+          handleOkClick(e as unknown as React.MouseEvent);
+        }
+      }
+    };
+
+    const handleOkClick = (e: React.MouseEvent | React.KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
       
@@ -214,6 +266,29 @@ const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
         {/* Hidden DatePicker for calendar functionality */}
         {showDatePicker && (
           <div className="absolute top-full left-0 mt-1 z-50 bg-popover rounded-lg shadow-lg overflow-hidden border border-border">
+            {/* Manual Input Field */}
+            <div className="px-3 pt-3 pb-2 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <input
+                  ref={manualInputRef}
+                  type="text"
+                  value={manualInput}
+                  onChange={handleManualInputChange}
+                  onKeyDown={handleManualInputKeyDown}
+                  placeholder={showTimeSelect ? 'YYYY-MM-DD HH:MM' : 'YYYY-MM-DD'}
+                  className={cn(
+                    'flex-1 h-8 px-2 text-sm rounded border bg-background focus:outline-none focus:ring-1 focus:ring-ring font-mono',
+                    inputError ? 'border-destructive focus:ring-destructive' : 'border-input'
+                  )}
+                />
+              </div>
+              {inputError && (
+                <p className="text-xs text-destructive mt-1 ml-6">
+                  {showTimeSelect ? 'Format: YYYY-MM-DD HH:MM' : 'Format: YYYY-MM-DD'}
+                </p>
+              )}
+            </div>
             <DatePicker
               ref={datePickerRef}
               selected={tempDate}
