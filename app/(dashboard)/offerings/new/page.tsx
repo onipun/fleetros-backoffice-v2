@@ -230,8 +230,10 @@ export default function NewOfferingPage() {
       </div>
 
       <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission}>
-        <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-8 xl:grid-cols-2">
+          {/* Left Column */}
+          <div className="space-y-6">
+          <div className="grid gap-6">
             {/* Basic Information */}
             <Card>
               <CardHeader>
@@ -353,7 +355,7 @@ export default function NewOfferingPage() {
             </Card>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6">
             {/* Pricing & Availability */}
             <Card>
               <CardHeader>
@@ -425,64 +427,27 @@ export default function NewOfferingPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Purchase Limits - for CONSUMABLE types */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('offering.purchaseLimits')}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('offering.purchaseLimitsHelp')}
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="purchaseLimitPerBooking">
-                    {t('offering.purchaseLimitPerBooking')}
-                  </Label>
-                  <Input
-                    id="purchaseLimitPerBooking"
-                    name="purchaseLimitPerBooking"
-                    type="number"
-                    min="1"
-                    value={formData.purchaseLimitPerBooking ?? ''}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
-                      setFormData((prev) => ({ ...prev, purchaseLimitPerBooking: value }));
-                    }}
-                    placeholder={t('offering.purchaseLimitPlaceholder')}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    {t('offering.purchaseLimitDescription')}
-                  </p>
-                </div>
-
-                {formData.consumableType === 'CONSUMABLE' && !formData.purchaseLimitPerBooking && (
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      {t('offering.consumableLimitSuggestion')}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          </div>
           </div>
 
-          {/* Multi-pricing (add multiple offering pricing rules like vehicle flow) */}
+          {/* Right Column */}
           <div className="space-y-6">
+            {/* Multi-pricing: allow adding multiple offering pricing rules inline (non-persistent until created) */}
             <OfferingMultiPricingPanel onDataChange={setPricingsData} entityInfo={{ type: 'Offering', id: 'New', name: formData.name || 'New Offering' }} />
-          </div>            {/* Actions */}
-            <div className="flex justify-end gap-4">
-            <Link href="/offerings">
-              <Button variant="outline" type="button">
-                {t('common.cancel')}
-              </Button>
-            </Link>
-            <Button type="submit" disabled={createMutation.isPending}>
-              <Save className="mr-2 h-4 w-4" />
-              {createMutation.isPending ? t('common.creating') : t('offering.newOffering')}
-            </Button>
           </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-4 mt-8">
+          <Link href="/offerings">
+            <Button variant="outline" type="button">
+              {t('common.cancel')}
+            </Button>
+          </Link>
+          <Button type="submit" disabled={createMutation.isPending}>
+            <Save className="mr-2 h-4 w-4" />
+            {createMutation.isPending ? t('common.creating') : t('offering.newOffering')}
+          </Button>
         </div>
       </form>
     </div>

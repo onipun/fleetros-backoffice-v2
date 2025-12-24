@@ -356,10 +356,11 @@ export default function OfferingDetailPage() {
   const primaryImage = images.find(img => img.isPrimary);
   const displayImageUrl = selectedImage || primaryImage?.imageUrl || images[0]?.imageUrl;
   
-  // Get offering type label
+  // Get offering type label - convert SNAKE_CASE to camelCase for translation keys
   const getOfferingTypeLabel = (type: string) => {
-    const typeKey = type.toLowerCase().replace(/_/g, '');
-    return t(`offering.types.${typeKey}`) || type;
+    // Convert FULL_TANK -> fullTank, AIRPORT_PICKUP -> airportPickup, etc.
+    const camelCaseKey = type.toLowerCase().replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    return t(`offering.types.${camelCaseKey}`) || type;
   };
 
   return (

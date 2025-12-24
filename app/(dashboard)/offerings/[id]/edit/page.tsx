@@ -52,8 +52,6 @@ export default function EditOfferingPage() {
       { value: 'GPS' as OfferingType, label: t('offering.types.gps') },
       { value: 'INSURANCE' as OfferingType, label: t('offering.types.insurance') },
       { value: 'CHILD_SEAT' as OfferingType, label: t('offering.types.childSeat') },
-      { value: 'WIFI' as OfferingType, label: t('offering.types.wifi') },
-      { value: 'ADDITIONAL_DRIVER' as OfferingType, label: t('offering.types.additionalDriver') },
       { value: 'HOMESTAY' as OfferingType, label: t('offering.types.homestay') },
       { value: 'VILLA' as OfferingType, label: t('offering.types.villa') },
       { value: 'CHAUFFEUR' as OfferingType, label: t('offering.types.chauffeur') },
@@ -468,47 +466,6 @@ export default function EditOfferingPage() {
                     {t('offering.mandatoryToggleLabel')}
                   </Label>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Purchase Limits - for CONSUMABLE types */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('offering.purchaseLimits')}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('offering.purchaseLimitsHelp')}
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="purchaseLimitPerBooking">
-                    {t('offering.purchaseLimitPerBooking')}
-                  </Label>
-                  <Input
-                    id="purchaseLimitPerBooking"
-                    name="purchaseLimitPerBooking"
-                    type="number"
-                    min="1"
-                    value={formData.purchaseLimitPerBooking ?? ''}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
-                      setFormData((prev) => ({ ...prev, purchaseLimitPerBooking: value }));
-                    }}
-                    placeholder={t('offering.purchaseLimitPlaceholder')}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    {t('offering.purchaseLimitDescription')}
-                  </p>
-                </div>
-
-                {formData.consumableType === 'CONSUMABLE' && !formData.purchaseLimitPerBooking && (
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      {t('offering.consumableLimitSuggestion')}
-                    </p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>

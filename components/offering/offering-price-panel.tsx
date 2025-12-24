@@ -18,7 +18,7 @@ import {
 } from '@/lib/api/offering-price-api';
 import { OfferingRateType, type OfferingPrice } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
+import { Edit, Save, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -219,12 +219,6 @@ export function OfferingPricePanel({ offeringId, offeringName }: OfferingPricePa
               Manage flexible pricing based on dates, quantity, and priority
             </CardDescription>
           </div>
-          {!isAdding && (
-            <Button onClick={() => setIsAdding(true)} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Price Rule
-            </Button>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
