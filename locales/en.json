@@ -1244,8 +1244,8 @@
     "priceModifierHelper": "Enter the factor used to adjust final pricing. 1.00 keeps the base price, values below 1 apply a discount.",
     "pricingConfig": "Pricing Configuration",
     "pricingConfigDescription": "Configure how this package modifies the base rental price",
-    "modifierType": "Modifier Type",
-    "priceModifier": "Price Modifier",
+    "modifierTypeLabel": "Modifier Type",
+    "priceModifierLabel": "Price Modifier",
     "allowDiscountOnModifier": "Allow Discount Codes",
     "allowDiscountOnModifierDescription": "When enabled, customers can apply discount codes on top of this package modifier",
     "allowDiscountOnModifierWarning": "⚠️ Discount codes cannot be applied with this package",
@@ -1263,6 +1263,10 @@
       "percentage": "Percentage",
       "fixedHelp": "Add or subtract a fixed dollar amount from the base price",
       "percentageHelp": "Multiply the base price by a percentage (positive increases, negative decreases)"
+    },
+    "priceModifier": {
+      "fixedExample": "e.g., +$50 surcharge or -$20 discount",
+      "percentageExample": "e.g., 20 for 20% increase, -20 for 20% discount"
     },
     "searchByName": "Search by name...",
     "noPackagesFound": "No packages found",
@@ -1321,10 +1325,6 @@
       "search": "Search",
       "searching": "Searching...",
       "reset": "Reset"
-    },
-    "priceModifier": {
-      "fixedExample": "e.g., +$50 surcharge or -$20 discount",
-      "percentageExample": "e.g., 20 for 20% increase, -20 for 20% discount"
     },
     "table": {
       "banner": "Image",

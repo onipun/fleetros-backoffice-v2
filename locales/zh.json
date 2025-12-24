@@ -908,6 +908,32 @@
     "validityPeriod": "有效期",
     "pricingRequirements": "定价与要求",
     "priceModifierHelper": "输入用于调整最终价格的系数。1.00 保持原价，小于 1 的值表示折扣。",
+    "pricingConfig": "定价配置",
+    "pricingConfigDescription": "配置此套餐如何调整基础租赁价格",
+    "modifierTypeLabel": "调整类型",
+    "priceModifierLabel": "价格调整",
+    "allowDiscountOnModifier": "允许折扣代码",
+    "allowDiscountOnModifierDescription": "启用后，客户可以在此套餐调整的基础上应用折扣代码",
+    "allowDiscountOnModifierWarning": "⚠️ 此套餐不能使用折扣代码",
+    "noDiscounts": "无折扣",
+    "discountsAllowed": "允许折扣",
+    "noDiscountsWarning": "使用此套餐时无法应用额外的折扣代码",
+    "fixedAmount": "固定",
+    "percentageModifier": "调整",
+    "type": {
+      "fixed": "固定金额",
+      "percentage": "百分比"
+    },
+    "modifierType": {
+      "fixed": "固定金额",
+      "percentage": "百分比",
+      "fixedHelp": "从基础价格中增加或减少固定金额",
+      "percentageHelp": "将基础价格乘以百分比(正数增加,负数减少)"
+    },
+    "priceModifier": {
+      "fixedExample": "例如,+$50 附加费或 -$20 折扣",
+      "percentageExample": "例如,20 表示增加 20%,-20 表示折扣 20%"
+    },
     "table": {
       "name": "名称",
       "priceModifier": "价格调整",

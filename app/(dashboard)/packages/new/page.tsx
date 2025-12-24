@@ -222,7 +222,7 @@ export default function NewPackagePage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="modifierType">
-                    {t('package.modifierType')} {t('common.required')}
+                    {t('package.modifierTypeLabel')} {t('common.required')}
                   </Label>
                   <select
                     id="modifierType"
@@ -244,7 +244,7 @@ export default function NewPackagePage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="priceModifier">
-                    {t('package.priceModifier')} {t('common.required')}
+                    {t('package.priceModifierLabel')} {t('common.required')}
                   </Label>
                   <Input
                     id="priceModifier"

@@ -900,6 +900,32 @@
     "validityPeriod": "Tempoh Sah",
     "pricingRequirements": "Harga & Keperluan",
     "priceModifierHelper": "Masukkan faktor pengubah harga. Nilai 1.00 mengekalkan harga asal, nilai di bawah 1 memberikan diskaun.",
+    "pricingConfig": "Konfigurasi Harga",
+    "pricingConfigDescription": "Konfigurasikan cara pakej ini mengubah harga sewa asas",
+    "modifierTypeLabel": "Jenis Pengubah",
+    "priceModifierLabel": "Pengubah Harga",
+    "allowDiscountOnModifier": "Benarkan Kod Diskaun",
+    "allowDiscountOnModifierDescription": "Apabila diaktifkan, pelanggan boleh menggunakan kod diskaun di atas pengubah pakej ini",
+    "allowDiscountOnModifierWarning": "⚠️ Kod diskaun tidak boleh digunakan dengan pakej ini",
+    "noDiscounts": "Tiada Diskaun",
+    "discountsAllowed": "Diskaun Dibenarkan",
+    "noDiscountsWarning": "Kod diskaun tambahan tidak boleh digunakan semasa menggunakan pakej ini",
+    "fixedAmount": "tetap",
+    "percentageModifier": "pengubah",
+    "type": {
+      "fixed": "Jumlah Tetap",
+      "percentage": "Peratusan"
+    },
+    "modifierType": {
+      "fixed": "Jumlah Tetap",
+      "percentage": "Peratusan",
+      "fixedHelp": "Tambah atau tolak jumlah dolar tetap dari harga asas",
+      "percentageHelp": "Darabkan harga asas dengan peratusan (positif meningkat, negatif menurun)"
+    },
+    "priceModifier": {
+      "fixedExample": "cth., +$50 caj tambahan atau -$20 diskaun",
+      "percentageExample": "cth., 20 untuk peningkatan 20%, -20 untuk diskaun 20%"
+    },
     "table": {
       "name": "Nama",
       "priceModifier": "Pengubah Harga",
