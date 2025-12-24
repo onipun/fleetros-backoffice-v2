@@ -443,6 +443,7 @@
       "pricingEntry": "Pricing",
       "validPricings": "Valid Entries",
       "valid": "Valid",
+      "addPricing": "Add Pricing Configuration",
       "addAnother": "Add Another Pricing",
       "noValidPricingsWarning": "At least one valid pricing entry is required. Please fill in base rate, valid from, and valid to dates.",
       "createMultipleSuccess": "Successfully created {count} pricing entries",

@@ -320,6 +320,22 @@
       "depositNonNegative": "Jumlah deposit tidak boleh negatif",
       "validityRequired": "Sila pilih tarikh sah dari dan hingga",
       "validityOrder": "Tarikh Sah Dari mesti sebelum tarikh Sah Hingga"
+    },
+    "multiPricing": {
+      "title": "Konfigurasi Harga",
+      "description": "Cipta pelbagai pilihan harga untuk senario berbeza (cth., kadar musim, kadar hujung minggu, diskaun jangka panjang).",
+      "pricingEntry": "Harga",
+      "validPricings": "Entri Sah",
+      "valid": "Sah",
+      "addPricing": "Tambah Konfigurasi Harga",
+      "addAnother": "Tambah Harga Lain",
+      "noValidPricingsWarning": "Sekurang-kurangnya satu entri harga sah diperlukan. Sila isi kadar asas, tarikh sah dari dan sah hingga.",
+      "createMultipleSuccess": "Berjaya mencipta {count} entri harga",
+      "createMultiplePartialSuccess": "Mencipta {success} daripada {total} entri harga. {failed} gagal.",
+      "createMultipleError": "Gagal mencipta entri harga",
+      "deleteConfirmHint": "Taip perkataan DELETE dalam huruf besar untuk membolehkan nyahaktif",
+      "deleteConfirmError": "Sila taip DELETE untuk mengesahkan",
+      "confirmDelete": "Nyahaktifkan Harga"
     }
   },
   "booking": {

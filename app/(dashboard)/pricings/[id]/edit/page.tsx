@@ -252,15 +252,6 @@ export default function EditPricingPage() {
       return;
     }
 
-    if (formData.depositAmount < 0) {
-      toast({
-        title: t('pricing.form.validationErrorTitle'),
-        description: t('pricing.form.depositNonNegative'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
     // Only validate dates if not neverExpires
     if (!formData.neverExpires) {
       if (!formData.validFrom || !formData.validTo) {
@@ -439,19 +430,6 @@ export default function EditPricingPage() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="depositAmount">{t('pricing.depositAmount')} *</Label>
-                  <CurrencyInput
-                    id="depositAmount"
-                    value={formData.depositAmount}
-                    onChange={(value) => setFormData({ ...formData, depositAmount: value })}
-                    currency="MYR"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t('pricing.form.depositHint')}
-                  </p>
-                </div>
               </div>
             </CardContent>
           </Card>

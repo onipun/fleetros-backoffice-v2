@@ -16,27 +16,34 @@ interface MultiPricingPanelProps {
     id: string | number;
     name?: string;
   };
+  /** If true, starts with one pricing entry expanded. Default is true for create forms. */
+  startExpanded?: boolean;
 }
+
+const getInitialPricing = (): PricingFormData => ({
+  baseRate: 0,
+  rateType: 'Daily',
+  depositAmount: 0,
+  minimumRentalDays: 1,
+  validFrom: '',
+  validTo: '',
+  tags: [],
+  isDefault: true,
+});
 
 export function MultiPricingPanel({
   onDataChange,
   existingTags = [],
   entityInfo,
+  startExpanded = true,
 }: MultiPricingPanelProps) {
   const { t } = useLocale();
-  const [pricings, setPricings] = useState<PricingFormData[]>([
-    {
-      baseRate: 0,
-      rateType: 'Daily',
-      depositAmount: 0,
-      minimumRentalDays: 1,
-      validFrom: '',
-      validTo: '',
-      tags: [],
-      isDefault: true,
-    },
-  ]);
-  const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set([0])); // First one expanded by default
+  const [pricings, setPricings] = useState<PricingFormData[]>(
+    startExpanded ? [getInitialPricing()] : []
+  );
+  const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(
+    startExpanded ? new Set([0]) : new Set()
+  );
 
   const handleAddPricing = () => {
     const newPricing: PricingFormData = {
@@ -47,14 +54,14 @@ export function MultiPricingPanel({
       validFrom: '',
       validTo: '',
       tags: [],
-      isDefault: false,
+      isDefault: pricings.length === 0, // First pricing is default
     };
     
+    const newIndex = pricings.length;
     const updatedPricings = [...pricings, newPricing];
     setPricings(updatedPricings);
     
-    // Collapse all existing entries and expand only the new one
-    const newIndex = updatedPricings.length - 1;
+    // Auto-expand the new pricing
     setExpandedIndexes(new Set([newIndex]));
     
     onDataChange?.(updatedPricings);
@@ -136,6 +143,24 @@ export function MultiPricingPanel({
   const getValidPricingsCount = (): number => {
     return pricings.filter(isValidPricing).length;
   };
+
+  // When no pricings, show only the add button
+  if (pricings.length === 0) {
+    return (
+      <div className="space-y-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleAddPricing}
+          className="w-full"
+          size="lg"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          {t('pricing.multiPricing.addPricing')}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

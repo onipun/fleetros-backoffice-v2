@@ -590,6 +590,7 @@ export default function EditVehiclePage() {
                 id: vehicleId,
                 name: vehicle?.name,
               }}
+              startExpanded={false}
             />
           </div>
         </div>

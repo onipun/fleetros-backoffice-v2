@@ -136,18 +136,6 @@ export function PricingPanel({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="depositAmount">{`${t('pricing.depositAmount')} ${t('common.required')}`}</Label>
-            <CurrencyInput
-              id="depositAmount"
-              value={formData.depositAmount}
-              onChange={(value) => handleChange({ depositAmount: value })}
-              disabled={readOnly}
-              required
-            />
-            <p className="text-xs text-muted-foreground">{t('pricing.form.depositHint')}</p>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="minimumRentalDays">{`${t('pricing.minimumRentalDays')} ${t('common.required')}`}</Label>
             <Input
               id="minimumRentalDays"

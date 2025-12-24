@@ -329,6 +329,22 @@
       "depositNonNegative": "押金金额不能为负数",
       "validityRequired": "请选择有效的开始和结束日期",
       "validityOrder": "有效开始日期必须早于有效结束日期"
+    },
+    "multiPricing": {
+      "title": "价格配置",
+      "description": "为不同场景创建多种价格选项（例如：季节价格、周末价格、长期折扣）。",
+      "pricingEntry": "价格",
+      "validPricings": "有效条目",
+      "valid": "有效",
+      "addPricing": "添加价格配置",
+      "addAnother": "添加另一个价格",
+      "noValidPricingsWarning": "需要至少一个有效的价格条目。请填写基准价格、有效开始和结束日期。",
+      "createMultipleSuccess": "成功创建 {count} 个价格条目",
+      "createMultiplePartialSuccess": "已创建 {success}/{total} 个价格条目。{failed} 个失败。",
+      "createMultipleError": "创建价格条目失败",
+      "deleteConfirmHint": "请输入大写的 DELETE 以启用停用",
+      "deleteConfirmError": "请输入 DELETE 确认",
+      "confirmDelete": "停用价格"
     }
   },
   "booking": {
