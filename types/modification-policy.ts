@@ -279,7 +279,7 @@ export const LOYALTY_TIERS: Exclude<LoyaltyTier, null>[] = ['BRONZE', 'SILVER', 
 
 export const LOYALTY_TIER_COLORS: Record<Exclude<LoyaltyTier, null>, string> = {
   BRONZE: 'bg-amber-600',
-  SILVER: 'bg-slate-400',
+  SILVER: 'bg-gray-500',
   GOLD: 'bg-yellow-500',
   PLATINUM: 'bg-indigo-600',
 };
