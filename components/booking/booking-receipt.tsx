@@ -5,15 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { formatDateTime } from '@/lib/utils';
 import type { Booking, Package as BookingPackage, Offering } from '@/types';
-import { Printer, X } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 
@@ -73,19 +73,10 @@ export function BookingReceipt({
             <DialogTitle className="text-2xl font-bold">
               {t('booking.receipt.title')}
             </DialogTitle>
-            <div className="flex gap-2">
-              <Button onClick={handlePrint} size="sm" className="gap-2">
-                <Printer className="h-4 w-4" />
-                {t('booking.receipt.print')}
-              </Button>
-              <Button
-                onClick={() => onOpenChange(false)}
-                size="sm"
-                variant="ghost"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button onClick={handlePrint} size="sm" className="gap-2 mr-6">
+              <Printer className="h-4 w-4" />
+              {t('booking.receipt.print')}
+            </Button>
           </div>
         </DialogHeader>
 
