@@ -58,6 +58,7 @@
     "seconds": "seconds",
     "yes": "Yes",
     "no": "No",
+    "active": "Active",
     "characters": "characters",
     "done": "Done",
     "displayOptions": "Display Options",
@@ -394,7 +395,9 @@
       "daily": "Daily",
       "weekly": "Weekly",
       "monthly": "Monthly",
-      "flat": "Flat Rate"
+      "flat": "Flat Rate",
+      "fixed": "Fixed",
+      "per_rental": "Per Rental"
     },
     "form": {
       "configurationTitle": "Pricing Configuration",
@@ -973,6 +976,10 @@
     "newOffering": "Create New Offering",
     "updateAction": "Update Offering",
     "createDescription": "Configure details and availability for a new offering.",
+    "priority": "Priority",
+    "quantityLimits": "Quantity Limits",
+    "minimumQuantity": "Minimum Quantity",
+    "maximumQuantity": "Maximum Quantity",
     "filters": "Filters",
     "searchPlaceholder": "Search offerings...",
     "allTypes": "All Types",

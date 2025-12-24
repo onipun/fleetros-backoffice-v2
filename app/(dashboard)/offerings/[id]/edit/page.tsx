@@ -138,7 +138,7 @@ export default function EditOfferingPage() {
     },
     onSuccess: async () => {
       // After updating offering, create any new pricing rules provided via multi-panel
-      const validPricings = pricingsData.filter((p) => p.baseRate > 0 && p.validFrom && p.validTo);
+      const validPricings = pricingsData.filter((p) => p.baseRate > 0 && (p.neverExpires || (p.validFrom && p.validTo)));
 
       if (validPricings.length > 0) {
         let successCount = 0;
@@ -154,8 +154,9 @@ export default function EditOfferingPage() {
               isDefault: Boolean(pricing.isDefault),
               minimumQuantity: pricing.minimumQuantity,
               maximumQuantity: pricing.maximumQuantity,
-              validFrom: pricing.validFrom || undefined,
-              validTo: pricing.validTo || undefined,
+              neverExpires: pricing.neverExpires || false,
+              validFrom: pricing.neverExpires ? undefined : (pricing.validFrom || undefined),
+              validTo: pricing.neverExpires ? undefined : (pricing.validTo || undefined),
               description: pricing.description || undefined,
             } as any;
 
@@ -272,8 +273,10 @@ export default function EditOfferingPage() {
       </div>
 
       <form onSubmit={handleSubmit} onKeyDown={preventEnterSubmission}>
-        <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-8 xl:grid-cols-2">
+          {/* Left Column */}
+          <div className="space-y-6">
+          <div className="grid gap-6">
             {/* Basic Information */}
             <Card>
               <CardHeader>
@@ -395,7 +398,7 @@ export default function EditOfferingPage() {
             </Card>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6">
             {/* Pricing & Availability */}
             <Card>
               <CardHeader>
@@ -509,10 +512,24 @@ export default function EditOfferingPage() {
               </CardContent>
             </Card>
           </div>
+          </div>
 
-          {/* Multi-pricing: allow adding multiple offering pricing rules inline (non-persistent until created) */}
+          {/* Right Column */}
           <div className="space-y-6">
-            <OfferingMultiPricingPanel onDataChange={setPricingsData} entityInfo={{ type: 'Offering', id: offeringId, name: offering?.name }} />
+            {/* Offering Price Management - Existing Pricing Rules */}
+            {offering && offeringId && typeof offeringId === 'string' && offeringId.trim() !== '' && !isNaN(parseInt(offeringId)) && (
+              <OfferingPricePanel
+                offeringId={parseInt(offeringId)}
+                offeringName={offering.name || 'Offering'}
+              />
+            )}
+
+            {/* Multi-pricing: allow adding multiple offering pricing rules inline (non-persistent until created) */}
+            <OfferingMultiPricingPanel 
+              onDataChange={setPricingsData} 
+              entityInfo={{ type: 'Offering', id: offeringId, name: offering?.name }}
+              startExpanded={false}
+            />
           </div>
         </div>
 
@@ -540,14 +557,6 @@ export default function EditOfferingPage() {
           </div>
         </div>
       </form>
-
-      {/* Offering Price Management */}
-      {offering && offeringId && typeof offeringId === 'string' && offeringId.trim() !== '' && !isNaN(parseInt(offeringId)) && (
-        <OfferingPricePanel
-          offeringId={parseInt(offeringId)}
-          offeringName={offering.name || 'Offering'}
-        />
-      )}
     </div>
   );
 }

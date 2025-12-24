@@ -45,8 +45,6 @@ export default function NewOfferingPage() {
       { value: 'GPS' as OfferingType, label: t('offering.types.gps') },
       { value: 'INSURANCE' as OfferingType, label: t('offering.types.insurance') },
       { value: 'CHILD_SEAT' as OfferingType, label: t('offering.types.childSeat') },
-      { value: 'WIFI' as OfferingType, label: t('offering.types.wifi') },
-      { value: 'ADDITIONAL_DRIVER' as OfferingType, label: t('offering.types.additionalDriver') },
       { value: 'HOMESTAY' as OfferingType, label: t('offering.types.homestay') },
       { value: 'VILLA' as OfferingType, label: t('offering.types.villa') },
       { value: 'CHAUFFEUR' as OfferingType, label: t('offering.types.chauffeur') },
@@ -76,6 +74,41 @@ export default function NewOfferingPage() {
     [t],
   );
 
+  // Predefined inventory settings for each offering type
+  const offeringTypeDefaults: Record<OfferingType, {
+    inventoryMode: InventoryMode;
+    consumableType: ConsumableType;
+    availability: number;
+    maxQuantityPerBooking: number;
+    purchaseLimitPerBooking: number | null;
+  }> = useMemo(() => ({
+    GPS: { inventoryMode: 'SHARED', consumableType: 'RETURNABLE', availability: 100, maxQuantityPerBooking: 5, purchaseLimitPerBooking: null },
+    INSURANCE: { inventoryMode: 'SHARED', consumableType: 'SERVICE', availability: 9999, maxQuantityPerBooking: 1, purchaseLimitPerBooking: null },
+    CHILD_SEAT: { inventoryMode: 'SHARED', consumableType: 'RETURNABLE', availability: 20, maxQuantityPerBooking: 3, purchaseLimitPerBooking: null },
+    HOMESTAY: { inventoryMode: 'EXCLUSIVE', consumableType: 'ACCOMMODATION', availability: 1, maxQuantityPerBooking: 1, purchaseLimitPerBooking: null },
+    VILLA: { inventoryMode: 'EXCLUSIVE', consumableType: 'ACCOMMODATION', availability: 1, maxQuantityPerBooking: 1, purchaseLimitPerBooking: null },
+    CHAUFFEUR: { inventoryMode: 'EXCLUSIVE', consumableType: 'SERVICE', availability: 1, maxQuantityPerBooking: 1, purchaseLimitPerBooking: null },
+    AIRPORT_PICKUP: { inventoryMode: 'SHARED', consumableType: 'SERVICE', availability: 9999, maxQuantityPerBooking: 1, purchaseLimitPerBooking: null },
+    FULL_TANK: { inventoryMode: 'SHARED', consumableType: 'CONSUMABLE', availability: 9999, maxQuantityPerBooking: 1, purchaseLimitPerBooking: 1 },
+    TOLL_PASS: { inventoryMode: 'SHARED', consumableType: 'CONSUMABLE', availability: 9999, maxQuantityPerBooking: 1, purchaseLimitPerBooking: 1 },
+    OTHER: { inventoryMode: 'SHARED', consumableType: 'RETURNABLE', availability: 100, maxQuantityPerBooking: 5, purchaseLimitPerBooking: null },
+  }), []);
+
+  // Auto-apply predefined settings when offering type changes
+  useEffect(() => {
+    const defaults = offeringTypeDefaults[formData.offeringType];
+    if (defaults) {
+      setFormData(prev => ({
+        ...prev,
+        inventoryMode: defaults.inventoryMode,
+        consumableType: defaults.consumableType,
+        availability: defaults.availability,
+        maxQuantityPerBooking: defaults.maxQuantityPerBooking,
+        purchaseLimitPerBooking: defaults.purchaseLimitPerBooking,
+      }));
+    }
+  }, [formData.offeringType, offeringTypeDefaults]);
+
   // Auto-adjust settings based on inventory mode and consumable type
   useEffect(() => {
     if (formData.inventoryMode === 'EXCLUSIVE') {
@@ -101,7 +134,7 @@ export default function NewOfferingPage() {
     },
     onSuccess: async (offering: Offering) => {
       // Create offering prices if user provided any via the multi-pricing panel
-      const validPricings = pricingsData.filter((p) => p.baseRate > 0 && p.validFrom && p.validTo);
+      const validPricings = pricingsData.filter((p) => p.baseRate > 0 && (p.neverExpires || (p.validFrom && p.validTo)));
 
       if (validPricings.length > 0) {
         let successCount = 0;
@@ -117,8 +150,9 @@ export default function NewOfferingPage() {
               isDefault: Boolean(pricing.isDefault),
               minimumQuantity: pricing.minimumQuantity,
               maximumQuantity: pricing.maximumQuantity,
-              validFrom: pricing.validFrom || undefined,
-              validTo: pricing.validTo || undefined,
+              neverExpires: pricing.neverExpires || false,
+              validFrom: pricing.neverExpires ? undefined : (pricing.validFrom || undefined),
+              validTo: pricing.neverExpires ? undefined : (pricing.validTo || undefined),
               description: pricing.description || undefined,
             } as any;
 

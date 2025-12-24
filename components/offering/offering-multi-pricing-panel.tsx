@@ -22,6 +22,7 @@ export interface OfferingPricingFormData {
   isDefault: boolean;
   minimumQuantity?: number;
   maximumQuantity?: number;
+  neverExpires?: boolean;
   validFrom: string;
   validTo: string;
   description?: string;
@@ -34,14 +35,18 @@ interface OfferingMultiPricingPanelProps {
     id: string | number;
     name?: string;
   };
+  /** If true, starts with one pricing entry expanded. Default is true for create forms. */
+  startExpanded?: boolean;
 }
 
 export function OfferingMultiPricingPanel({
   onDataChange,
   entityInfo,
+  startExpanded = true,
 }: OfferingMultiPricingPanelProps) {
   const { t } = useLocale();
-  const [pricings, setPricings] = useState<OfferingPricingFormData[]>([
+  const [pricings, setPricings] = useState<OfferingPricingFormData[]>(
+    startExpanded ? [
     {
       baseRate: 0,
       rateType: OfferingRateType.DAILY,
@@ -50,12 +55,16 @@ export function OfferingMultiPricingPanel({
       isDefault: true,
       minimumQuantity: undefined,
       maximumQuantity: undefined,
+      neverExpires: false,
       validFrom: '',
       validTo: '',
       description: '',
     },
-  ]);
-  const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set([0]));
+  ] : []
+  );
+  const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(
+    startExpanded ? new Set([0]) : new Set()
+  );
 
   const handleAddPricing = () => {
     const newPricing: OfferingPricingFormData = {
@@ -66,6 +75,7 @@ export function OfferingMultiPricingPanel({
       isDefault: false,
       minimumQuantity: undefined,
       maximumQuantity: undefined,
+      neverExpires: false,
       validFrom: '',
       validTo: '',
       description: '',
@@ -121,7 +131,7 @@ export function OfferingMultiPricingPanel({
   };
 
   const isValidPricing = (pricing: OfferingPricingFormData): boolean => {
-    return pricing.baseRate > 0 && pricing.validFrom !== '' && pricing.validTo !== '';
+    return pricing.baseRate > 0 && (pricing.neverExpires || (pricing.validFrom !== '' && pricing.validTo !== ''));
   };
 
   const getValidPricingsCount = (): number => {
@@ -134,6 +144,24 @@ export function OfferingMultiPricingPanel({
     { value: OfferingRateType.FIXED, label: 'Fixed' },
     { value: OfferingRateType.PER_RENTAL, label: 'Per Rental' },
   ];
+
+  // When no pricings, show only the add button
+  if (pricings.length === 0) {
+    return (
+      <div className="space-y-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleAddPricing}
+          className="w-full"
+          size="lg"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add Another Pricing Rule
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -341,34 +369,60 @@ export function OfferingMultiPricingPanel({
                     </div>
                   </div>
 
-                  {/* Valid From/To */}
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor={`validFrom-${index}`}>
-                        Valid From {t('common.required')}
+                  {/* Never Expires */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`neverExpires-${index}`}
+                      checked={Boolean(pricing.neverExpires)}
+                      onCheckedChange={(checked) =>
+                        handlePricingChange(index, {
+                          ...pricing,
+                          neverExpires: Boolean(checked),
+                          validFrom: checked ? '' : pricing.validFrom,
+                          validTo: checked ? '' : pricing.validTo,
+                        })
+                      }
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label htmlFor={`neverExpires-${index}`} className="cursor-pointer">
+                        {t('pricing.form.neverExpires')}
                       </Label>
-                      <DateTimePicker
-                        id={`validFrom-${index}`}
-                        value={pricing.validFrom}
-                        onChange={(value) =>
-                          handlePricingChange(index, { ...pricing, validFrom: value || '' })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`validTo-${index}`}>
-                        Valid To {t('common.required')}
-                      </Label>
-                      <DateTimePicker
-                        id={`validTo-${index}`}
-                        value={pricing.validTo}
-                        onChange={(value) =>
-                          handlePricingChange(index, { ...pricing, validTo: value || '' })
-                        }
-                      />
+                      <p className="text-xs text-muted-foreground">
+                        {t('pricing.form.neverExpiresHint')}
+                      </p>
                     </div>
                   </div>
+
+                  {/* Valid From/To */}
+                  {!pricing.neverExpires && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor={`validFrom-${index}`}>
+                          Valid From {t('common.required')}
+                        </Label>
+                        <DateTimePicker
+                          id={`validFrom-${index}`}
+                          value={pricing.validFrom}
+                          onChange={(value) =>
+                            handlePricingChange(index, { ...pricing, validFrom: value || '' })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`validTo-${index}`}>
+                          Valid To {t('common.required')}
+                        </Label>
+                        <DateTimePicker
+                          id={`validTo-${index}`}
+                          value={pricing.validTo}
+                          onChange={(value) =>
+                            handlePricingChange(index, { ...pricing, validTo: value || '' })
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Description */}
                   <div className="space-y-2">

@@ -56,6 +56,7 @@
   "seconds": "秒",
   "yes": "是",
   "no": "否",
+  "active": "激活",
   "displayOptions": "显示选项",
   "pageSize": "每页显示",
   "sortBy": "排序方式",
@@ -299,7 +300,9 @@
       "daily": "按天",
       "weekly": "按周",
       "monthly": "按月",
-      "flat": "固定费率"
+      "flat": "固定费率",
+      "fixed": "固定",
+      "per_rental": "每次租赁"
     },
     "form": {
       "configurationTitle": "定价配置",
@@ -751,6 +754,10 @@
     "newOffering": "创建新服务",
     "updateAction": "更新服务",
     "createDescription": "配置新服务的详细信息和可用性。",
+    "priority": "优先级",
+    "quantityLimits": "数量限制",
+    "minimumQuantity": "最小数量",
+    "maximumQuantity": "最大数量",
     "filters": "筛选",
     "searchPlaceholder": "搜索服务...",
     "allTypes": "全部类型",

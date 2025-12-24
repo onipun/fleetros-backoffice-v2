@@ -48,6 +48,7 @@
   "seconds": "saat",
   "yes": "Ya",
   "no": "Tidak",
+  "active": "Aktif",
   "displayOptions": "Pilihan Paparan",
   "pageSize": "Saiz Halaman",
   "sortBy": "Susun Mengikut",
@@ -290,7 +291,9 @@
       "daily": "Harian",
       "weekly": "Mingguan",
       "monthly": "Bulanan",
-      "flat": "Kadar Tetap"
+      "flat": "Kadar Tetap",
+      "fixed": "Tetap",
+      "per_rental": "Setiap Sewaan"
     },
     "form": {
       "configurationTitle": "Konfigurasi Harga",
@@ -743,6 +746,10 @@
     "newOffering": "Cipta Perkhidmatan Baharu",
     "updateAction": "Kemas Kini Perkhidmatan",
     "createDescription": "Konfigurasikan butiran dan ketersediaan perkhidmatan baharu.",
+    "priority": "Keutamaan",
+    "quantityLimits": "Had Kuantiti",
+    "minimumQuantity": "Kuantiti Minimum",
+    "maximumQuantity": "Kuantiti Maksimum",
     "filters": "Tapisan",
     "searchPlaceholder": "Cari perkhidmatan...",
     "allTypes": "Semua Jenis",

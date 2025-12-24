@@ -11,14 +11,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import {
-  createOfferingPrice,
-  deleteOfferingPrice,
-  getOfferingPrices,
-  updateOfferingPrice,
+    createOfferingPrice,
+    deleteOfferingPrice,
+    getOfferingPrices,
+    updateOfferingPrice,
 } from '@/lib/api/offering-price-api';
 import { OfferingRateType, type OfferingPrice } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 interface OfferingPricePanelProps {
@@ -445,14 +446,15 @@ export function OfferingPricePanel({ offeringId, offeringName }: OfferingPricePa
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(price)}
-                        disabled={editingId === price.id}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <Link href={`/offering-prices/${price.id}/edit`}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!price.id}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
                       <Button
                         size="sm"
                         variant="outline"
