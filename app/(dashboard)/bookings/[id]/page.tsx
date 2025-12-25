@@ -947,11 +947,33 @@ export default function BookingDetailPage() {
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('booking.cancelBooking')}
+            <AlertDialogTitle className="text-orange-600">
+              ⚠️ {t('booking.cancelBooking')}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('booking.cancelBookingConfirm')}
+            <AlertDialogDescription className="space-y-3">
+              <p className="font-medium">
+                {t('booking.cancelBookingConfirm')}
+              </p>
+              
+              {booking?.balancePayment && booking.balancePayment > 0 && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 dark:text-blue-400 text-sm">ℹ️</span>
+                    <div className="flex-1">
+                      <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                        Balance Payment: {formatCurrency(booking.balancePayment)}
+                      </p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        {t('booking.cancelBookingNote')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <p className="text-sm text-muted-foreground italic">
+                {t('booking.cancelBookingWarning')}
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -966,7 +988,7 @@ export default function BookingDetailPage() {
                 cancelBookingMutation.mutate();
               }}
             >
-              {cancelBookingMutation.isPending ? t('common.loading') : t('booking.cancelBooking')}
+              {cancelBookingMutation.isPending ? t('common.loading') : t('booking.cancelBookingProceed')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

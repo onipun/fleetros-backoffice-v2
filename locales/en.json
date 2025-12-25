@@ -554,7 +554,10 @@
       "descending": "Descending (Z-A, 9-0)"
     },
     "cancelBooking": "Cancel Booking",
-    "cancelBookingConfirm": "Are you sure you want to cancel this booking? This action cannot be undone.",
+    "cancelBookingConfirm": "Are you sure you want to cancel this booking?",
+    "cancelBookingNote": "If there is a balance payment, it will be automatically issued as a credit note to the customer.",
+    "cancelBookingWarning": "This action cannot be undone.",
+    "cancelBookingProceed": "Yes, Cancel Booking",
     "cancelBookingSuccess": "Booking Cancelled",
     "cancelBookingSuccessDescription": "The booking has been cancelled successfully.",
     "cancelBookingError": "Failed to cancel booking",
