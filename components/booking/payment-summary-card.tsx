@@ -46,6 +46,7 @@ import {
   writeOffBadDebt,
 } from '@/lib/api/settlement-api';
 import { cn } from '@/lib/utils';
+import { getTransactionTypeInfo } from '@/types/settlement';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
@@ -358,7 +359,20 @@ export function PaymentSummaryCard({
     );
   }
 
-  const paymentHistory = summary?.paymentHistory || [];
+  // Use settlement transactions if available (has type field), otherwise fall back to payment history
+  const paymentHistory = settlement?.transactions?.map(tx => ({
+    id: tx.id,
+    amount: tx.amount,
+    paymentMethod: tx.paymentMethod || 'CASH',
+    status: tx.status,
+    referenceNumber: tx.referenceNumber,
+    receiptUrl: tx.receiptUrl,
+    paymentDate: tx.transactionDate,
+    isDeposit: tx.type === 'DEPOSIT',
+    notes: tx.notes,
+    transactionType: tx.type,
+    isPostCompletion: tx.isPostCompletion,
+  })) || summary?.paymentHistory || [];
   const displayedPayments = showAllPayments
     ? paymentHistory
     : paymentHistory.slice(0, 3);
@@ -729,6 +743,7 @@ function PaymentHistoryRow({
 }: PaymentHistoryRowProps) {
   const methodInfo = getPaymentMethodInfo(payment.paymentMethod);
   const statusColor = getPaymentStatusColor(payment.status);
+  const transactionTypeInfo = payment.transactionType ? getTransactionTypeInfo(payment.transactionType) : null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -752,6 +767,11 @@ function PaymentHistoryRow({
               {methodInfo.label}
               {payment.isDeposit && ' (Deposit)'}
             </p>
+            {transactionTypeInfo && (
+              <p className="text-xs text-muted-foreground">
+                Type: {transactionTypeInfo.icon} {transactionTypeInfo.label}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -778,6 +798,17 @@ function PaymentHistoryRow({
               <div>
                 <span className="text-muted-foreground">Reference:</span>
                 <p className="font-medium font-mono">{payment.referenceNumber}</p>
+              </div>
+            )}
+            {transactionTypeInfo && (
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Type:</span>
+                <p className="font-medium">
+                  {transactionTypeInfo.icon} {transactionTypeInfo.label}
+                  {transactionTypeInfo.description && (
+                    <span className="text-xs text-muted-foreground ml-2">({transactionTypeInfo.description})</span>
+                  )}
+                </p>
               </div>
             )}
           </div>
