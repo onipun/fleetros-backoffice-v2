@@ -546,6 +546,7 @@
       "sortBy": "Sort By",
       "sortStartDate": "Start Date",
       "sortEndDate": "End Date",
+      "sortId": "Booking ID",
       "sortCreatedAt": "Created Date",
       "sortTotalAmount": "Total Amount",
       "sortStatus": "Status",

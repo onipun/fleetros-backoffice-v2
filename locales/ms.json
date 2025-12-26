@@ -1017,6 +1017,7 @@
       "sortBy": "Susun Mengikut",
       "sortPaymentDate": "Tarikh Pembayaran",
       "sortCreatedAt": "Dicipta Pada",
+      "sortId": "ID Tempahan",
       "sortAmount": "Jumlah",
       "sortStatus": "Status",
       "sortDirection": "Susunan",

@@ -494,6 +494,7 @@ export function BookingSearchFilters({ onSearch, isLoading = false }: BookingSea
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="id">{t('booking.search.sortId')}</SelectItem>
                     <SelectItem value="startDate">{t('booking.search.sortStartDate')}</SelectItem>
                     <SelectItem value="endDate">{t('booking.search.sortEndDate')}</SelectItem>
                     <SelectItem value="createdAt">{t('booking.search.sortCreatedAt')}</SelectItem>

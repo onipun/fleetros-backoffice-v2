@@ -1026,6 +1026,7 @@
       "sortBy": "排序方式",
       "sortPaymentDate": "付款日期",
       "sortCreatedAt": "创建时间",
+      "sortId": "预订编号",
       "sortAmount": "金额",
       "sortStatus": "状态",
       "sortDirection": "排序顺序",
