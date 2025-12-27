@@ -19,56 +19,56 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { Button } from '@/components/ui/button';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import {
-    getPaymentMethodInfo,
-    getPaymentStatusColor,
-    getPaymentSummary,
-    PAYMENT_METHODS,
-    recordManualPayment,
-    recordManualPaymentWithReceipt,
-    type ManualPaymentRequest,
-    type ManualPaymentResponse,
-    type PaymentMethodType
+  getPaymentMethodInfo,
+  getPaymentStatusColor,
+  getPaymentSummary,
+  PAYMENT_METHODS,
+  recordManualPayment,
+  recordManualPaymentWithReceipt,
+  type ManualPaymentRequest,
+  type ManualPaymentResponse,
+  type PaymentMethodType
 } from '@/lib/api/manual-payment';
 import { cn } from '@/lib/utils';
 import {
-    getTransactionTypeInfo,
-    TRANSACTION_TYPES,
-    type TransactionType,
-    type TransactionTypeInfo,
+  getTransactionTypeInfo,
+  TRANSACTION_TYPES,
+  type TransactionType,
+  type TransactionTypeInfo,
 } from '@/types/settlement';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-    AlertCircle,
-    CheckCircle2,
-    ChevronDown,
-    ChevronUp,
-    DollarSign,
-    History,
-    Loader2,
-    Receipt,
-    Upload,
-    X,
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  History,
+  Loader2,
+  Receipt,
+  Upload,
+  X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 

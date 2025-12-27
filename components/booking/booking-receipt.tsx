@@ -5,16 +5,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { formatDateTime } from '@/lib/utils';
-import type { Booking, Package as BookingPackage, Offering } from '@/types';
+import { hateoasClient } from '@/lib/api/hateoas-client';
+import { cn, formatDateTime } from '@/lib/utils';
+import type { Booking, Package as BookingPackage, Offering, Vehicle } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useReactToPrint } from 'react-to-print';
 
 interface BookingReceiptProps {
@@ -31,9 +33,37 @@ interface BookingReceiptProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function SectionTitle({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="h-5 w-1.5 rounded-full bg-primary" />
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+    </div>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: ReactNode;
+  value: ReactNode;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-2">
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className={cn('text-sm font-medium text-foreground text-right', valueClassName)}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export function BookingReceipt({
   booking,
-  vehicleDetails,
+  vehicleDetails: propVehicleDetails,
   packageDetails,
   pricingSnapshot,
   open,
@@ -41,6 +71,17 @@ export function BookingReceipt({
 }: BookingReceiptProps) {
   const { t, formatCurrency } = useLocale();
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Fetch vehicle details via HATEOAS API
+  const { data: vehicleData } = useQuery({
+    queryKey: ['vehicle', booking.vehicleId],
+    queryFn: () => hateoasClient.getResource<Vehicle>('vehicles', String(booking.vehicleId)),
+    enabled: open && !!booking.vehicleId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Use fetched vehicle data or fallback to props
+  const vehicleDetails = vehicleData || propVehicleDetails;
 
     const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -57,10 +98,10 @@ export function BookingReceipt({
   }>;
 
   const statusColors: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    CONFIRMED: 'bg-blue-100 text-blue-800 border-blue-300',
-    COMPLETED: 'bg-green-100 text-green-800 border-green-300',
-    CANCELLED: 'bg-red-100 text-red-800 border-red-300',
+    PENDING: 'bg-warning/10 text-warning border-warning/20',
+    CONFIRMED: 'bg-info/10 text-info border-info/20',
+    COMPLETED: 'bg-success/10 text-success border-success/20',
+    CANCELLED: 'bg-danger/10 text-danger border-danger/20',
   };
 
   const getStatusColor = (status: string) => {
@@ -75,7 +116,7 @@ export function BookingReceipt({
             <DialogTitle className="text-2xl font-bold">
               {t('booking.receipt.title')}
             </DialogTitle>
-            <Button onClick={handlePrint} size="sm" className="gap-2 mr-6">
+            <Button onClick={handlePrint} size="sm" className="gap-2">
               <Printer className="h-4 w-4" />
               {t('booking.receipt.print')}
             </Button>
@@ -84,25 +125,25 @@ export function BookingReceipt({
 
         <div ref={receiptRef} className="px-6 pb-6">
           {/* Header */}
-          <div className="mb-8 border-b-2 border-gray-300 pb-6">
+          <div className="mb-8 border-b border-border pb-6">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-semibold text-foreground mb-1">
                   {t('booking.receipt.companyName')}
                 </h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {t('booking.receipt.bookingReceipt')}
                 </p>
               </div>
               <div className="text-right">
                 <div
-                  className={`inline-flex px-4 py-2 rounded-lg border-2 font-semibold text-sm ${getStatusColor(
+                  className={`inline-flex items-center px-3 py-1.5 rounded-md border font-medium text-sm ${getStatusColor(
                     booking.status || 'PENDING'
                   )}`}
                 >
                   {t(`booking.status.${(booking.status || 'pending').toLowerCase()}`)}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   {t('booking.receipt.generatedOn')}:{' '}
                   {formatDateTime(new Date().toISOString())}
                 </p>
@@ -111,133 +152,136 @@ export function BookingReceipt({
           </div>
 
           {/* Booking Information */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <Card className="border-2">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="h-8 w-1 bg-primary rounded-full"></span>
-                  {t('booking.receipt.bookingInformation')}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 font-medium">
-                      {t('booking.receipt.bookingId')}
-                    </span>
-                    <span className="text-sm font-bold text-gray-900">
-                      #{booking.id}
-                    </span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 font-medium">
-                      {t('booking.receipt.bookingDate')}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {booking.createdAt
-                        ? formatDateTime(booking.createdAt)
-                        : t('common.notAvailable')}
-                    </span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 font-medium">
-                      {t('booking.receipt.duration')}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {booking.totalDays || 0}{' '}
-                      {(booking.totalDays || 0) === 1
-                        ? t('booking.form.daySingular')
-                        : t('booking.form.dayPlural')}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="h-8 w-1 bg-primary rounded-full"></span>
-                  {t('booking.receipt.vehicleInformation')}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 font-medium">
-                      {t('booking.receipt.vehicleId')}
-                    </span>
-                    <span className="text-sm font-bold text-gray-900">
-                      #{booking.vehicleId}
-                    </span>
-                  </div>
-                  {vehicleDetails && (
-                    <>
-                      <Separator />
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 font-medium">
-                          {t('booking.receipt.vehicle')}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {vehicleDetails.year} {vehicleDetails.make}{' '}
-                          {vehicleDetails.model}
-                        </span>
-                      </div>
-                      {vehicleDetails.licensePlate && (
-                        <>
-                          <Separator />
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-600 font-medium">
-                              {t('booking.receipt.licensePlate')}
-                            </span>
-                            <span className="text-sm font-semibold text-gray-900">
-                              {vehicleDetails.licensePlate}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Rental Period */}
-          <Card className="border-2 mb-8">
+          <Card className="border border-border shadow-none mb-6">
             <CardContent className="p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="h-8 w-1 bg-primary rounded-full"></span>
-                {t('booking.receipt.rentalPeriod')}
-              </h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase mb-1">
-                      {t('booking.receipt.pickupDetails')}
-                    </p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {booking.startDate
-                        ? formatDateTime(booking.startDate)
-                        : t('common.notAvailable')}
-                    </p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      📍 {booking.pickupLocation || t('common.notAvailable')}
-                    </p>
-                  </div>
+              <SectionTitle title={t('booking.receipt.bookingInformation')} />
+              <div className="mt-4 divide-y divide-border">
+                <InfoRow
+                  label={t('booking.receipt.bookingId')}
+                  value={`#${booking.id}`}
+                  valueClassName="font-semibold"
+                />
+                <InfoRow
+                  label={t('booking.receipt.bookingDate')}
+                  value={
+                    booking.createdAt
+                      ? formatDateTime(booking.createdAt)
+                      : t('common.notAvailable')
+                  }
+                />
+                <InfoRow
+                  label={t('booking.receipt.duration')}
+                  value={`${booking.totalDays || 0} ${(booking.totalDays || 0) === 1
+                    ? t('booking.form.daySingular')
+                    : t('booking.form.dayPlural')}`}
+                />
+
+                <div className="py-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {t('booking.receipt.pickupDetails')}
+                  </p>
                 </div>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase mb-1">
-                      {t('booking.receipt.dropoffDetails')}
-                    </p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {booking.endDate
-                        ? formatDateTime(booking.endDate)
-                        : t('common.notAvailable')}
-                    </p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      📍 {booking.dropoffLocation || t('common.notAvailable')}
-                    </p>
+                <InfoRow
+                  label={t('booking.receipt.pickupDate')}
+                  value={
+                    booking.startDate
+                      ? formatDateTime(booking.startDate)
+                      : t('common.notAvailable')
+                  }
+                  valueClassName="font-semibold"
+                />
+                <InfoRow
+                  label={t('booking.receipt.pickupLocation')}
+                  value={booking.pickupLocation || t('common.notAvailable')}
+                />
+
+                <div className="py-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {t('booking.receipt.dropoffDetails')}
+                  </p>
+                </div>
+                <InfoRow
+                  label={t('booking.receipt.dropoffDate')}
+                  value={
+                    booking.endDate
+                      ? formatDateTime(booking.endDate)
+                      : t('common.notAvailable')
+                  }
+                  valueClassName="font-semibold"
+                />
+                <InfoRow
+                  label={t('booking.receipt.dropoffLocation')}
+                  value={booking.dropoffLocation || t('common.notAvailable')}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Customer Details */}
+          <Card className="border border-border shadow-none mb-6">
+            <CardContent className="p-6">
+              <SectionTitle title={t('booking.receipt.customerDetails')} />
+              <div className="mt-4 divide-y divide-border">
+                {booking.guestName && (
+                  <InfoRow label={t('booking.receipt.customerName')} value={booking.guestName} valueClassName="font-semibold" />
+                )}
+                {booking.guestEmail && (
+                  <InfoRow label={t('booking.receipt.customerEmail')} value={booking.guestEmail} />
+                )}
+                {booking.guestPhone && (
+                  <InfoRow label={t('booking.receipt.customerPhone')} value={booking.guestPhone} />
+                )}
+                {!booking.guestName && !booking.guestEmail && !booking.guestPhone && (
+                  <div className="py-3 text-sm text-muted-foreground italic">
+                    {t('common.notAvailable')}
                   </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Vehicle Information */}
+          <Card className="border border-border shadow-none mb-6">
+            <CardContent className="p-6">
+              <SectionTitle title={t('booking.receipt.vehicleInformation')} />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="mt-4 divide-y divide-border">
+                  <InfoRow label={t('booking.receipt.vehicleId')} value={`#${booking.vehicleId}`} valueClassName="font-semibold" />
+                  <InfoRow
+                    label={t('booking.receipt.vehicle')}
+                    value={
+                      vehicleDetails
+                        ? `${vehicleDetails.year ?? ''} ${vehicleDetails.make ?? ''} ${vehicleDetails.model ?? ''}`.trim()
+                        : t('common.notAvailable')
+                    }
+                  />
+                  <InfoRow
+                    label={t('booking.receipt.licensePlate')}
+                    value={vehicleDetails?.licensePlate || t('common.notAvailable')}
+                  />
+                </div>
+
+                <div className="mt-4 divide-y divide-border">
+                  <InfoRow
+                    label={t('booking.receipt.transmission')}
+                    value={vehicleDetails?.transmissionType || t('common.notAvailable')}
+                  />
+                  <InfoRow
+                    label={t('booking.receipt.seaterCount')}
+                    value={
+                      vehicleDetails?.seaterCount
+                        ? `${vehicleDetails.seaterCount} ${t('booking.receipt.seats')}`
+                        : t('common.notAvailable')
+                    }
+                  />
+                  <InfoRow
+                    label={t('booking.receipt.fuelType')}
+                    value={vehicleDetails?.fuelType || t('common.notAvailable')}
+                  />
+                  <InfoRow
+                    label={t('booking.receipt.carType')}
+                    value={vehicleDetails?.carType || t('common.notAvailable')}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -245,19 +289,16 @@ export function BookingReceipt({
 
           {/* Package Information */}
           {(booking.packageId || packageDetails) && (
-            <Card className="border-2 mb-8 bg-blue-50/50">
+            <Card className="border border-border shadow-none mb-6">
               <CardContent className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="h-8 w-1 bg-blue-600 rounded-full"></span>
-                  {t('booking.receipt.packageInformation')}
-                </h3>
+                <SectionTitle title={t('booking.receipt.packageInformation')} />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-gray-900">
+                    <p className="text-sm font-semibold text-foreground">
                       {packageDetails?.name || `${t('booking.receipt.package')} #${booking.packageId}`}
                     </p>
                     {packageDetails?.description && (
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {packageDetails.description}
                       </p>
                     )}
@@ -272,12 +313,9 @@ export function BookingReceipt({
 
           {/* Additional Services */}
           {offerings.length > 0 && (
-            <Card className="border-2 mb-8">
+            <Card className="border border-border shadow-none mb-6">
               <CardContent className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="h-8 w-1 bg-primary rounded-full"></span>
-                  {t('booking.receipt.additionalServices')}
-                </h3>
+                <SectionTitle title={t('booking.receipt.additionalServices')} />
                 <div className="space-y-3">
                   {offerings.map((item, index) => {
                     const offering = item.offering || ({} as Offering);
@@ -288,29 +326,29 @@ export function BookingReceipt({
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-foreground">
                               {offering.name || `${t('offering.unnamedOffering')} #${item.offeringId}`}
                             </p>
                             {item.included && (
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-green-50 text-green-700 border-green-300"
+                                className="text-xs bg-success/10 text-success border-success/20"
                               >
                                 {t('booking.receipt.packageIncluded')}
                               </Badge>
                             )}
                           </div>
                           {offering.description && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {offering.description}
                             </p>
                           )}
                         </div>
                         <div className="text-right ml-4">
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             {item.quantity || 1} × {formatCurrency(item.price || 0)}
                           </p>
-                          <p className="text-sm font-bold text-gray-900">
+                          <p className="text-sm font-semibold text-foreground">
                             {formatCurrency(item.totalPrice || 0)}
                           </p>
                         </div>
@@ -323,22 +361,19 @@ export function BookingReceipt({
           )}
 
           {/* Pricing Breakdown */}
-          <Card className="border-2 mb-8 bg-gray-50">
+          <Card className="border border-border shadow-none mb-6">
             <CardContent className="p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="h-8 w-1 bg-primary rounded-full"></span>
-                {t('booking.receipt.pricingBreakdown')}
-              </h3>
+              <SectionTitle title={t('booking.receipt.pricingBreakdown')} />
               <div className="space-y-1">
                 {pricingSnapshot ? (
                   <>
                     {/* Vehicle Rentals */}
                     {pricingSnapshot.pricingSummary?.vehicleRentals?.map((rental: any, idx: number) => (
                       <div key={idx} className="flex justify-between py-1">
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-muted-foreground">
                           {rental.vehicleName} ({rental.days} {rental.days === 1 ? 'day' : 'days'} × {formatCurrency(rental.dailyRate)})
                         </span>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-sm font-medium text-foreground">
                           {formatCurrency(rental.amount || 0)}
                         </span>
                       </div>
@@ -347,11 +382,11 @@ export function BookingReceipt({
                     {/* Package Adjustments */}
                     {pricingSnapshot.pricingSummary?.packages?.map((pkg: any, idx: number) => (
                       <div key={idx} className="flex justify-between py-1">
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-muted-foreground">
                           {pkg.packageName}
                           {pkg.modifierType === 'PERCENTAGE' && ` (${pkg.priceModifier > 0 ? '+' : ''}${pkg.priceModifier}%)`}
                         </span>
-                        <span className={`text-sm font-semibold ${(pkg.packageAdjustment || pkg.amount) >= 0 ? 'text-gray-900' : 'text-green-600'}`}>
+                        <span className={`text-sm font-medium ${(pkg.packageAdjustment || pkg.amount) >= 0 ? 'text-foreground' : 'text-success'}`}>
                           {(pkg.packageAdjustment || pkg.amount) >= 0 ? '' : '-'}{formatCurrency(Math.abs(pkg.packageAdjustment || pkg.amount || 0))}
                         </span>
                       </div>
@@ -360,10 +395,10 @@ export function BookingReceipt({
                     {/* Offerings */}
                     {pricingSnapshot.pricingSummary?.offerings?.map((offering: any, idx: number) => (
                       <div key={idx} className="flex justify-between py-1">
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-muted-foreground">
                           {offering.offeringName}
                         </span>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-sm font-medium text-foreground">
                           {formatCurrency(offering.amount || offering.totalPrice || 0)}
                         </span>
                       </div>
@@ -371,15 +406,15 @@ export function BookingReceipt({
 
                     {/* Subtotal */}
                     <div className="flex justify-between py-1 border-t mt-1 pt-1">
-                      <span className="text-sm font-medium text-gray-700">Subtotal</span>
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
+                      <span className="text-sm font-medium text-foreground">
                         {formatCurrency(pricingSnapshot.subtotal ?? pricingSnapshot.pricingSummary?.subtotal ?? pricingSnapshot.subtotalBeforeDiscount ?? 0)}
                       </span>
                     </div>
 
                     {/* Discounts */}
                     {pricingSnapshot.pricingSummary?.discounts?.map((discount: any, idx: number) => (
-                      <div key={idx} className="flex justify-between py-1 text-green-600">
+                      <div key={idx} className="flex justify-between py-1 text-success">
                         <span className="text-sm">Discount: {discount.discountCode}</span>
                         <span className="text-sm font-semibold">-{formatCurrency(discount.discountAmount || 0)}</span>
                       </div>
@@ -387,11 +422,11 @@ export function BookingReceipt({
 
                     {/* Loyalty Discount */}
                     {pricingSnapshot.isLoyaltyRedeemed && pricingSnapshot.loyaltyDiscountAmount > 0 && (
-                      <div className="flex justify-between py-1 text-green-600">
+                      <div className="flex justify-between py-1 text-success">
                         <span className="text-sm flex items-center gap-1">
                           🎁 Loyalty Points Discount
                           {pricingSnapshot.loyaltyPointsRedeemed && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted-foreground">
                               ({pricingSnapshot.loyaltyPointsRedeemed.toLocaleString()} pts)
                             </span>
                           )}
@@ -402,7 +437,7 @@ export function BookingReceipt({
 
                     {/* Total Savings */}
                     {(pricingSnapshot.totalDiscount ?? 0) > 0 && (
-                      <div className="flex justify-between py-1 text-green-600">
+                      <div className="flex justify-between py-1 text-success">
                         <span className="text-sm font-medium">Total Savings</span>
                         <span className="text-sm font-semibold">-{formatCurrency(pricingSnapshot.totalDiscount)}</span>
                       </div>
@@ -411,51 +446,51 @@ export function BookingReceipt({
                     {/* Taxes */}
                     {(pricingSnapshot.taxAmount ?? 0) > 0 && (
                       <div className="flex justify-between py-1 border-t mt-1 pt-1">
-                        <span className="text-sm text-gray-700">Tax</span>
-                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(pricingSnapshot.taxAmount)}</span>
+                        <span className="text-sm text-muted-foreground">Tax</span>
+                        <span className="text-sm font-medium text-foreground">{formatCurrency(pricingSnapshot.taxAmount)}</span>
                       </div>
                     )}
 
                     {/* Service Fee */}
                     {(pricingSnapshot.serviceFee ?? 0) > 0 && (
                       <div className="flex justify-between py-1">
-                        <span className="text-sm text-gray-700">Service Fee</span>
-                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(pricingSnapshot.serviceFee)}</span>
+                        <span className="text-sm text-muted-foreground">Service Fee</span>
+                        <span className="text-sm font-medium text-foreground">{formatCurrency(pricingSnapshot.serviceFee)}</span>
                       </div>
                     )}
 
                     {/* Deposit */}
                     {(pricingSnapshot.totalDeposit ?? 0) > 0 && (
                       <div className="flex justify-between py-1">
-                        <span className="text-sm text-gray-700">Deposit (Refundable)</span>
-                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(pricingSnapshot.totalDeposit)}</span>
+                        <span className="text-sm text-muted-foreground">Deposit (Refundable)</span>
+                        <span className="text-sm font-medium text-foreground">{formatCurrency(pricingSnapshot.totalDeposit)}</span>
                       </div>
                     )}
 
                     {/* Grand Total */}
                     <Separator className="my-1" />
-                    <div className="flex justify-between py-2 bg-white rounded-lg px-4">
-                      <span className="text-base font-bold text-gray-900">Grand Total</span>
-                      <span className="text-xl font-bold text-primary">
+                    <div className="flex justify-between items-baseline py-3 bg-muted/30 rounded-md px-4">
+                      <span className="text-sm font-semibold text-foreground">Grand Total</span>
+                      <span className="text-2xl font-semibold text-primary">
                         {formatCurrency(pricingSnapshot.grandTotal || booking.finalPrice || 0)}
                       </span>
                     </div>
 
                     {/* Payment Schedule */}
                     {(pricingSnapshot.dueAtBooking || pricingSnapshot.dueAtPickup) && (
-                      <div className="space-y-1 mt-2 p-3 bg-gray-100 rounded-lg">
+                      <div className="space-y-1 mt-3 p-4 bg-muted/30 rounded-md">
                         {pricingSnapshot.dueAtBooking > 0 && (
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-700">Due at Booking</span>
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm text-muted-foreground">Due at Booking</span>
+                            <span className="text-sm font-medium text-foreground">
                               {formatCurrency(pricingSnapshot.dueAtBooking)}
                             </span>
                           </div>
                         )}
                         {pricingSnapshot.dueAtPickup > 0 && (
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-700">Due at Pickup</span>
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm text-muted-foreground">Due at Pickup</span>
+                            <span className="text-sm font-medium text-foreground">
                               {formatCurrency(pricingSnapshot.dueAtPickup)}
                             </span>
                           </div>
@@ -464,11 +499,11 @@ export function BookingReceipt({
                     )}
 
                     {/* Balance Due */}
-                    <div className="flex justify-between py-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 mt-2">
-                      <span className="text-sm font-semibold text-yellow-900">
+                    <div className="flex justify-between py-3 bg-warning/10 border border-warning/20 rounded-md px-4 mt-3">
+                      <span className="text-sm font-semibold text-foreground">
                         {t('booking.receipt.balanceDue')}
                       </span>
-                      <span className="text-base font-bold text-yellow-900">
+                      <span className="text-base font-semibold text-foreground">
                         {formatCurrency(booking.balancePayment || 0)}
                       </span>
                     </div>
@@ -477,15 +512,15 @@ export function BookingReceipt({
                   <>
                     {/* Fallback to simple breakdown if no pricing snapshot */}
                     <div className="flex justify-between py-1">
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-muted-foreground">
                         {t('booking.receipt.rentalFee')}
                       </span>
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-medium text-foreground">
                         {formatCurrency(booking.totalRentalFee || 0)}
                       </span>
                     </div>
                     {booking.discountId && (
-                      <div className="flex justify-between py-1 text-green-700">
+                      <div className="flex justify-between py-1 text-success">
                         <span className="text-sm">
                           {t('booking.receipt.discount')} (#{booking.discountId})
                         </span>
@@ -497,19 +532,19 @@ export function BookingReceipt({
                       </div>
                     )}
                     <Separator className="my-1" />
-                    <div className="flex justify-between py-2 bg-white rounded-lg px-4">
-                      <span className="text-base font-bold text-gray-900">
+                    <div className="flex justify-between items-baseline py-3 bg-muted/30 rounded-md px-4">
+                      <span className="text-sm font-semibold text-foreground">
                         {t('booking.receipt.totalAmount')}
                       </span>
-                      <span className="text-xl font-bold text-primary">
+                      <span className="text-2xl font-semibold text-primary">
                         {formatCurrency(booking.finalPrice || 0)}
                       </span>
                     </div>
-                    <div className="flex justify-between py-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 mt-2">
-                      <span className="text-sm font-semibold text-yellow-900">
+                    <div className="flex justify-between py-3 bg-warning/10 border border-warning/20 rounded-md px-4 mt-3">
+                      <span className="text-sm font-semibold text-foreground">
                         {t('booking.receipt.balanceDue')}
                       </span>
-                      <span className="text-base font-bold text-yellow-900">
+                      <span className="text-base font-semibold text-foreground">
                         {formatCurrency(booking.balancePayment || 0)}
                       </span>
                     </div>
@@ -521,13 +556,10 @@ export function BookingReceipt({
 
           {/* Insurance Information */}
           {booking.insurancePolicy && (
-            <Card className="border-2 mb-8 bg-indigo-50/50">
+            <Card className="border border-border shadow-none mb-6">
               <CardContent className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="h-8 w-1 bg-indigo-600 rounded-full"></span>
-                  {t('booking.receipt.insuranceInformation')}
-                </h3>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                <SectionTitle title={t('booking.receipt.insuranceInformation')} />
+                <p className="mt-4 text-sm text-muted-foreground whitespace-pre-wrap">
                   {booking.insurancePolicy}
                 </p>
               </CardContent>
@@ -535,12 +567,12 @@ export function BookingReceipt({
           )}
 
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t-2 border-gray-300">
+          <div className="mt-8 pt-6 border-t border-border">
             <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {t('booking.receipt.thankYou')}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {t('booking.receipt.questions')}
               </p>
             </div>
