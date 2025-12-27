@@ -893,6 +893,9 @@ export default function BookingDetailPage() {
         bookingTotal={booking.finalPrice ?? 0}
         balanceDue={booking.balancePayment ?? 0}
         bookingStatus={booking.status}
+        guestEmail={booking.guestEmail}
+        guestName={booking.guestName}
+        guestPhone={booking.guestPhone}
         open={manualPaymentDialogOpen}
         onOpenChange={setManualPaymentDialogOpen}
         onSuccess={() => {

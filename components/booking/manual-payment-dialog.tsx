@@ -77,6 +77,9 @@ interface ManualPaymentDialogProps {
   bookingTotal?: number;
   balanceDue?: number;
   bookingStatus?: string;
+  guestEmail?: string;
+  guestName?: string;
+  guestPhone?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (response: ManualPaymentResponse) => void;
@@ -87,6 +90,9 @@ export function ManualPaymentDialog({
   bookingTotal = 0,
   balanceDue = 0,
   bookingStatus,
+  guestEmail,
+  guestName,
+  guestPhone,
   open,
   onOpenChange,
   onSuccess,
@@ -161,7 +167,8 @@ export function ManualPaymentDialog({
       setReferenceNumber('');
       setPaymentDate('');
       setNotes('');
-      setPayerName('');
+      // Set payer name from guest name only
+      setPayerName(guestName || '');
       setIsDeposit(false);
       setAutoConfirmBooking(true);
       setConfirmBooking(false);
@@ -170,7 +177,7 @@ export function ManualPaymentDialog({
       setShowPaymentHistory(false);
       setShowAdvancedOptions(false);
     }
-  }, [open, balanceDue, paymentSummary?.balanceDue]);
+  }, [open, balanceDue, paymentSummary?.balanceDue, guestName, isBookingCompleted]);
 
   // Handle receipt file selection
   const handleReceiptSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
