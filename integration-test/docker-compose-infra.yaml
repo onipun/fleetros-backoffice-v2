@@ -1,69 +1,67 @@
-version: '3.8'
-
 # Infrastructure-only Docker Compose for local development
-# This spins up PostgreSQL, Redis, and Keycloak without the application
+# This spins up PostgreSQL and Keycloak without the application
 # Use this during development when running the application locally
+#
+# USAGE FOR DEPENDENT PROJECTS:
+# 1. Start this infrastructure first:
+#    cd /path/to/backoffice/integration-test/docker && docker compose -f docker-compose-infra.yml up -d
+#
+# 2. In your dependent project's docker-compose.yml, reference the external network:
+#    networks:
+#      backoffice-infra:
+#        external: true
+#        name: backoffice-infra-network
+#
+# 3. Connect your services to the network and use these hostnames:
+#    - postgres:5432 (PostgreSQL)
+#    - keycloak:8080 (Keycloak internal)
+#    - localhost:8180 (Keycloak from host)
+#
+# ENVIRONMENT VARIABLES (can be overridden):
+#   POSTGRES_USER, POSTGRES_PASSWORD, KEYCLOAK_ADMIN, KEYCLOAK_ADMIN_PASSWORD
 
 services:
-  # PostgreSQL Database
-  # Supports multiple databases: backoffice, keycloak, payment_platform
   postgres:
     image: postgres:16-alpine
-    container_name: postgres
+    container_name: backoffice-postgres
+    hostname: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme
-      POSTGRES_MULTIPLE_DATABASES: backoffice,keycloak,payment_platform
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DATABASES:-backoffice,keycloak}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./init-scripts/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
-      - ./init-scripts/01-init.sql:/docker-entrypoint-initdb.d/02-init.sql:ro
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      - ./init-reporting-tables.sql:/docker-entrypoint-initdb.d/02-init-reporting-tables.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - backoffice-network
+      - backoffice-infra-network
 
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    command: redis-server --appendonly yes
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - backoffice-network
-
-  # Keycloak Authentication Server
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
-    container_name: keycloak
+    container_name: backoffice-keycloak
+    hostname: keycloak
     command: start-dev
     environment:
       # Admin credentials
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
 
       # Database configuration - use separate keycloak database
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: changeme
+      KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       KC_DB_SCHEMA: public
 
       # Hostname configuration - allow access from host machine
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
@@ -73,11 +71,11 @@ services:
       KC_METRICS_ENABLED: "true"
 
       # Logging
-      KC_LOG_LEVEL: INFO
-      QUARKUS_LOG_LEVEL: INFO
+      KC_LOG_LEVEL: ${KEYCLOAK_LOG_LEVEL:-INFO}
+      QUARKUS_LOG_LEVEL: ${KEYCLOAK_LOG_LEVEL:-INFO}
     ports:
-      - "8180:8080"
-      - "8787:8787" # Debug port
+      - "${KEYCLOAK_PORT:-8180}:8080"
+      - "${KEYCLOAK_DEBUG_PORT:-8787}:8787" # Debug port
     volumes:
       - keycloak-data:/opt/keycloak/data
     depends_on:
@@ -90,57 +88,29 @@ services:
       retries: 15
       start_period: 90s
     networks:
-      - backoffice-network
+      - backoffice-infra-network
 
-  # Keycloak Initialization
   keycloak-init:
     image: alpine:latest
-    container_name: keycloak-init
+    container_name: backoffice-keycloak-init
     volumes:
-      - ./init-scripts/init-keycloak.sh:/init-keycloak.sh:ro
+      - ./init-keycloak.sh:/init-keycloak.sh:ro
     entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl jq bash && bash /init-keycloak.sh"]
     depends_on:
       keycloak:
         condition: service_healthy
     networks:
-      - backoffice-network
+      - backoffice-infra-network
     restart: "no"
 
-  # pgAdmin - PostgreSQL Web UI
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-      - ./init-scripts/pgadmin-servers.json:/pgadmin4/servers.json:ro
-      - ./init-scripts/pgpass:/pgadmin4/pgpass:ro
-    depends_on:
-      - postgres
-    networks:
-      - backoffice-network
-    restart: unless-stopped
-    entrypoint: >
-      /bin/sh -c "
-      cp /pgadmin4/pgpass /tmp/pgpass &&
-      chmod 600 /tmp/pgpass &&
-      /entrypoint.sh
-      "
-
 networks:
-  backoffice-network:
+  backoffice-infra-network:
+    name: backoffice-infra-network
     driver: bridge
 
 volumes:
   postgres-data:
-  redis-data:
+    name: backoffice-postgres-data
   keycloak-data:
-  pgadmin-data:
+    name: backoffice-keycloak-data
 

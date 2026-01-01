@@ -32,7 +32,7 @@ done
 echo "✓ Keycloak is ready"
 
 # Additional delay to ensure Keycloak is fully initialized
-sleep 5
+#sleep 5
 
 # Get admin access token
 echo "Getting admin access token..."
@@ -216,6 +216,46 @@ for ROLE in "ADMIN" "USER" "MANAGER"; do
     fi
 done
 
+# Get fresh admin token
+ADMIN_TOKEN=$(curl -s -X POST "${KEYCLOAK_URL}/realms/master/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=${ADMIN_USER}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "grant_type=password" \
+  -d "client_id=admin-cli" | jq -r '.access_token')
+
+# Get client UUID for protocol mapper configuration
+CLIENT_UUID=$(curl -s "${KEYCLOAK_URL}/admin/realms/${REALM_NAME}/clients?clientId=${CLIENT_ID}" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" | jq -r '.[0].id // empty')
+
+# Create protocol mapper for account_id claim
+echo "Setting up protocol mapper for account_id claim..."
+MAPPER_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${KEYCLOAK_URL}/admin/realms/${REALM_NAME}/clients/${CLIENT_UUID}/protocol-mappers/models" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "account-id-mapper",
+    "protocol": "openid-connect",
+    "protocolMapper": "oidc-usermodel-attribute-mapper",
+    "config": {
+      "user.attribute": "account_id",
+      "claim.name": "account_id",
+      "jsonType.label": "String",
+      "id.token.claim": "true",
+      "access.token.claim": "true",
+      "userinfo.token.claim": "true"
+    }
+  }')
+
+MAPPER_HTTP_CODE=$(echo "$MAPPER_RESPONSE" | tail -n1)
+if [ "$MAPPER_HTTP_CODE" == "201" ]; then
+    echo "  ✓ Protocol mapper for account_id created"
+elif [ "$MAPPER_HTTP_CODE" == "409" ]; then
+    echo "  ✓ Protocol mapper for account_id already exists"
+else
+    echo "  ⚠ Protocol mapper status: $MAPPER_HTTP_CODE"
+fi
+
 echo ""
 echo "=========================================="
 echo "✓ Keycloak Setup Complete!"
@@ -227,6 +267,7 @@ echo ""
 echo "Direct Access Grants: ENABLED"
 echo "Standard Flow: ENABLED"
 echo "Service Accounts: ENABLED"
+echo "Protocol Mappers: account_id"
 echo ""
 echo "The realm is ready for integration tests!"
 echo "=========================================="
