@@ -1,11 +1,11 @@
 /**
  * Reporting Service Type Definitions
- * Based on REPORTING_SERVICE_INTEGRATION_GUIDE.md
+ * Based on REPORTING_API_INTEGRATION.md
  */
 
-export type TrendDirection = 'UP' | 'DOWN' | 'STABLE';
+export type TrendDirection = 'UP' | 'DOWN' | 'NEUTRAL';
 
-export type ReportType = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+export type ReportType = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'CUSTOM';
 
 export interface StatisticMetric {
   value: string;
@@ -68,7 +68,6 @@ export interface RevenueReportResponse {
 }
 
 export interface ReportRequest {
-  accountId: number;
   startDate: string;
   endDate: string;
   forceRefresh?: boolean;

@@ -1,14 +1,18 @@
 'use client';
 
+import { useLocale } from '@/components/providers/locale-provider';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDashboardStatistics, refreshDashboardStatistics } from '@/lib/api/reporting-api';
 import type { DashboardStatisticsResponse, StatisticMetric } from '@/types/reporting';
 import {
+    AlertCircle,
     ArrowDownIcon,
     ArrowUpIcon,
     Car,
     DollarSign,
     FileText,
+    MinusIcon,
     Package,
     RefreshCw,
 } from 'lucide-react';
@@ -18,15 +22,19 @@ interface StatCardProps {
   title: string;
   metric: StatisticMetric;
   icon: React.ComponentType<{ className?: string }>;
-  currency?: string;
+  formatValue?: (value: string) => string;
 }
 
-function StatCard({ title, metric, icon: Icon, currency }: StatCardProps) {
+function StatCard({ title, metric, icon: Icon, formatValue }: StatCardProps) {
   const isPositiveTrend = metric.trend === 'UP';
   const isNegativeTrend = metric.trend === 'DOWN';
+  const isNeutralTrend = metric.trend === 'NEUTRAL';
+
+  // Use formatValue if provided, otherwise use the original value
+  const displayValue = formatValue ? formatValue(metric.value) : metric.value;
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
+    <Card className="hover:shadow-lg transition-shadow duration-300 border">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
@@ -36,13 +44,16 @@ function StatCard({ title, metric, icon: Icon, currency }: StatCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold tracking-tight">{metric.value}</div>
+        <div className="text-3xl font-bold tracking-tight">{displayValue}</div>
         <div className="flex items-center mt-2 space-x-1">
           {isPositiveTrend && (
             <ArrowUpIcon className="h-4 w-4 text-emerald-500" />
           )}
           {isNegativeTrend && (
             <ArrowDownIcon className="h-4 w-4 text-rose-500" />
+          )}
+          {isNeutralTrend && (
+            <MinusIcon className="h-4 w-4 text-muted-foreground" />
           )}
           <p
             className={`text-xs font-medium ${
@@ -61,11 +72,8 @@ function StatCard({ title, metric, icon: Icon, currency }: StatCardProps) {
   );
 }
 
-interface DashboardStatisticsProps {
-  accountId: number;
-}
-
-export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
+export function DashboardStatistics() {
+  const { formatCurrency } = useLocale();
   const [statistics, setStatistics] = useState<DashboardStatisticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -80,16 +88,15 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
       }
       setError(null);
 
-      console.log('Fetching dashboard statistics:', { accountId, forceRefresh });
-
       const data = forceRefresh
-        ? await refreshDashboardStatistics(accountId)
-        : await getDashboardStatistics(accountId);
+        ? await refreshDashboardStatistics()
+        : await getDashboardStatistics();
 
       setStatistics(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch dashboard statistics:', err);
-      const errorMessage = err?.message || err?.error || 'Failed to load statistics. Please check if the reporting service is running.';
+      const error = err as { message?: string; error?: string };
+      const errorMessage = error?.message || error?.error || 'Failed to load statistics. Please check if the reporting service is running.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -98,25 +105,43 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
   };
 
   useEffect(() => {
-    if (accountId) {
-      fetchStatistics();
+    fetchStatistics();
+  }, []);
+
+  // Function to format revenue value by extracting number and reformatting with user's currency
+  const formatRevenueValue = (value: string): string => {
+    // Extract numeric value from string like "$15,750" or "15,750"
+    const numericValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
+    if (isNaN(numericValue)) {
+      return value; // Return original if parsing fails
     }
-  }, [accountId]);
+    return formatCurrency(numericValue);
+  };
 
   if (loading && !statistics) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="space-y-0 pb-2">
-              <div className="h-4 bg-muted rounded w-24" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-muted rounded w-32 mb-2" />
-              <div className="h-3 bg-muted rounded w-28" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-7 bg-muted rounded w-48 animate-pulse" />
+            <div className="h-4 bg-muted rounded w-36 mt-1 animate-pulse" />
+          </div>
+          <div className="h-9 w-24 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 bg-muted rounded w-24" />
+                <div className="h-10 w-10 bg-muted rounded-full" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-muted rounded w-20 mb-2" />
+                <div className="h-4 bg-muted rounded w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -125,39 +150,35 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
     const isNetworkError = error.includes('Network error') || error.includes('Unable to connect');
     
     return (
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-destructive flex items-center gap-2 text-base">
+            <AlertCircle className="h-5 w-5" />
             Dashboard Statistics Unavailable
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-destructive">
-              Failed to load statistics
-            </p>
-            <p className="text-xs text-muted-foreground">{error}</p>
-          </div>
+          <p className="text-sm text-muted-foreground">{error}</p>
           
           {isNetworkError && (
-            <div className="rounded-md bg-muted p-3 space-y-2">
+            <div className="rounded-md bg-muted/50 p-3 space-y-2">
               <p className="text-xs font-semibold">Troubleshooting Steps:</p>
               <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
                 <li>Ensure the reporting service is running on port 8084</li>
-                <li>Check the <code className="bg-background px-1 rounded">NEXT_PUBLIC_REPORTING_API_URL</code> environment variable</li>
                 <li>Verify network connectivity and CORS settings</li>
                 <li>Check the browser console for detailed error logs</li>
               </ol>
             </div>
           )}
           
-          <button
+          <Button
             onClick={() => fetchStatistics()}
-            className="text-sm px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            variant="outline"
+            size="sm"
           >
+            <RefreshCw className="h-4 w-4 mr-2" />
             Retry
-          </button>
+          </Button>
         </CardContent>
       </Card>
     );
@@ -176,14 +197,15 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
             Real-time metrics for your account
           </p>
         </div>
-        <button
+        <Button
           onClick={() => fetchStatistics(true)}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium"
+          variant="outline"
+          size="sm"
         >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -201,7 +223,7 @@ export function DashboardStatistics({ accountId }: DashboardStatisticsProps) {
           title="Total Revenue"
           metric={statistics.totalRevenue}
           icon={DollarSign}
-          currency={statistics.currency}
+          formatValue={formatRevenueValue}
         />
         <StatCard
           title="Active Packages"

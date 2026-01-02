@@ -56,13 +56,11 @@ function handleApiError(error: unknown): never {
 }
 
 /**
- * Get dashboard statistics for an account
+ * Get dashboard statistics for the authenticated account
  * GET /api/v1/reporting/dashboard
- * Account ID is extracted from the authorization token
+ * Account ID is extracted from the authorization token (JWT)
  */
-export async function getDashboardStatistics(
-  accountId: number
-): Promise<DashboardStatisticsResponse> {
+export async function getDashboardStatistics(): Promise<DashboardStatisticsResponse> {
   try {
     const token = await getAuthToken();
     if (!token) {
@@ -100,13 +98,11 @@ export async function getDashboardStatistics(
 }
 
 /**
- * Generate new dashboard statistics for an account
+ * Generate new dashboard statistics for the authenticated account
  * POST /api/v1/reporting/dashboard/generate
- * Account ID is extracted from the authorization token
+ * Account ID is extracted from the authorization token (JWT)
  */
-export async function generateDashboardStatistics(
-  accountId: number
-): Promise<DashboardStatisticsResponse> {
+export async function generateDashboardStatistics(): Promise<DashboardStatisticsResponse> {
   try {
     const token = await getAuthToken();
     if (!token) {
@@ -146,11 +142,9 @@ export async function generateDashboardStatistics(
 /**
  * Refresh dashboard statistics (clear cache and regenerate)
  * PUT /api/v1/reporting/dashboard/refresh
- * Account ID is extracted from the authorization token
+ * Account ID is extracted from the authorization token (JWT)
  */
-export async function refreshDashboardStatistics(
-  accountId: number
-): Promise<DashboardStatisticsResponse> {
+export async function refreshDashboardStatistics(): Promise<DashboardStatisticsResponse> {
   try {
     const token = await getAuthToken();
     if (!token) {
@@ -188,12 +182,11 @@ export async function refreshDashboardStatistics(
 }
 
 /**
- * Get revenue report for an account
+ * Get revenue report for the authenticated account
  * GET /api/v1/reporting/revenue
- * Account ID is extracted from the authorization token
+ * Account ID is extracted from the authorization token (JWT)
  */
 export async function getRevenueReport(
-  accountId: number,
   startDate: string,
   endDate: string,
   forceRefresh: boolean = false
@@ -287,12 +280,11 @@ export async function generateRevenueReport(
 /**
  * Get revenue reports by type
  * GET /api/v1/reporting/revenue/by-type
- * Account ID is extracted from the authorization token
+ * Account ID is extracted from the authorization token (JWT)
  */
 export async function getRevenueReportsByType(
-  accountId: number,
   reportType: ReportType,
-  limit: number = 5
+  limit: number = 10
 ): Promise<RevenueReportResponse[]> {
   try {
     const token = await getAuthToken();
@@ -324,6 +316,52 @@ export async function getRevenueReportsByType(
       const errorData = await response.json().catch(() => ({}));
       throw {
         message: errorData.error || errorData.message || 'Failed to fetch reports by type',
+        status: response.status,
+        ...errorData,
+      } as ReportingError;
+    }
+
+    return await response.json();
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/**
+ * Cleanup old revenue reports
+ * DELETE /api/v1/reporting/revenue/cleanup
+ * Requires ADMIN authority
+ */
+export async function cleanupOldReports(retentionDays: number = 90): Promise<{ deletedCount: number; message: string }> {
+  try {
+    const token = await getAuthToken();
+    if (!token) {
+      window.location.href = '/login';
+      throw new Error('Not authenticated');
+    }
+
+    const params = new URLSearchParams({
+      retentionDays: String(retentionDays),
+    });
+
+    const response = await fetch(
+      `${REPORTING_API_BASE_URL}/api/v1/reporting/revenue/cleanup?${params}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+      }
+      const errorData = await response.json().catch(() => ({}));
+      throw {
+        message: errorData.error || errorData.message || 'Failed to cleanup old reports',
         status: response.status,
         ...errorData,
       } as ReportingError;
