@@ -9,6 +9,7 @@ export enum OnboardingStatus {
   COMPLETED = 'COMPLETED',
   VERIFIED = 'VERIFIED',
   FAILED = 'FAILED',
+  ACCOUNT_DELETED = 'ACCOUNT_DELETED',
 }
 
 export enum AccountStatus {
@@ -17,6 +18,7 @@ export enum AccountStatus {
   RESTRICTED_SOON = 'RESTRICTED_SOON',
   ENABLED = 'ENABLED',
   REJECTED = 'REJECTED',
+  DELETED = 'DELETED',
 }
 
 /**
@@ -60,6 +62,13 @@ export interface MerchantStatus {
   requirementsCurrentlyDue?: string[];
   requirementsEventuallyDue?: string[];
   error?: string;
+  message?: string;
+  // Deleted account fields
+  isDeleted?: boolean;
+  recreationAvailable?: boolean;
+  gatewayAccountId?: string;
+  // Link expiration
+  accountLinkExpiresAt?: string;
 }
 
 /**
@@ -78,6 +87,31 @@ export interface RefreshOnboardingResponse {
 export interface DashboardResponse {
   success: boolean;
   dashboardUrl: string;
+  error?: string;
+}
+
+/**
+ * Request for recreating a deleted merchant account
+ */
+export interface RecreateAccountRequest {
+  country: string;
+  email: string;
+  businessName?: string;
+  phone?: string;
+}
+
+/**
+ * Response for recreating a deleted merchant account
+ */
+export interface RecreateAccountResponse {
+  success: boolean;
+  accountId?: number;
+  gatewayAccountId?: string;
+  onboardingUrl?: string;
+  onboardingStatus?: OnboardingStatus;
+  accountStatus?: AccountStatus;
+  accountLinkExpiresAt?: string;
+  message?: string;
   error?: string;
 }
 

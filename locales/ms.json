@@ -100,6 +100,16 @@
       "description": "Urus akaun pemprosesan Stripe anda dan terima bayaran daripada pelanggan",
       "manage": "Urus Akaun Pembayaran"
     },
+    "profile": {
+      "title": "Profil Perniagaan",
+      "description": "Urus maklumat syarikat dan tetapan anda",
+      "manage": "Urus Profil"
+    },
+    "accountSettings": {
+      "title": "Tetapan Akaun",
+      "description": "Urus tetapan konfigurasi khusus akaun seperti kadar cukai dan yuran",
+      "manage": "Urus Tetapan"
+    },
     "saveSuccess": "Tetapan berjaya disimpan",
     "saveError": "Gagal menyimpan tetapan"
   },

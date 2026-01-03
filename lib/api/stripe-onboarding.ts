@@ -5,12 +5,14 @@
  */
 
 import type {
-  DashboardResponse,
-  MerchantRegistrationRequest,
-  MerchantRegistrationResponse,
-  MerchantStatus,
-  OnboardingError,
-  RefreshOnboardingResponse,
+    DashboardResponse,
+    MerchantRegistrationRequest,
+    MerchantRegistrationResponse,
+    MerchantStatus,
+    OnboardingError,
+    RecreateAccountRequest,
+    RecreateAccountResponse,
+    RefreshOnboardingResponse,
 } from '@/types/stripe-onboarding';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8082';
@@ -194,6 +196,50 @@ export async function getDashboardLink(): Promise<DashboardResponse> {
       const errorData = await response.json().catch(() => ({}));
       throw {
         message: errorData.error || errorData.message || 'Failed to get dashboard link',
+        status: response.status,
+        ...errorData,
+      } as OnboardingError;
+    }
+
+    return await response.json();
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/**
+ * Recreate a deleted merchant account
+ * POST /api/merchants/recreate
+ */
+export async function recreateMerchantAccount(
+  data: RecreateAccountRequest
+): Promise<RecreateAccountResponse> {
+  try {
+    const token = await getAuthToken();
+    if (!token) {
+      window.location.href = '/login';
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/merchants/recreate`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+      }
+      const errorData = await response.json().catch(() => ({}));
+      throw {
+        message: errorData.error || errorData.message || 'Failed to recreate account',
         status: response.status,
         ...errorData,
       } as OnboardingError;

@@ -1,7 +1,7 @@
 'use client';
 
 interface MerchantStatusBadgeProps {
-  status: string;
+  status?: string;
 }
 
 const STATUS_STYLES = {
@@ -18,12 +18,14 @@ const STATUS_STYLES = {
 } as const;
 
 export function MerchantStatusBadge({ status }: MerchantStatusBadgeProps) {
-  const normalizedStatus = status.toUpperCase().replace(/ /g, '_');
+  // Handle undefined/null status
+  const safeStatus = status || 'NOT_STARTED';
+  const normalizedStatus = safeStatus.toUpperCase().replace(/ /g, '_');
   const style = STATUS_STYLES[normalizedStatus as keyof typeof STATUS_STYLES] || STATUS_STYLES.NOT_STARTED;
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style}`}>
-      {status.replace(/_/g, ' ')}
+      {safeStatus.replace(/_/g, ' ')}
     </span>
   );
 }

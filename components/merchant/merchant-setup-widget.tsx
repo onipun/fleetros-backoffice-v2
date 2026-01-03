@@ -151,6 +151,50 @@ export function MerchantSetupWidget({ compact = false, showDetails = true }: Mer
     );
   }
 
+  // Account is restricted - show warning
+  const isRestricted = status.accountStatus === 'RESTRICTED' || status.accountStatus === 'RESTRICTED_SOON';
+  if (isRestricted) {
+    return (
+      <Card className="border-orange-300 bg-gradient-to-br from-orange-50 to-white">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-orange-900">
+            <AlertTriangle className="h-5 w-5" />
+            {status.accountStatus === 'RESTRICTED' 
+              ? (t('merchant.widget.restricted.title') || 'Account Restricted')
+              : (t('merchant.widget.restrictedSoon.title') || 'Action Required Soon')}
+          </CardTitle>
+          <CardDescription className="text-orange-700">
+            {status.accountStatus === 'RESTRICTED'
+              ? (t('merchant.widget.restricted.description') || 'Your account has restrictions. Complete verification to resume payments.')
+              : (t('merchant.widget.restrictedSoon.description') || 'Your account will be restricted soon. Please complete verification.')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {showDetails && (
+            <div className="bg-white rounded-lg p-3 border border-orange-200">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-600">{t('merchant.widget.status') || 'Status'}:</span>
+                <MerchantStatusBadge status={status.accountStatus} />
+              </div>
+              <p className="text-xs text-orange-700">
+                {t('merchant.widget.restricted.message') || 'Stripe requires additional verification to continue processing payments.'}
+              </p>
+            </div>
+          )}
+          <Button 
+            onClick={handleViewDashboard} 
+            className="w-full bg-orange-600 hover:bg-orange-700"
+            size={compact ? 'default' : 'lg'}
+          >
+            <AlertTriangle className="mr-2 h-4 w-4" />
+            {t('merchant.widget.restricted.button') || 'Complete Verification'}
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Account is set up - show status
   const isReady = status.canAcceptPayments;
 
@@ -185,10 +229,12 @@ export function MerchantSetupWidget({ compact = false, showDetails = true }: Mer
               <span className="text-gray-600">{t('merchant.widget.status') || 'Status'}:</span>
               <MerchantStatusBadge status={status.onboardingStatus} />
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">{t('merchant.widget.email') || 'Email'}:</span>
-              <span className="font-medium text-gray-900 truncate ml-2">{status.email}</span>
-            </div>
+            {status.email && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">{t('merchant.widget.email') || 'Email'}:</span>
+                <span className="font-medium text-gray-900 truncate ml-2">{status.email}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -220,6 +266,16 @@ export function MerchantSetupWidget({ compact = false, showDetails = true }: Mer
             </div>
           </div>
         )}
+
+        {/* Action Button - Continue/Complete Onboarding */}
+        <Button 
+          onClick={handleSetupClick} 
+          className="w-full bg-yellow-600 hover:bg-yellow-700"
+          size={compact ? 'default' : 'lg'}
+        >
+          <ArrowRight className="mr-2 h-4 w-4" />
+          {t('merchant.widget.pending.button') || 'Continue Setup'}
+        </Button>
       </CardContent>
     </Card>
   );

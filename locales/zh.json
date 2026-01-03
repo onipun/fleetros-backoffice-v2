@@ -109,6 +109,16 @@
       "description": "管理您的 Stripe 付款账户并接收客户付款",
       "manage": "管理付款账户"
     },
+    "profile": {
+      "title": "企业资料",
+      "description": "管理您的公司信息和设置",
+      "manage": "管理资料"
+    },
+    "accountSettings": {
+      "title": "账户设置",
+      "description": "管理账户特定的配置设置，如税率和费用",
+      "manage": "管理设置"
+    },
     "saveSuccess": "设置保存成功",
     "saveError": "保存设置失败"
   },

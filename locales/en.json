@@ -113,6 +113,16 @@
       "description": "Manage your Stripe payment processing account and accept payments from customers",
       "manage": "Manage Payment Account"
     },
+    "profile": {
+      "title": "Business Profile",
+      "description": "Manage your company information and settings",
+      "manage": "Manage Profile"
+    },
+    "accountSettings": {
+      "title": "Account Settings",
+      "description": "Manage account-specific configuration settings like tax rates and fees",
+      "manage": "Manage Settings"
+    },
     "saveSuccess": "Settings saved successfully",
     "saveError": "Failed to save settings"
   },

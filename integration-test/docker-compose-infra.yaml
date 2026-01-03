@@ -1,5 +1,5 @@
 # Infrastructure-only Docker Compose for local development
-# This spins up PostgreSQL and Keycloak without the application
+# This spins up PostgreSQL, Keycloak, and Redis without the application
 # Use this during development when running the application locally
 #
 # USAGE FOR DEPENDENT PROJECTS:
@@ -16,9 +16,10 @@
 #    - postgres:5432 (PostgreSQL)
 #    - keycloak:8080 (Keycloak internal)
 #    - localhost:8180 (Keycloak from host)
+#    - redis:6379 (Redis)
 #
 # ENVIRONMENT VARIABLES (can be overridden):
-#   POSTGRES_USER, POSTGRES_PASSWORD, KEYCLOAK_ADMIN, KEYCLOAK_ADMIN_PASSWORD
+#   POSTGRES_USER, POSTGRES_PASSWORD, KEYCLOAK_ADMIN, KEYCLOAK_ADMIN_PASSWORD, REDIS_PASSWORD
 
 services:
   postgres:
@@ -28,7 +29,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DATABASES:-backoffice,keycloak}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DATABASES:-backoffice,keycloak,payment_platform}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -103,6 +104,23 @@ services:
       - backoffice-infra-network
     restart: "no"
 
+  redis:
+    image: redis:7-alpine
+    container_name: backoffice-redis
+    hostname: redis
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backoffice-infra-network
+
 networks:
   backoffice-infra-network:
     name: backoffice-infra-network
@@ -113,4 +131,6 @@ volumes:
     name: backoffice-postgres-data
   keycloak-data:
     name: backoffice-keycloak-data
+  redis-data:
+    name: backoffice-redis-data
 

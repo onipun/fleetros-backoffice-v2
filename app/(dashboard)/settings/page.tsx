@@ -5,7 +5,7 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Award, Check, CreditCard, Globe, Palette, Settings as SettingsIcon, Shield, Users } from 'lucide-react';
+import { ArrowRight, Award, Building2, Check, CreditCard, Globe, Palette, Settings as SettingsIcon, Shield, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -54,22 +54,44 @@ export default function SettingsPage() {
       <div className="grid gap-6 max-w-4xl">
         {/* Quick Access Cards */}
         <div className="grid gap-4 md:grid-cols-2">
+          {/* Business Profile - Quick Access */}
+          <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-purple-500" />
+                <CardTitle>{t('settings.profile.title') || 'Business Profile'}</CardTitle>
+              </div>
+              <CardDescription>
+                {t('settings.profile.description') || 'Manage your company information and settings'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/settings/profile">
+                <Button className="w-full" variant="outline">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  {t('settings.profile.manage') || 'Manage Profile'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           {/* Account Settings - Quick Access */}
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <SettingsIcon className="h-5 w-5 text-primary" />
-                <CardTitle>Account Settings</CardTitle>
+                <CardTitle>{t('settings.accountSettings.title')}</CardTitle>
               </div>
               <CardDescription>
-                Manage account-specific configuration settings like tax rates and fees
+                {t('settings.accountSettings.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/settings/account-settings">
                 <Button className="w-full">
                   <SettingsIcon className="mr-2 h-4 w-4" />
-                  Manage Settings
+                  {t('settings.accountSettings.manage')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { AccountStatus, OnboardingStatus } from '@/types/stripe-onboarding';
-import { AlertCircle, CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Loader2, Trash2, XCircle } from 'lucide-react';
 
 interface OnboardingStatusBadgeProps {
   onboardingStatus: OnboardingStatus;
@@ -68,6 +68,14 @@ export function OnboardingStatusBadge({
           icon: XCircle,
           variant: 'destructive' as const,
           className: 'bg-red-500 text-white',
+        };
+      
+      case OnboardingStatus.ACCOUNT_DELETED:
+        return {
+          label: 'Account Deleted',
+          icon: Trash2,
+          variant: 'destructive' as const,
+          className: 'bg-red-600 text-white',
         };
       
       default:
@@ -138,6 +146,13 @@ export function AccountStatusBadge({
           label: 'Rejected',
           variant: 'destructive' as const,
           className: 'bg-red-500 text-white',
+        };
+      
+      case AccountStatus.DELETED:
+        return {
+          label: 'Deleted',
+          variant: 'destructive' as const,
+          className: 'bg-red-600 text-white',
         };
       
       default:

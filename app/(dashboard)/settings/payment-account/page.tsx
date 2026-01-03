@@ -73,10 +73,12 @@ export default function PaymentAccountPage() {
         </p>
       </div>
 
-      {/* Merchant Setup Widget - New Integration */}
-      <MerchantSetupWidget showDetails={true} />
+      {/* Merchant Setup Widget - Only show if onboarding not started yet */}
+      {!businessAccountId && (
+        <MerchantSetupWidget showDetails={true} />
+      )}
 
-      {/* Legacy Support - Show old onboarding if businessAccountId exists */}
+      {/* Show onboarding dashboard if businessAccountId exists */}
       {businessAccountId && (
         <>
           {/* Payment Capability Status */}
