@@ -81,25 +81,6 @@ export default function PaymentAccountPage() {
       {/* Show onboarding dashboard if businessAccountId exists */}
       {businessAccountId && (
         <>
-          {/* Payment Capability Status */}
-          {canAcceptPayment && (
-            <Card className="border-green-200 bg-green-50 dark:bg-green-950">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-green-100 dark:bg-green-900">
-                    <CreditCard className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Payment Processing Active</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Your account is ready to accept payments from customers
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Onboarding Status Dashboard */}
           <OnboardingStatusDashboard
             businessAccountId={businessAccountId}
